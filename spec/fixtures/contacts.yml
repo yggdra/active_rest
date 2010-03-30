@@ -1,0 +1,27 @@
+bart_tel:
+  id: 1
+  owner_id: 1
+  owner_type : User
+  field: tel
+  value: '123434'
+
+compulglobal_email:
+  id: 2
+  owner_id: 2
+  owner_type : Company
+  field: email
+  value: info@compuglobal.com    
+
+homer_fax:
+  id: 3
+  owner_id: 2
+  owner_type : User
+  field: fax
+  value: '1007'  
+
+marge_tel:
+  id: 4
+  owner_id: 3
+  owner_type : User
+  field: tel
+  value: '032323232'     

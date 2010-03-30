@@ -1,0 +1,25 @@
+bart_simpson:
+  id: 1
+  name: Bart Simpson
+  company_id: 3
+  
+homer_simpson:
+  id: 2
+  name: Homer Simpson
+  company_id: 1
+  
+marge_simpson:
+  id: 3
+  name: Marge Simpson
+  company_id: 3
+      
+maggie_simpson:
+  id: 4
+  name: Maggie Simpson
+  company_id: 2  
+  
+lisa_simpson:
+  id: 5
+  name: Lisa Simpson
+  company_id: 2    
+   

@@ -1,0 +1,242 @@
+#
+# ActiveRest, a more powerful rest resources manager
+# Copyright (C) 2008, Intercom s.r.l., windmillmedia
+#
+# = ActiveRest::Helpers::Pagination::Base
+#
+# Author:: Lele Forzani <lele@windmill.it>, Alfredo Cerutti <acerutti@intercom.it>
+# License:: Proprietary
+#
+# Revision:: $Id: base.rb 5105 2009-08-05 12:30:05Z dot79 $
+#
+# == Description
+#
+#
+#
+
+module ActiveRest
+module Helpers
+module Pagination
+
+  module Core
+
+    #
+    # this module handles conditions, sorting and paginations decoding the incoming json (it describes the filters),
+    # then store in session the parameters used to run the query
+    #
+
+    def self.included(base)
+      #:nodoc:
+    end
+
+    protected
+
+    #
+    # update pagination state and save it
+    #
+    def update_pagination_state_with_params!(restraining_model = nil)
+      model_klass = (restraining_model.is_a?(Class) || restraining_model.nil? ? restraining_model : restraining_model.to_s.classify.constantize)
+      pagination_state = previous_pagination_state(model_klass)
+
+      pagination_state.merge!({
+        :sort_field => (params[:sort] || pagination_state[:sort_field] || 'id').sub(/(\A[^\[]*)\[([^\]]*)\]/,'\2'), # fields may be passed as 'object[attr]'
+        :sort_direction => (params[:dir] || pagination_state[:sort_direction]).to_s.upcase,
+        :offset => params[:start] || pagination_state[:offset] || ActiveRest::Configuration.config[:default_pagination_offset],
+        :limit => params[:limit] || pagination_state[:limit] || ActiveRest::Configuration.config[:default_pagination_page_size]
+      })
+
+      # allow only valid sort_fields matching column names of the given model ...
+      unless model_klass.nil? || model_klass.column_names.include?(pagination_state[:sort_field])
+        pagination_state.delete(:sort_field)
+        pagination_state.delete(:sort_direction)
+      end
+
+      # ... and valid sort_directions
+      pagination_state.delete(:sort_direction) unless %w(ASC DESC).include?(pagination_state[:sort_direction])
+
+      save_pagination_state(pagination_state, model_klass)
+    end
+
+    #
+    # build options from pagination state
+    #
+    def options_from_pagination_state(pagination_state)
+      find_options = { :offset => pagination_state[:offset],
+                     :limit  => pagination_state[:limit] }
+
+      find_options.merge!(
+        :order => "#{pagination_state[:sort_field]} #{pagination_state[:sort_direction]}"
+      ) unless pagination_state[:sort_field].blank?
+
+      find_options
+    end
+
+    #
+    # build options for index search
+    #
+    def options_from_search
+      # select the finder (app level or controller level)
+      finder = nil
+      if index_options.has_key?(:finder)
+        if index_options[:finder].is_a?(Symbol) # if not a symbol can be a module
+          finder_plugin = index_options[:finder] # must be a valid plugin/finder
+        else
+          finder = index_options[:finder] # use the module declared at application level
+        end
+      else
+        finder_plugin = ActiveRest::Configuration.config[:plugins][:finder] # use the default one
+      end
+
+      finder = "ActiveRest::Plugins::Finders::#{finder_plugin.to_s.capitalize}".constantize if finder.nil? # ok, it a symbol... load the plugin/finder
+
+      # we got the finder, let's go !
+      condition_parent, criteria_parent, order_parent = (ActiveRest::Configuration.config[:route_expand_model_namespace]) ? no_standard_lookup_for_parent_object : standard_lookup_for_parent_object
+      joins = parse_joins
+      extra_conditions = index_options.has_key?(:extra_conditions) ? send(index_options[:extra_conditions]) : {}
+
+      options = {
+        :extra_conditions => extra_conditions.nil? ? {} : extra_conditions,
+        :condition_parent => condition_parent,
+        :criteria_parent => criteria_parent,
+        :order_parent => order_parent,
+        :joins => {:reflections => joins[0], :fields => joins[1]},
+        :target_model_to_underscore => target_model_to_underscore,
+        :polymorphic => index_options.has_key?(:polymorphic) ? index_options[:polymorphic] : []
+        # add here other options that can be setted per controller
+      }
+
+      finder.build_conditions(target_model, params, options)
+    end
+
+    private
+
+    #
+    # lookup for parent id; if found fill in a condition for finder method
+    #
+    def standard_lookup_for_parent_object
+      cond = nil
+      criteria = {}
+      order = nil
+
+      route = ActionController::Routing::Routes.find_route(request.path, {:method => request.method})
+
+      segments = route.segments.select do | seg |
+        !seg.is_a?(ActionController::Routing::DividerSegment)
+      end
+
+      # guess....
+      # assume (something)_id sia l'id del parent model
+      parent_id = nil
+      segments.reverse.each do | seg |
+        parent_id = seg if seg.is_a?(ActionController::Routing::DynamicSegment) && seg.respond_to?(:key) && /^.+_id?/.match(seg.key.to_s) && !params[seg.key].blank?
+        break if parent_id
+      end
+      return nil, {}, nil unless parent_id
+
+      # se le route sono sane, assomiglieranno a /namespace/parent_controller/parent_id/association/......
+      parent_controller = segments[segments.index(parent_id) - 1]
+      association = segments[segments.index(parent_id) + 1]
+
+      resource = ActiveRest::Helpers::Routes::Mapper::ROUTES[parent_controller.value.to_sym][:resource]
+
+      # !!!! il modello salvato nella resource è valid sono la prima volta !!!
+      parent_model = resource.options[:model].to_s.constantize
+
+      reflection = parent_model.reflections[association.value.to_sym]
+      reflection_as = reflection.options[:as]
+
+      column = reflection.primary_key_name
+
+      # dot79 - populate criteria only if we found the field
+      if target_model.column_names.include?(column)
+        cond = " #{target_model.quoted_table_name}.#{target_model.connection.quote_column_name(column)} = :#{column} "
+        criteria[column.to_sym] = params[parent_id.key]
+
+        if (reflection_as)
+          key = "#{reflection_as}_type"
+          cond += " AND #{target_model.quoted_table_name}.#{target_model.connection.quote_column_name(key)} = :#{key} "
+          criteria[key.to_sym] = parent_model.to_s #class_name
+        end
+
+        # assume che :has_* :conditions => String || [String, (nil|Hash)]
+        conditions = reflection.options[:conditions]
+        conditions = [conditions] if conditions.is_a?(String)
+
+        cond += " AND #{conditions[0]} " if conditions.is_a?(Array) && conditions[0].is_a?(String) && (conditions[1].nil? || conditions[1].is_a?(Hash))
+        criteria.merge!(conditions[1]) if conditions.is_a?(Array) && conditions[1].is_a?(Hash)
+      end
+
+      order = reflection.options[:order]
+
+      return cond, criteria, order
+    end
+
+    #
+    # lookup for parent id; if found fill in a condition for finder method
+    #
+    def no_standard_lookup_for_parent_object
+      cond = nil
+      criteria = {}
+
+      params.each do |p|
+        if p[0].match(/.*_id$/)
+          begin
+            reflection = p[0].sub('_id', '').to_sym
+            cond = " #{target_model.reflections[reflection].options[:foreign_key] || target_model.reflections[reflection].primary_key_name}=:#{p[0]} "
+            criteria[eval(":#{p[0]}")] = p[1]
+          rescue
+            # there_is a foobar_id field but it's not a clear reflection
+            # let's see if it is a polymorphic association
+            cond, criteria = lookup_for_polymorphic_association(p) { |param_id|
+              cond = " #{ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s][:foreign_type]}=:association_foreign_type AND #{ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_primary_key]}=:association_foreing_key "
+              criteria = {
+              :association_foreign_type => ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_model],
+              :association_foreing_key => p[1]
+              }
+              return cond, criteria, nil
+            }
+
+          end
+        end
+      end
+
+      return cond, criteria, nil
+    end
+
+    #
+    # try to detect polymorphic association upon current model
+    # and information collected during bootstrap process in routes declaration
+    #
+    def lookup_for_polymorphic_association(p)
+      if ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s]
+        param_id = '%s_%s' % [ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s][:reflection], p[0]]
+        if ActiveRest::Helpers::Routes::Mapper::AS.has_key?(param_id)
+          yield param_id if block_given?
+        else
+          return nil, {}
+        end
+      else
+        return nil, {}
+      end
+    end
+
+    #
+    # get pagination state from session
+    #
+    def previous_pagination_state(model_klass = nil)
+      ActiveRest::Configuration.config[:save_pagination] ?
+        (session["#{model_klass.to_s.pluralize.underscore if model_klass}_pagination_state"] || {}) :
+        {}
+    end
+
+    #
+    # save pagination state to session
+    #
+    def save_pagination_state(pagination_state, model_klass = nil)
+      session["#{model_klass.to_s.pluralize.underscore if model_klass}_pagination_state"] = pagination_state
+    end
+  end
+
+end
+end
+end

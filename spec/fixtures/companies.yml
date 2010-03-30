@@ -1,0 +1,20 @@
+big_corp:
+  id: 1
+  name: big_corp
+  city: NY
+  street: Fifth Avenue
+  zip: 28021
+    
+compuglobal:
+  id: 2
+  name: compuglobal
+  city: Springfield
+  street: Bart's road
+  zip: 01001
+  
+newerOS:
+  id: 3
+  name: newerOS
+  city: Springfield
+  street: Hill road, 3
+  zip: 01001   
