@@ -1,5 +1,0 @@
-active_rest_sanbbox_db:
-  adapter: sqlite3
-  database: vendor/plugins/active_rest/spec/active_rest.db  
-  pool: 5
-  timeout: 5000
