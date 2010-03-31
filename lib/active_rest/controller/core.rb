@@ -81,14 +81,6 @@ module Controller
     end
 
     #
-    # override this in model to prevent to call an action. For example call
-    # deny_access
-    #
-    def active_rest_authorization
-      return true
-    end
-
-    #
     # setup I18n if params has this information
     #
     def prepare_i18n
@@ -113,26 +105,17 @@ module Controller
           if block_given?
             yield
           else
-            head :status => status, :nothing => true
+            render :nothing => true, :status => status
           end
         end
 
-        format.xml  { head :status => status,
-                      :status => extjs_options[:standard_submit] ? :ok : status,
-                      :nothing => true }
-
-        format.json  { head :status => status, :status => status, :nothing => true }
-
-        format.jsone  { head :status => status,
-                      :status => extjs_options[:standard_submit] ? :ok : status,
-                      :content_type => extjs_options[:standard_submit] ? 'text/html' : 'application/json',
-                      :nothing => true }
-
+        format.xml { render :nothing => true, :status => status }
         format.yaml  { head :status => status, :nothing => true }
+        format.json { render :nothing => true, :status => status } 
+        format.jsone { render :nothing => true, :status => status } 
 
         blk.call(format) if blk # when overriding to handle other format
         format.any { head :status => status, :nothing => true } # any other format
-
       end
     end
 

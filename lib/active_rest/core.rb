@@ -86,9 +86,6 @@ module ActiveRest
           # if read only not allow these actions
           before_filter :check_read_only, :only=> [:new, :create, :update, :destroy, :validate_create, :validate_update]
 
-          # you can override of this function and prevent access to the resources
-          before_filter :active_rest_authorization
-
           # if we get here, chek for polymorphic associations
           before_filter :prepare_polymorphic_association, :only => :create
 
