@@ -124,7 +124,7 @@ module Actions
           saved = @target.save!
         end
       rescue ActiveRecord::RecordInvalid
-        # don't do nothing, let the controller respond
+        # don't do anything, let the controller respond
       end
 
       if params[:_suppress_response]
@@ -134,7 +134,7 @@ module Actions
           find_target(:id => @target.id)
           write_action_successful_response(:created)
         else
-          write_action_error_response(:created)
+          write_action_error_response
         end
       end
     rescue Exception => ex

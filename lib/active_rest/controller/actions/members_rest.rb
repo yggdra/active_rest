@@ -74,9 +74,9 @@ module Actions
         render :nothing => true, :status => status
       else
         if saved
-          write_action_successful_response(:created)
+          member_write_action_successful_response(:created)
         else
-          write_action_error_response(member_name)
+          member_write_action_error_response(member_name)
         end
       end
     rescue Exception => ex
@@ -117,9 +117,9 @@ module Actions
         render :nothing => true, :status => status
       else
         if saved
-          write_action_successful_response(:created)
+          member_write_action_successful_response(:created)
         else
-          write_action_error_response(member_name)
+          member_write_action_error_response(member_name)
         end
       end
     rescue Exception => ex
@@ -170,7 +170,7 @@ module Actions
 
     private
 
-    def write_action_successful_response(status)
+    def member_write_action_successful_response(status)
       respond_to do |format|
         format.html {
           flash[:notice] = 'Operation successful.'
@@ -191,7 +191,7 @@ module Actions
       end
     end
 
-    def write_action_error_respnse(member_name)
+    def member_write_action_error_respnse(member_name)
       respond_to do |format|
         format.html {
           flash[:notice] = '#{member_model_to_underscore(member_name)} was unable to save. Some errors occured.'
