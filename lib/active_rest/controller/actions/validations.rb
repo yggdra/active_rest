@@ -70,7 +70,7 @@ module Actions
         render :nothing => true, :status => status
       else
         respond_to do | format |
-          format.yaml {
+          format.xml {
             render :xml => {
                 :success => valid,
                 :errors => build_response(target_model_to_underscore, target.errors) }.to_xml,
