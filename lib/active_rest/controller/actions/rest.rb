@@ -89,7 +89,7 @@ module Actions
         format.yaml { render :text => target.to_yaml }
         format.json { render :json => target }
         format.jsone {
-          root = extjs_options[:standard_crud] ? target_model_to_underscore : :data
+          root = target_model_to_underscore
           render :json => { :ns => target_model_to_underscore, root => target, :success => true }
         }
         blk.call(format) if blk
@@ -225,7 +225,7 @@ module Actions
         format.json { render :json => @target, :status => status }
 
         format.jsone {
-          root = extjs_options[:standard_crud] ? target_model_to_underscore : :data
+          root = target_model_to_underscore
           render :json => { :ns => target_model_to_underscore, root => @target, :success => true },
                  :status => status
         }

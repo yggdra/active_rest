@@ -50,29 +50,8 @@ module ActiveRest
 
         #
         # extjs_options ammitted key
-        # - standard_submit (boolean)
-        # - standard_error (boolean)
-        # - standard_crud (boolean)
         #
         self.extjs_options = params[:extjs_options] || {}
-
-        if self.extjs_options[:stardard_submit].nil?
-          self.extjs_options[:stardard_submit] = ActiveRest::Configuration[:extjs_stardard_submit].nil? ?
-                                                   false :
-                                                   ActiveRest::Configuration[:extjs_stardard_submit]
-        end
-
-        if self.extjs_options[:standard_error].nil?
-          self.extjs_options[:standard_error] = ActiveRest::Configuration[:extjs_standard_error].nil? ?
-                                                  false :
-                                                  ActiveRest::Configuration[:extjs_standard_error]
-        end
-
-        if self.extjs_options[:standard_crud].nil?
-          self.extjs_options[:standard_crud] = ActiveRest::Configuration[:extjs_standard_crud].nil? ?
-                                                 false :
-                                                 ActiveRest::Configuration[:extjs_standard_crud]
-        end
 
         #
         # options for model level

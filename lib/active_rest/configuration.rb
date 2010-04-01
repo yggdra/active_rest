@@ -36,9 +36,6 @@ module ActiveRest
 
       # how active rest must create routes
       :route_expand_model_namespace => false, # with false each association can point to different parent controller
-      :extjs_stardard_submit => false,
-      :extjs_standard_error => false,
-      :extjs_standard_crud => true
     }.freeze
 
     def self.init

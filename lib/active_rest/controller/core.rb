@@ -91,7 +91,6 @@ module Controller
     # raise a rescue action with forbidden status
     #
     def active_rest_deny_access
-      generic_rescue_action(:method_not_allowed)
     end
 
     private
@@ -111,8 +110,8 @@ module Controller
 
         format.xml { render :nothing => true, :status => status }
         format.yaml  { head :status => status, :nothing => true }
-        format.json { render :nothing => true, :status => status } 
-        format.jsone { render :nothing => true, :status => status } 
+        format.json { render :nothing => true, :status => status }
+        format.jsone { render :nothing => true, :status => status }
 
         blk.call(format) if blk # when overriding to handle other format
         format.any { head :status => status, :nothing => true } # any other format
@@ -211,7 +210,7 @@ module Controller
     # avoid any action that can modify the record or change the table
     #
     def check_read_only
-      active_rest_deny_access if target_model_read_only
+      generic_rescue_action(:method_not_allowed) if target_model_read_only
     end
 
 
@@ -226,7 +225,7 @@ module Controller
     # 2) :join => { :assoc => true }
     # associa tutti i campi, rimappa i nomi come #{table_name}_#{column_name}
     #
-    # 3) :join => { :assoc => [:colonna1, :colonna2....] } 
+    # 3) :join => { :assoc => [:colonna1, :colonna2....] }
     # associa i campi specificati, rimappa i nomi come #{table_name}_#{column_name}
     #
     # 4) :join => { :assoc => { :colonna1 => 'nome1', :colonna2 => 'nome2',.... } }

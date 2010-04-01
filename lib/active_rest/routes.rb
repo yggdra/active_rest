@@ -53,11 +53,14 @@ module ActiveRest
       end
 
       options = ActiveRest::Helpers::Routes::Mapper.merge(params)
+
       # do we have to manage a single resource?
-      if (!params[:single_resource].nil?) and (params[:single_resource]==true)
+      if params[:single_resource]
         map.resource controller, options
       else
-        options[:controller] = params[:model].to_s.tableize.gsub(/\//, '_') if ActiveRest::Configuration.config[:route_expand_model_namespace]
+        if ActiveRest::Configuration.config[:route_expand_model_namespace]
+          options[:controller] = params[:model].to_s.tableize.gsub(/\//, '_')
+        end
 
         map.resources controller, options if options[:has_many].blank?
 
@@ -69,23 +72,25 @@ module ActiveRest
 
             hm.each do | subroute, klass |
               controller_name = klass.to_s.tableize
-              #controller_name = controller_name.gsub(/\//, '_') if ActiveRest::Configuration.config[:route_expand_model_namespace]
+
               if ActiveRest::Configuration.config[:route_expand_model_namespace]
                 controller_name = controller_name.gsub(/\//, '_')
               else
                 controller_name = klass.to_s.demodulize.tableize
               end
+
               route.resources subroute.to_sym, :controller => controller_name
             end
           end
-
         end
       end
+
       r  = ActionController::Resources::Resource.new(controller, ActiveRest::Helpers::Routes::Mapper.merge(params))
 
       # add this controller to ROUTES mapper ??
       if (params[:act_as_plain_rest].nil?) or (params[:act_as_plain_rest]==false)
-        ActiveRest::Helpers::Routes::Mapper::ROUTES[controller] = { :path_prefix => r.path_prefix, :url => "/#{r.options[:namespace]}#{r.plural.to_s}", :resource => r }
+        ActiveRest::Helpers::Routes::Mapper::ROUTES[controller] =
+             { :path_prefix => r.path_prefix, :url => "/#{r.options[:namespace]}#{r.plural.to_s}", :resource => r }
       end
     end
   end

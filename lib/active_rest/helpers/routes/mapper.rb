@@ -22,7 +22,8 @@ module Routes
 
     BASE_OPTIONS = {
       :collection => {
-        :schema => :get
+        :schema => :get,
+        :validate => :post
       }.freeze
     }
 

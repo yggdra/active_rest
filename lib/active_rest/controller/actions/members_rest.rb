@@ -162,7 +162,7 @@ module Actions
         format.yaml { render :text => target.to_yaml }
         format.json { render :json => @member }
         format.jsone {
-          root = extjs_options[:standard_crud] ? member_model_to_underscore(member_name) : :data
+          root = member_model_to_underscore(member_name)
           render :json => { :ns => member_model_to_underscore(member_name), root => @member, :success => true }
         }
       end
@@ -184,7 +184,7 @@ module Actions
 
         # extjs prevede come risposte a create o update di usare il namespace, non 'data' come root per la risposta...
         format.jsone {
-          root = extjs_options[:standard_crud] ? member_model_to_underscore(member_name) : :data
+          root = member_model_to_underscore(member_name)
           render :json => { :ns => member_model_to_underscore(member_name), root => @member.attributes, :success => true },
                  :status => status
         }
