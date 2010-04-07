@@ -22,10 +22,12 @@ module Routes
 
     BASE_OPTIONS = {
       :collection => {
-        :schema => :get,
-        :validate => :post
-      }.freeze
-    }
+        :schema => :get
+      },
+      :member => {
+        :schema => :get
+      }
+    }.freeze
 
     ROUTES = {}
     AS = {} # relations with :as keyword pointing to a polymorphic association

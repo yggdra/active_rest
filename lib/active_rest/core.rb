@@ -27,8 +27,8 @@ module ActiveRest
         class_inheritable_accessor :model_options # model options
 
         attr_accessor :target, :targets
-
       end
+
       base.extend(ClassMethods)
     end
 
@@ -46,8 +46,8 @@ module ActiveRest
         # - extra_conditions (a controller def method)
         # - finder (a symbol rappresenting the plugin/finder or a custom Module declared in app project)
         #
-        self.index_options = params[:index_options] || {}
 
+        self.index_options = params[:index_options] || {}
         #
         # extjs_options ammitted key
         #
@@ -75,7 +75,8 @@ module ActiveRest
         end
 
         module_eval do
-          include ActiveRest::Helpers::Pagination::Core # manage pagination - will load up the finder plugin
+          include ActiveRest::Pagination # manage pagination - will load up the finder plugin
+          include ActiveRest::Finder
           include ActiveRest::Controller::Core # common stuff
           include ActiveRest::Controller::Actions::Rest # default verbs and actions
           include ActiveRest::Controller::Actions::MembersRest # default verbs and actions

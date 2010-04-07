@@ -36,8 +36,6 @@ ActiveRest::Configuration.recursive_load('active_rest/controller/proxies')
 
 # starting point
 ActiveRest::Configuration.init
-require 'active_rest/finders_registry'
-ActiveRest::FindersRegistry.init
 
 require 'active_rest/routes' # route mapper
 require 'active_rest/core' # rest_controller_for

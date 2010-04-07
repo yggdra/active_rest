@@ -110,7 +110,9 @@ describe CompaniesController do
     post :create, :format => 'xml',
          :company => {
            :name => 'New Company',
-           :city => 'no where'
+           :city => 'no where',
+           :street => 'Crazy Avenue, 0',
+           :zip => '00000'
          }
 
     response.status.should =~ /^201/
@@ -203,30 +205,36 @@ describe CompaniesController do
   before(:each) do
   end
 
-#  it 'should be able run a validation ONLY for create action' do
-#    post :create, :format => 'xml',
-#         :company => {
-#           :name => 'Brand new PRO company'
-#         },
-#         :_only_validation => :true
-#
-#    response.status.should =~ /^202/
-#
-#    # check the full list
-#    get :index,  :format => 'xml'
-#    response.should_not include_text('<name>Brand new PRO company</name>')
-#  end
-#
-#  it 'should be able run a validation ONLY for update action' do
-#    params = {
-#      :name => 'Renamed to Compuglobal TM'
-#    }
-#    put :update, :id => companies(:compuglobal).id, :format => 'xml', :company => params, :_only_validation => :true
-#    response.status.should == STATUS[:s202]
-#
-#    # try to read - the value must be the previous
-#    get :show, :id => companies(:compuglobal).id, :format => 'xml'
-#    response.should include_text('<name>' + companies(:compuglobal).name + '</name>')
+  it 'should be able to validate resource creation without creating the object' do
+    post :create, :format => 'xml',
+         :_only_validation => :true,
+         :company => {
+           :name => 'Brand new PRO company',
+           :city => 'no where',
+           :street => 'Crazy Avenue, 0',
+           :zip => '00000'
+         }
+
+    response.status.should =~ /^202/
+
+    # check the full list
+    get :index,  :format => 'xml'
+    response.should_not include_text('<name>Brand new PRO company</name>')
+  end
+
+  it 'should be able to validate resource update without creating the object' do
+    put :update, :id => companies(:compuglobal).id, :format => 'xml',
+        :_only_validation => :true,
+        :company => {
+          :name => 'Renamed to Compuglobal TM'
+        }
+
+    response.status.should =~ /^202/
+
+    # try to read - the value must be the previous
+    get :show, :id => companies(:compuglobal).id, :format => 'xml'
+    response.should include_text('<name>' + companies(:compuglobal).name + '</name>')
+  end
 end
 
 
@@ -265,3 +273,5 @@ end
 #    response.body.should include_text("<company[name]>can't be blank</company[name]>")
 #  end
 #end
+
+#require 'controllers/companies_controller_finder_spec.rb'

@@ -4,17 +4,20 @@ big_corp:
   city: NY
   street: Fifth Avenue
   zip: 28021
-    
+  is_active: true
+
 compuglobal:
   id: 2
   name: compuglobal
   city: Springfield
   street: Bart's road
   zip: 01001
-  
+  is_active: false
+
 newerOS:
   id: 3
   name: newerOS
   city: Springfield
   street: Hill road, 3
-  zip: 01001   
+  zip: 01001
+  is_active: true

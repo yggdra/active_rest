@@ -55,32 +55,6 @@ module Controller
     end
 
     #
-    # build and save pagination state
-    #
-    def apply_pagination
-      pagination_state = update_pagination_state_with_params!(target_model)
-      return options_from_pagination_state(pagination_state)
-    end
-
-    #
-    # return filtered targets and total count (filtered too)
-    #
-    # find_results = filtered records
-    # pagination_and_conditions = hash with pagination and conditions
-    # params = optional parameters (es. :hmt_finder )
-    #
-    def calculate_results(find_results, pagination_and_conditions, params={})
-      if params[:hmt_habtm_finder]
-        count = eval(params[:hmt_habtm_finder]+'.count(:all, pagination_and_conditions)')
-      else
-        count = target_model.count(:all, pagination_and_conditions)
-      end
-
-      targets = find_results
-      return targets, count
-    end
-
-    #
     # setup I18n if params has this information
     #
     def prepare_i18n
@@ -158,38 +132,35 @@ module Controller
     # find all with conditions
     #
     def find_targets
+
       # 1^ prepare basic conditions
-      conditions = options_from_search
-      pagination_and_conditions = apply_pagination.merge(conditions)
+      update_model_finder_scope
+
+      pagination_state = update_pagination_state_with_params!(target_model)
+      update_model_pagination_scope(pagination_state)
 
       # 2^ build joins - some finder plugins may change :select and :joins argument or can clash with them
       joins, select = build_joins
-      pagination_and_conditions[:select] = select unless select.nil?||select.empty?
-      pagination_and_conditions[:joins] = joins unless joins.nil?||joins.empty?
+      opts[:select] = select unless select.nil?||select.empty?
+      opts[:joins] = joins unless joins.nil?||joins.empty?
 
       preprocessor = index_options[:preprocess]
       if preprocessor && (preprocessor.is_a?(String) || preprocessor.instance_of?(Module))
         preprocessor = preprocessor.constantize if preprocessor.is_a?(String)
         preprocessor = preprocessor.to_s.constantize if preprocessor.is_a?(Symbol)
-        pagination_and_conditions = preprocessor::preprocess(pagination_and_conditions, :params => params)
+        opts = preprocessor::preprocess(opts, :params => params)
       end
 
       # 3^ detect has_many through associations (in that case try to use the right finder)
       hmt_habtm_finder = ActiveRest::Helpers::Routes::Mapper.has_many_through_or_habtm?(target_model, params)
 
-      all = nil
       if hmt_habtm_finder
-        all = eval(hmt_habtm_finder+'.find(:all, pagination_and_conditions.dup)') #attention! .dup to avoid :readonly => true ??
+######FIXME
+        resources = eval(hmt_habtm_finder+'.find(:all, pagination_and_conditions.dup)') #attention! .dup to avoid :readonly => true ??
       else
-        all = target_model.find(:all, pagination_and_conditions.dup) #attention! .dup to avoid :readonly => true ??
+        @targets = target_model.ar_finder_scope.ar_pagination_scope.all(opts)
+        @count = target_model.ar_finder_scope.count
       end
-
-      conditions = pagination_and_conditions
-      conditions[:select] = '*'
-      conditions.delete(:offset)
-      conditions.delete(:limit)
-      conditions.delete(:order)
-      @targets, @count = calculate_results(all, conditions, :hmt_habtm_finder => hmt_habtm_finder)
     end
 
     #
@@ -215,7 +186,7 @@ module Controller
 
 
     #
-    # parse join if controller has declare the option :join => ...
+    # parse join if controller declared the option :join => ...
     #
     # there are these cases:
     #

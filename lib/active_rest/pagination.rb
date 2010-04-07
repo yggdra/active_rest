@@ -14,11 +14,9 @@
 #
 #
 
-module ActiveRest
-module Helpers
-module Pagination
 
-  module Core
+module ActiveRest
+  module Pagination
 
     #
     # this module handles conditions, sorting and paginations decoding the incoming json (it describes the filters),
@@ -60,52 +58,16 @@ module Pagination
     #
     # build options from pagination state
     #
-    def options_from_pagination_state(pagination_state)
+    def update_model_pagination_scope(pagination_state)
+
       find_options = { :offset => pagination_state[:offset],
-                     :limit  => pagination_state[:limit] }
+                       :limit  => pagination_state[:limit] }
 
       find_options.merge!(
         :order => "#{pagination_state[:sort_field]} #{pagination_state[:sort_direction]}"
       ) unless pagination_state[:sort_field].blank?
 
-      find_options
-    end
-
-    #
-    # build options for index search
-    #
-    def options_from_search
-      # select the finder (app level or controller level)
-      finder = nil
-      if index_options.has_key?(:finder)
-        if index_options[:finder].is_a?(Symbol) # if not a symbol can be a module
-          finder_plugin = index_options[:finder] # must be a valid plugin/finder
-        else
-          finder = index_options[:finder] # use the module declared at application level
-        end
-      else
-        finder_plugin = ActiveRest::Configuration.config[:plugins][:finder] # use the default one
-      end
-
-      finder = "ActiveRest::Plugins::Finders::#{finder_plugin.to_s.capitalize}".constantize if finder.nil? # ok, it a symbol... load the plugin/finder
-
-      # we got the finder, let's go !
-      condition_parent, criteria_parent, order_parent = (ActiveRest::Configuration.config[:route_expand_model_namespace]) ? no_standard_lookup_for_parent_object : standard_lookup_for_parent_object
-      joins = parse_joins
-      extra_conditions = index_options.has_key?(:extra_conditions) ? send(index_options[:extra_conditions]) : {}
-
-      options = {
-        :extra_conditions => extra_conditions.nil? ? {} : extra_conditions,
-        :condition_parent => condition_parent,
-        :criteria_parent => criteria_parent,
-        :order_parent => order_parent,
-        :joins => {:reflections => joins[0], :fields => joins[1]},
-        :target_model_to_underscore => target_model_to_underscore,
-        :polymorphic => index_options.has_key?(:polymorphic) ? index_options[:polymorphic] : []
-        # add here other options that can be setted per controller
-      }
-
-      finder.build_conditions(target_model, params, options)
+      target_model.named_scope(:ar_pagination_scope, find_options)
     end
 
     private
@@ -237,6 +199,4 @@ module Pagination
     end
   end
 
-end
-end
 end
