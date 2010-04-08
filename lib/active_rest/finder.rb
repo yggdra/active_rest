@@ -11,7 +11,22 @@
 #
 # == Description
 #
+# Finder module implements index action filtering through a filter= URI parameter
 #
+# The filter parameter should contain a JSON serialized tree structure representing the expression
+# Each node can be a String, a Numeric, an Array and a Hash.
+#
+# - Strings, Numeric and Arrays are quoted and inserted into the SQL expression.
+#
+# - Hashes may:
+#   - Contain just one key "field". The value is inserted into the SQL as a field name.
+#   - Contain "o" and "a" and/or "b" keys. In this case the Hash represent an expression, "a" and "b" are the
+#     two terms, "o" is an operator. "a" or "b" may be missing in case of unary operators.
+#
+# Supported operators:
+#
+# Binary: >, >=, <, <=, =, <>, LIKE, NOT LIKE, IN, NOT IN, AND, OR
+# Unary: IS NULL, IS NOT NULL, NOT
 #
 
 module ActiveRest
@@ -21,7 +36,7 @@ module ActiveRest
       class SyntaxError < StandardError; end
       class InvalidJSON < SyntaxError; end
       class UnknownField < SyntaxError; end
-      class UnknownOperand < SyntaxError; end
+      class UnknownOperator < SyntaxError; end
 
       attr_accessor :tree
       attr_accessor :model
@@ -32,7 +47,7 @@ module ActiveRest
         begin
           newobj.tree = ActiveSupport::JSON.decode(json)
         rescue
-          raise SyntaxError
+          raise InvalidJSON
         end
 
         newobj.model = model
@@ -67,9 +82,9 @@ module ActiveRest
 
             attr = term[:field]
 
-            raise SyntaxError.new("Attribute '#{attr}' name has invalid chars") if attr =~ /[^a-zA-Z0-9_]/
+            raise SyntaxError, "Attribute '#{attr}' name has invalid chars" if attr =~ /[^a-zA-Z0-9_]/
 
-            raise UnknownField.new("Unknown field '#{attr}'") if !model.columns_hash[attr]
+            raise UnknownField, "Unknown field '#{attr}'" if !model.columns_hash[attr]
 
             @sql += model.connection.quote_column_name(attr)
           else
@@ -82,13 +97,13 @@ module ActiveRest
 
       def to_sql_recur(tree)
 
-        raise SyntaxError.new("Expected operator for expression #{tree}") if !tree[:o]
+        raise SyntaxError, "Expected operator for expression '#{tree}'" if !tree[:o]
 
         op = tree[:o].upcase
         case op
         when '>', '>=', '<', '<=', '=', '<>', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'AND', 'OR'
-          raise SyntaxError.new("Expected operand a for operator #{op}") if !tree[:a]
-          raise SyntaxError.new("Expected operand b for operator #{op}") if !tree[:b]
+          raise SyntaxError, "Expected operand a for operator '#{op}'" if !tree[:a]
+          raise SyntaxError, "Expected operand b for operator '#{op}'" if !tree[:b]
 
           to_sql_recur_handle_term(tree[:a])
           @sql += ' ' + op + ' '
@@ -96,22 +111,22 @@ module ActiveRest
 
         when 'IS NULL', 'IS NOT NULL'
           # Unary operator
-          raise SyntaxError.new("Expected operand a for operator #{op}") if !tree[:a]
-          raise SyntaxError.new("Unexpected operand b for operator '#{op}'") if tree[:b]
+          raise SyntaxError, "Expected operand a for operator '#{op}'" if !tree[:a]
+          raise SyntaxError, "Unexpected operand b for operator '#{op}'" if tree[:b]
 
           to_sql_recur_handle_term(tree[:a])
           @sql += ' ' + op + ' '
 
         when 'NOT'
           # Unary operator
-          raise SyntaxError.new("Expected operand b for operator #{op}") if !tree[:b]
-          raise SyntaxError.new("Unexpected operand a for operator '#{op}'") if tree[:a]
+          raise SyntaxError, "Expected operand b for operator '#{op}i" if !tree[:b]
+          raise SyntaxError, "Unexpected operand a for operator '#{op}'" if tree[:a]
 
           @sql += ' ' + op + ' '
           to_sql_recur_handle_term(tree[:b])
 
         else
-          raise UnknownOperand
+          raise UnknownOperator, "Unknown operator '#{op}'"
         end
       end
     end
