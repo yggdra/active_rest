@@ -88,5 +88,3 @@ module ActiveRest
 
   end # eo module
 end # eo module
-
-ActionController::Base.send(:include, ActiveRest::Core)
