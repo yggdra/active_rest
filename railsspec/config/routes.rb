@@ -3,8 +3,7 @@ ActionController::Routing::Routes.draw do |map|
   map.active :users, :model => User
   map.active :contacts, :model => Contact
 
-  map.active :companies_finder_auto, :model => Company
-  map.active :companies_finder_operators, :model => Company
+  map.active :companies_transaction, :model => Company
 #
 #  map.active :basic_features, :model => Company
 #  map.active :basic_features_ext_js_upload, :model => Company

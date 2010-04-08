@@ -117,7 +117,7 @@ module Actions
       saved = false
 
       begin
-        target_model.transaction do
+        send(rest_xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
           @target = target_model.new
           @target.send(:attributes=, params[target_model_to_underscore], guard_protected_attributes)
@@ -162,7 +162,7 @@ module Actions
     def update(&blk)
       saved = false
       begin
-        target_model.transaction do
+        send(rest_xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
           @target.send(:attributes=, params[target_model_to_underscore], guard_protected_attributes)
           saved = @target.save!
