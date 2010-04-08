@@ -4,6 +4,7 @@ ActionController::Routing::Routes.draw do |map|
   map.active :contacts, :model => Contact
 
   map.active :companies_transaction, :model => Company
+  map.active :companies_read_only, :model => Company
 #
 #  map.active :basic_features, :model => Company
 #  map.active :basic_features_ext_js_upload, :model => Company
