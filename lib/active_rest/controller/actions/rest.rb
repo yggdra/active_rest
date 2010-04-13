@@ -263,7 +263,7 @@ module Actions
           render :json => {
                    :success => false,
                    :errors => build_response(target_model_to_underscore, @target.errors) }.to_json,
-                   :status => :not_acceptable
+                   :status => :ok # 406 not welcome to ExtJs
         }
       end
     end
