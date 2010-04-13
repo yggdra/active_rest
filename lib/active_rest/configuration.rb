@@ -54,25 +54,12 @@ module ActiveRest
       file = File.expand_path(File.join(RAILS_ROOT, 'config', 'active_rest.yml'))
       conf = File.exists?(file) ? (YAML.load_file(file) || {}) : {}
       conf.symbolize_keys!
-      conf[:plugins].symbolize_keys! if conf[:plugins]
       conf
     end
 
     def self.recursive_load(directory)
       root_dir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
       Dir[File.join(root_dir, directory, '*.rb')].each { |ext| require ext }
-    end
-
-    def self.setup_plugins
-      if ActiveRest::Configuration.config.has_key?(:plugins)
-        if ActiveRest::Configuration.config[:plugins].has_key?(:others)
-          ActiveRest::Configuration.config[:plugins][:others] = [ActiveRest::Configuration.config[:plugins][:others]] unless ActiveRest::Configuration.config[:plugins][:others].is_a?(Array)
-
-          ActiveRest::Configuration.config[:plugins][:others].each do |plugin|
-            require 'active_rest/plugins/others/'+plugin.to_s
-          end
-        end
-      end
     end
   end
 

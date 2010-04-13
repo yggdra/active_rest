@@ -15,7 +15,7 @@
 #
 
 
-# load up configuration and plugins
+# load up configuration
 require 'active_rest/configuration'
 #puts ActiveRest::Configuration.config.inspect
 

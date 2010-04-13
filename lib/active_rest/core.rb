@@ -51,7 +51,6 @@ module ActiveRest
       #
       # index_options ammitted key
       # - extra_conditions (a controller def method)
-      # - finder (a symbol rappresenting the plugin/finder or a custom Module declared in app project)
       #
 
       self.index_options = params[:index_options] || {}
@@ -84,7 +83,7 @@ module ActiveRest
       end
 
       module_eval do
-        include ActiveRest::Pagination # manage pagination - will load up the finder plugin
+        include ActiveRest::Pagination # manage pagination
         include ActiveRest::Finder
         include ActiveRest::Controller::Core # common stuff
         include ActiveRest::Controller::Actions::Rest # default verbs and actions

@@ -139,7 +139,7 @@ module Controller
       pagination_state = update_pagination_state_with_params!(target_model)
       update_model_pagination_scope(pagination_state)
 
-      # 2^ build joins - some finder plugins may change :select and :joins argument or can clash with them
+      # 2^ build joins - some finder may change :select and :joins argument or can clash with them
       joins, select = build_joins
       opts[:select] = select unless select.nil?||select.empty?
       opts[:joins] = joins unless joins.nil?||joins.empty?
