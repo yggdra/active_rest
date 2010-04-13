@@ -152,7 +152,7 @@ module ActiveRest
         end
       end
 
-      target_model.named_scope(:ar_finder_scope, :conditions => cond)
+      target_model.scope(:ar_finder_scope, :conditions => cond)
 
       return nil
 

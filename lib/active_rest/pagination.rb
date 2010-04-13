@@ -72,98 +72,98 @@ module ActiveRest
 
     private
 
-    #
-    # lookup for parent id; if found fill in a condition for finder method
-    #
-    def standard_lookup_for_parent_object
-      cond = nil
-      criteria = {}
-      order = nil
-
-      route = ActionController::Routing::Routes.find_route(request.path, {:method => request.method})
-
-      segments = route.segments.select do | seg |
-        !seg.is_a?(ActionController::Routing::DividerSegment)
-      end
-
-      # guess....
-      # assume (something)_id sia l'id del parent model
-      parent_id = nil
-      segments.reverse.each do | seg |
-        parent_id = seg if seg.is_a?(ActionController::Routing::DynamicSegment) && seg.respond_to?(:key) && /^.+_id?/.match(seg.key.to_s) && !params[seg.key].blank?
-        break if parent_id
-      end
-      return nil, {}, nil unless parent_id
-
-      # se le route sono sane, assomiglieranno a /namespace/parent_controller/parent_id/association/......
-      parent_controller = segments[segments.index(parent_id) - 1]
-      association = segments[segments.index(parent_id) + 1]
-
-      resource = ActiveRest::Helpers::Routes::Mapper::ROUTES[parent_controller.value.to_sym][:resource]
-
-      # !!!! il modello salvato nella resource è valid sono la prima volta !!!
-      parent_model = resource.options[:model].to_s.constantize
-
-      reflection = parent_model.reflections[association.value.to_sym]
-      reflection_as = reflection.options[:as]
-
-      column = reflection.primary_key_name
-
-      # dot79 - populate criteria only if we found the field
-      if target_model.column_names.include?(column)
-        cond = " #{target_model.quoted_table_name}.#{target_model.connection.quote_column_name(column)} = :#{column} "
-        criteria[column.to_sym] = params[parent_id.key]
-
-        if (reflection_as)
-          key = "#{reflection_as}_type"
-          cond += " AND #{target_model.quoted_table_name}.#{target_model.connection.quote_column_name(key)} = :#{key} "
-          criteria[key.to_sym] = parent_model.to_s #class_name
-        end
-
-        # assume che :has_* :conditions => String || [String, (nil|Hash)]
-        conditions = reflection.options[:conditions]
-        conditions = [conditions] if conditions.is_a?(String)
-
-        cond += " AND #{conditions[0]} " if conditions.is_a?(Array) && conditions[0].is_a?(String) && (conditions[1].nil? || conditions[1].is_a?(Hash))
-        criteria.merge!(conditions[1]) if conditions.is_a?(Array) && conditions[1].is_a?(Hash)
-      end
-
-      order = reflection.options[:order]
-
-      return cond, criteria, order
-    end
-
-    #
-    # lookup for parent id; if found fill in a condition for finder method
-    #
-    def no_standard_lookup_for_parent_object
-      cond = nil
-      criteria = {}
-
-      params.each do |p|
-        if p[0].match(/.*_id$/)
-          begin
-            reflection = p[0].sub('_id', '').to_sym
-            cond = " #{target_model.reflections[reflection].options[:foreign_key] || target_model.reflections[reflection].primary_key_name}=:#{p[0]} "
-            criteria[eval(":#{p[0]}")] = p[1]
-          rescue
-            # there_is a foobar_id field but it's not a clear reflection
-            # let's see if it is a polymorphic association
-            cond, criteria = lookup_for_polymorphic_association(p) { |param_id|
-              cond = " #{ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s][:foreign_type]}=:association_foreign_type AND #{ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_primary_key]}=:association_foreing_key "
-              criteria = {
-              :association_foreign_type => ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_model],
-              :association_foreing_key => p[1]
-              }
-              return cond, criteria, nil
-            }
-
-          end
-        end
-      end
-
-      return cond, criteria, nil
-    end
+#    #
+#    # lookup for parent id; if found fill in a condition for finder method
+#    #
+#    def standard_lookup_for_parent_object
+#      cond = nil
+#      criteria = {}
+#      order = nil
+#
+#      route = ActionController::Routing::Routes.find_route(request.path, {:method => request.method})
+#
+#      segments = route.segments.select do | seg |
+#        !seg.is_a?(ActionController::Routing::DividerSegment)
+#      end
+#
+#      # guess....
+#      # assume (something)_id sia l'id del parent model
+#      parent_id = nil
+#      segments.reverse.each do | seg |
+#        parent_id = seg if seg.is_a?(ActionController::Routing::DynamicSegment) && seg.respond_to?(:key) && /^.+_id?/.match(seg.key.to_s) && !params[seg.key].blank?
+#        break if parent_id
+#      end
+#      return nil, {}, nil unless parent_id
+#
+#      # se le route sono sane, assomiglieranno a /namespace/parent_controller/parent_id/association/......
+#      parent_controller = segments[segments.index(parent_id) - 1]
+#      association = segments[segments.index(parent_id) + 1]
+#
+#      resource = ActiveRest::Helpers::Routes::Mapper::ROUTES[parent_controller.value.to_sym][:resource]
+#
+#      # !!!! il modello salvato nella resource è valid sono la prima volta !!!
+#      parent_model = resource.options[:model].to_s.constantize
+#
+#      reflection = parent_model.reflections[association.value.to_sym]
+#      reflection_as = reflection.options[:as]
+#
+#      column = reflection.primary_key_name
+#
+#      # dot79 - populate criteria only if we found the field
+#      if target_model.column_names.include?(column)
+#        cond = " #{target_model.quoted_table_name}.#{target_model.connection.quote_column_name(column)} = :#{column} "
+#        criteria[column.to_sym] = params[parent_id.key]
+#
+#        if (reflection_as)
+#          key = "#{reflection_as}_type"
+#          cond += " AND #{target_model.quoted_table_name}.#{target_model.connection.quote_column_name(key)} = :#{key} "
+#          criteria[key.to_sym] = parent_model.to_s #class_name
+#        end
+#
+#        # assume che :has_* :conditions => String || [String, (nil|Hash)]
+#        conditions = reflection.options[:conditions]
+#        conditions = [conditions] if conditions.is_a?(String)
+#
+#        cond += " AND #{conditions[0]} " if conditions.is_a?(Array) && conditions[0].is_a?(String) && (conditions[1].nil? || conditions[1].is_a?(Hash))
+#        criteria.merge!(conditions[1]) if conditions.is_a?(Array) && conditions[1].is_a?(Hash)
+#      end
+#
+#      order = reflection.options[:order]
+#
+#      return cond, criteria, order
+#    end
+#
+#    #
+#    # lookup for parent id; if found fill in a condition for finder method
+#    #
+#    def no_standard_lookup_for_parent_object
+#      cond = nil
+#      criteria = {}
+#
+#      params.each do |p|
+#        if p[0].match(/.*_id$/)
+#          begin
+#            reflection = p[0].sub('_id', '').to_sym
+#            cond = " #{target_model.reflections[reflection].options[:foreign_key] || target_model.reflections[reflection].primary_key_name}=:#{p[0]} "
+#            criteria[eval(":#{p[0]}")] = p[1]
+#          rescue
+#            # there_is a foobar_id field but it's not a clear reflection
+#            # let's see if it is a polymorphic association
+#            cond, criteria = lookup_for_polymorphic_association(p) { |param_id|
+#              cond = " #{ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s][:foreign_type]}=:association_foreign_type AND #{ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_primary_key]}=:association_foreing_key "
+#              criteria = {
+#              :association_foreign_type => ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_model],
+#              :association_foreing_key => p[1]
+#              }
+#              return cond, criteria, nil
+#            }
+#
+#          end
+#        end
+#      end
+#
+#      return cond, criteria, nil
+#    end
 
     #
     # try to detect polymorphic association upon current model

@@ -17,23 +17,23 @@ module Annotations
     def self.included(base)
       base.extend ClassMethods
       base.class_eval do
-        def attributes_with_virtual_attributes
-          attr = attributes_without_virtual_attributes
-          if respond_to?(:virtual_attributes_generator)
-            attr.merge!( virtual_attributes_generator || {} )
-          end
-          attr
-        end
-
-        alias_method_chain :attributes, :virtual_attributes
-
-        def attribute_names_with_virtual_attributes
-          attr = attribute_names_without_virtual_attributes
-          attr = attr.concat((self.class.attribute_annotations || {}).keys).collect{|n|n.to_s}
-          attr
-        end
-
-        alias_method_chain :attribute_names, :virtual_attributes
+#        def attributes_with_virtual_attributes
+#          attr = attributes_without_virtual_attributes
+#          if respond_to?(:virtual_attributes_generator)
+#            attr.merge!( virtual_attributes_generator || {} )
+#          end
+#          attr
+#        end
+#
+#        alias_method_chain :attributes, :virtual_attributes
+#
+#        def attribute_names_with_virtual_attributes
+#          attr = attribute_names_without_virtual_attributes
+#          attr = attr.concat((self.class.attribute_annotations || {}).keys).collect{|n|n.to_s}
+#          attr
+#        end
+#
+#        alias_method_chain :attribute_names, :virtual_attributes
       end
     end
 
@@ -151,4 +151,6 @@ end
 end
 
 
-ActiveRecord::Base.send :include, ActiveRest::Models::Annotations::AttributeAnnotations
+class ActiveRecord::Base
+  include ::ActiveRest::Models::Annotations::AttributeAnnotations
+end

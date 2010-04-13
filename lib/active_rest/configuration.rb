@@ -28,9 +28,6 @@ module ActiveRest
       :default_pagination_offset => 0,
       :default_pagination_page_size => 100,
 
-      # plugins - base finder and others
-      :plugins => { :finder => :auto, :others => [] },
-
       # add to active_rest the capability to members with CRUD capability
       :members_crud => false,
 

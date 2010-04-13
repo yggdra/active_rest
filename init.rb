@@ -19,7 +19,6 @@
 require 'active_rest/configuration'
 #puts ActiveRest::Configuration.config.inspect
 
-
 # MODELS annotations, overrides
 ActiveRest::Configuration.recursive_load('active_rest/models/annotations')
 ActiveRest::Configuration.recursive_load('active_rest/models/overrides')
@@ -39,9 +38,3 @@ ActiveRest::Configuration.init
 
 require 'active_rest/routes' # route mapper
 require 'active_rest/core' # rest_controller_for
-
-
-
-# others plugins to load? Maybe those can patch ActiveRest ...
-#puts ActiveRest::Configuration.config.inspect
-ActiveRest::Configuration.setup_plugins
