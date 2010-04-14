@@ -33,7 +33,7 @@ module Proxies
       def build_associations_proxies
         target_model.reflections.keys.each do | k |
           if target_model.reflections[k].macro == :has_one or target_model.reflections[k].macro == :belongs_to
-            if ActiveRest::Configuration[:members_crud]
+            if ActiveRest::Controller.config.members_crud
               # crud for has_many and belongs_to
               line = __LINE__
               class_eval %{

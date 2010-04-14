@@ -16,6 +16,7 @@
 
 
 module ActiveRest
+module Controller
   module Pagination
 
     #
@@ -32,42 +33,44 @@ module ActiveRest
     #
     # update pagination state and save it
     #
-    def update_pagination_state_with_params!(restraining_model = nil)
-      model_klass = (restraining_model.is_a?(Class) || restraining_model.nil? ? restraining_model : restraining_model.to_s.classify.constantize)
-      pagination_state = previous_pagination_state(model_klass)
+    def update_pagination_state
+#      model_klass = (restraining_model.is_a?(Class) || restraining_model.nil? ? restraining_model : restraining_model.to_s.classify.constantize)
+#      pagination_state = previous_pagination_state(model_klass)
 
-      pagination_state.merge!({
-        :sort_field => (params[:sort] || pagination_state[:sort_field] || 'id').sub(/(\A[^\[]*)\[([^\]]*)\]/,'\2'), # fields may be passed as 'object[attr]'
-        :sort_direction => (params[:dir] || pagination_state[:sort_direction]).to_s.upcase,
-        :offset => params[:start] || pagination_state[:offset] || ActiveRest::Configuration.config[:default_pagination_offset],
-        :limit => params[:limit] || pagination_state[:limit] || ActiveRest::Configuration.config[:default_pagination_page_size]
-      })
-
-      # allow only valid sort_fields matching column names of the given model ...
-      unless model_klass.nil? || model_klass.column_names.include?(pagination_state[:sort_field])
-        pagination_state.delete(:sort_field)
-        pagination_state.delete(:sort_direction)
+      if params[:pag_persistant]
+        load_pagination_state
+      else
+        @pagination = {}
       end
 
-      # ... and valid sort_directions
-      pagination_state.delete(:sort_direction) unless %w(ASC DESC).include?(pagination_state[:sort_direction])
+      dir = nil
+      if params[:dir]
+        dir = params[:dir].to_s.upcase
+        raise "Invalid sort direction #{}" unless %w(ASC DESC).include?(dir)
+      end
 
-      save_pagination_state(pagination_state, model_klass)
+      @pagination.merge!({
+        # fields may be passed as 'object[attr]'
+        :sort_field => (params[:sort] || @pagination[:sort_field] || 'id').sub(/(\A[^\[]*)\[([^\]]*)\]/,'\2'),
+        :sort_direction => (dir || @pagination[:sort_direction]).to_s.upcase,
+        :offset => params[:start] || @pagination[:offset] || 0,
+        :limit => params[:limit] || @pagination[:limit] || 100 # FIXME ActiveRest::Pagination.default_page_size
+      })
+
+# This should be done by our caller
+#      # allow only valid sort_fields matching column names of the given model ...
+#      unless model_klass.nil? || model_klass.column_names.include?(@pagination[:sort_field])
+#        @pagination.delete(:sort_field)
+#        @pagination.delete(:sort_direction)
+#      end
+
+      if params[:pag_persistant]
+        save_pagination_state
+      end
     end
 
-    #
-    # build options from pagination state
-    #
-    def update_model_pagination_scope(pagination_state)
-
-      find_options = { :offset => pagination_state[:offset],
-                       :limit  => pagination_state[:limit] }
-
-      find_options.merge!(
-        :order => "#{pagination_state[:sort_field]} #{pagination_state[:sort_direction]}"
-      ) unless pagination_state[:sort_field].blank?
-
-      target_model.named_scope(:ar_pagination_scope, find_options)
+    def get_pagination_relation
+      return target_model.limit(@pagination[:limit]).offset(@pagination[:offset])
     end
 
     private
@@ -169,34 +172,33 @@ module ActiveRest
     # try to detect polymorphic association upon current model
     # and information collected during bootstrap process in routes declaration
     #
-    def lookup_for_polymorphic_association(p)
-      if ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s]
-        param_id = '%s_%s' % [ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s][:reflection], p[0]]
-        if ActiveRest::Helpers::Routes::Mapper::AS.has_key?(param_id)
-          yield param_id if block_given?
-        else
-          return nil, {}
-        end
-      else
-        return nil, {}
-      end
-    end
+#    def lookup_for_polymorphic_association(p)
+#      if ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s]
+#        param_id = '%s_%s' % [ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s][:reflection], p[0]]
+#        if ActiveRest::Helpers::Routes::Mapper::AS.has_key?(param_id)
+#          yield param_id if block_given?
+#        else
+#          return nil, {}
+#        end
+#      else
+#        return nil, {}
+#      end
+#    end
 
     #
     # get pagination state from session
     #
-    def previous_pagination_state(model_klass = nil)
-      ActiveRest::Configuration.config[:save_pagination] ?
-        (session["#{model_klass.to_s.pluralize.underscore if model_klass}_pagination_state"] || {}) :
-        {}
+    def load_pagination_state
+      @pagination = session["#{target_model.to_s.pluralize.underscore}_pagination"] || {}
     end
 
     #
     # save pagination state to session
     #
-    def save_pagination_state(pagination_state, model_klass = nil)
-      session["#{model_klass.to_s.pluralize.underscore if model_klass}_pagination_state"] = pagination_state
+    def save_pagination_state
+      session["#{target_model.to_s.pluralize.underscore}_pagination"] = @pagination
     end
   end
 
+end
 end

@@ -1,10 +1,21 @@
-ActionController::Routing::Routes.draw do |map|
-  map.active :companies, :model => Company
-  map.active :users, :model => User
-  map.active :contacts, :model => Contact
+Railsspec::Application.routes.draw do |map|
 
-  map.active :companies_transaction, :model => Company
-  map.active :companies_read_only, :model => Company
+  aresources :companies do
+  end
+
+  aresources :users do
+  end
+
+  aresources :contacts do
+  end
+
+  aresources :companies_transaction do
+#, :model => Company
+  end
+
+  aresources :companies_read_only do
+#, :model => Company
+  end
 #
 #  map.active :basic_features, :model => Company
 #  map.active :basic_features_ext_js_upload, :model => Company

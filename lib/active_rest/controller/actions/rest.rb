@@ -141,7 +141,7 @@ module Actions
       require 'pp'
       Rails.logger.error ex.pretty_inspect
       Rails.logger.error ex.backtrace.pretty_inspect
-      generic_rescue_action(:bad_request) # something nasty has happend
+      raise BadRequest # something nasty has happend
     end
 
     # GET /target/1/edit
@@ -186,7 +186,7 @@ module Actions
       require 'pp'
       Rails.logger.error ex.pretty_inspect
       Rails.logger.error ex.backtrace.pretty_inspect
-      generic_rescue_action(:bad_request) # something nasty has happend
+      raise BadRequest # something nasty has happend
     end
 
 
@@ -269,14 +269,14 @@ module Actions
     end
 
     def x_sendfile
-      return if !ActiveRest::Configuration.config[:x_sendfile] ||
-                @targets.length < ActiveRest::Configuration.config[:default_pagination_page_size]
+      return if !ActiveRest::Controller.config.x_sendfile ||
+                @targets.length < ActiveRest::Controller.config.default_page_size
 
       # DEFAULT
       cache_file_name =  UUID.timestamp_create.to_s
       #cache_file_name = Digest::MD5.hexdigest(request.env['REMOTE_ADDR']+'_'+request.env['REQUEST_URI'])
       #cache_file_name += '.'+params[:format] if params[:format]
-      cache_full_path_file_name = File.join(ActiveRest::Configuration.config[:cache_path], cache_file_name)
+      cache_full_path_file_name = File.join(ActiveRest::Controller.config.cache_path, cache_file_name)
 
       #unless File.exists?(cache_full_path_file_name)
       f = File.new(cache_full_path_file_name,  "w+")

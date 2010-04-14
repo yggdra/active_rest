@@ -34,7 +34,7 @@ module Actions
     # GET /target/1/member
     def member_show(association, member_name)
       if @member.nil?
-        generic_rescue_action(:not_found)
+        raise NotFound
       else
         member_output(association, member_name)
       end
@@ -51,8 +51,7 @@ module Actions
     # see ActiveRest::Controller::Actions::Validations
     def member_create(association, member_name)
       if association == :belongs_to
-        generic_rescue_action(406)
-        return
+        raise NotAcceptable
       end
 
       saved = false
@@ -83,14 +82,13 @@ module Actions
       require 'pp'
       Rails.logger.error ex.pretty_inspect
       Rails.logger.error ex.backtrace.pretty_inspect
-      generic_rescue_action(:bad_request) # something nasty has happend
+      raise BadRequest # something nasty has happend
     end
 
     # GET /target/1/member_edit
     def member_edit(association, member_name)
       if @member.nil?
-        generic_rescue_action(:not_found)
-        return
+        raise NotFound
       end
       member_output(association, member_name)
     end
@@ -100,8 +98,7 @@ module Actions
     # see ActiveRest::Controller::Actions::Validations
     def member_update(association, member_name)
       if @member.nil?
-        generic_rescue_action(:not_found)
-        return
+        raise NotFound
       end
       saved = false
       begin
@@ -126,18 +123,17 @@ module Actions
       require 'pp'
       Rails.logger.error ex.pretty_inspect
       Rails.logger.error ex.backtrace.pretty_inspect
-      generic_rescue_action(:bad_request) # something nasty has happend
+      raise BadRequest # something nasty has happend
     end
 
 
     # DELETE /target/1/member
     def member_destroy(association, member_name)
       if association == :belongs_to
-        generic_rescue_action(406)
-        return
+        raise NotAcceptable
       end
       if @member.nil?
-        generic_rescue_action(:not_found)
+        raise NotFound
       else
         @member.destroy
         respond_to do |format|

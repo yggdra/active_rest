@@ -16,6 +16,6 @@ describe CompaniesTransactionController do
            :zip => '00000'
          }
 
-    response.status.should =~ /^201/
+    response.status.should == 201
   end
 end

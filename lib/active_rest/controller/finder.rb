@@ -30,7 +30,14 @@
 #
 
 module ActiveRest
+module Controller
   module Finder
+
+    def self.included(base)
+      #:nodoc:
+    end
+
+    protected
 
     class Expression
       class SyntaxError < StandardError; end
@@ -131,30 +138,20 @@ module ActiveRest
       end
     end
 
-    def self.included(base)
-      #:nodoc:
-    end
-
-    protected
-
     #
     # build options for index search
     #
-    def update_model_finder_scope
+    def get_finder_relation
 
       if params[:filter]
         begin
           expr = Expression.from_json(params[:filter], target_model)
           cond = expr.to_sql(target_model)
-        rescue Expression::SyntaxError
-          generic_rescue_action(:bad_request)
-          return
         end
       end
 
-      target_model.scope(:ar_finder_scope, :conditions => cond)
+      return target_model.where(cond)
 
-      return nil
 
 ##      options = {
 ##        :extra_conditions => extra_conditions.nil? ? {} : extra_conditions,
@@ -168,5 +165,6 @@ module ActiveRest
 ##      }
     end
 
+end
 end
 end

@@ -1,5 +1,5 @@
 class CompaniesTransactionController < ApplicationController
-  include ActiveRest
+  include ActiveRest::Controller
 
   layout false
   rest_controller_for Company

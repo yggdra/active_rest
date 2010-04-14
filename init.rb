@@ -14,27 +14,4 @@
 #
 #
 
-
-# load up configuration
-require 'active_rest/configuration'
-#puts ActiveRest::Configuration.config.inspect
-
-# MODELS annotations, overrides
-ActiveRest::Configuration.recursive_load('active_rest/models/annotations')
-ActiveRest::Configuration.recursive_load('active_rest/models/overrides')
-
-# HELPERS routes, model, pagination
-ActiveRest::Configuration.recursive_load('active_rest/helpers/routes')
-ActiveRest::Configuration.recursive_load('active_rest/helpers/models')
-ActiveRest::Configuration.recursive_load('active_rest/helpers/pagination');
-
-# BASIC FEATURES
-ActiveRest::Configuration.recursive_load('active_rest/controller')
-ActiveRest::Configuration.recursive_load('active_rest/controller/actions')
-ActiveRest::Configuration.recursive_load('active_rest/controller/proxies')
-
-# starting point
-ActiveRest::Configuration.init
-
-require 'active_rest/routes' # route mapper
-require 'active_rest/core' # rest_controller_for
+require 'active_rest'
