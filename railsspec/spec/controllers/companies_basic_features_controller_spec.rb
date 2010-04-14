@@ -14,52 +14,52 @@ describe CompaniesController do
     get :schema, :format => 'xml'
     response.should be_success
 
-#    response.body.should be_html_with {
-#      hash_ {
-#        type_ 'Company'
-#        send(:'type-symbolized', 'company')
-#
-#        id {
-#          type_ 'integer', :type => :symbol
-#          primary true, :type => :boolean
-#          null false, :type => :boolean
-#          default :nil => :true
-#        }
-#
-#        name {
-#          type_ 'string', :type => :symbol
-#          primary false, :type => :boolean
-#          null false, :type => :boolean
-#          default :nil => :true
-#        }
-#
-#        city {
-#          type_ 'string', :type => :symbol
-#          primary false, :type => :boolean
-#          null false, :type => :boolean
-#          default :nil => :true
-#        }
-#
-#        street { }
-#        zip { }
-#        send(:'created-at') { }
-#        send(:'updated-at') { }
-#
-#        users {
-#          type_ 'has_many', :type => :symbol
-#          embedded false, :type => :boolean
-#          entries(:type => :array) {
-#          }
-#        }
-#
-#        contacts {
-#          type_ 'has_many', :type => :symbol
-#          embedded false, :type => :boolean
-#          entries(:type => :array) {
-#          }
-#        }
-#      }
-#    }
+    response.body.should be_xml_with {
+      hash_ {
+        type_ 'Company'
+        send(:'type-symbolized', 'company')
+
+        id {
+          type_ 'integer', :type => :symbol
+          primary true, :type => :boolean
+          null false, :type => :boolean
+          default :nil => :true
+        }
+
+        name {
+          type_ 'string', :type => :symbol
+          primary false, :type => :boolean
+          null false, :type => :boolean
+          default :nil => :true
+        }
+
+        city {
+          type_ 'string', :type => :symbol
+          primary false, :type => :boolean
+          null true, :type => :boolean
+          default :nil => :true
+        }
+
+        street { }
+        zip { }
+        send(:'created-at') { }
+        send(:'updated-at') { }
+
+        users {
+          type_ 'has_many', :type => :symbol
+          embedded false, :type => :boolean
+          entries(:type => :array) {
+          }
+        }
+
+        contacts {
+          type_ 'has_many', :type => :symbol
+          embedded false, :type => :boolean
+          entries(:type => :array) {
+          }
+        }
+      }
+    }
   end
 
   it 'should be able to call index' do
@@ -67,46 +67,46 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        company {
-#          city 'NY'
-#          id_ 1, :type => :integer
-#          name_ 'big_corp'
-#          street 'Fifth Avenue'
-#          zip '28021'
-#        }
-#        company {
-#          city 'Springfield'
-#          id_ 2, :type => :integer
-#          name_ 'compuglobal'
-#          street 'Bart\'s road'
-#          zip '513'
-#        }
-#        company {
-#          city 'Springfield'
-#          id_ 3, :type => :integer
-#          name_ 'newerOS'
-#          street 'Hill road, 3'
-#          zip '513'
-#        }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        company {
+          city 'NY'
+          id_ 1, :type => :integer
+          name_ 'big_corp'
+          street 'Fifth Avenue'
+          zip '28021'
+        }
+        company {
+          city 'Springfield'
+          id_ 2, :type => :integer
+          name_ 'compuglobal'
+          street 'Bart\'s road'
+          zip '513'
+        }
+        company {
+          city 'Springfield'
+          id_ 3, :type => :integer
+          name_ 'newerOS'
+          street 'Hill road, 3'
+          zip '01001'
+        }
+      }
+    }
   end
 
   it 'should be able to get a record given its ID' do
     get :show, :id => @c2.id,  :format => 'xml'
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company {
-#        city 'Springfield'
-#        id_ 2, :type => :integer
-#        name_ 'compuglobal'
-#        street 'Bart\'s road'
-#        zip '513'
-#      }
-#    }
+    response.body.should be_xml_with {
+      company {
+        city 'Springfield'
+        id_ 2, :type => :integer
+        name_ 'compuglobal'
+        street 'Bart\'s road'
+        zip '513'
+      }
+    }
   end
 
   it 'should be able to create a new record' do

@@ -14,7 +14,7 @@ Factory.define :company_2, :class => 'Company' do |x|
   x.name 'compuglobal'
   x.city 'Springfield'
   x.street 'Bart\'s road'
-  x.zip '01001'
+  x.zip '513'
   x.is_active false
 end
 

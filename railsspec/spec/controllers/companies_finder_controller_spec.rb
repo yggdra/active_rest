@@ -24,13 +24,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        without! { company { name_ 'big_corp' } }
-#        company { name_ 'compuglobal' }
-#        company { name_ 'newerOS' }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        without! { company { name_ 'big_corp' } }
+        company { name_ 'compuglobal' }
+        company { name_ 'newerOS' }
+      }
+    }
   end
 
   it 'should find records with finder condition >=' do
@@ -39,13 +39,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        without! { company { name_ 'big_corp' } }
-#        company { name_ 'compuglobal' }
-#        company { name_ 'newerOS' }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        without! { company { name_ 'big_corp' } }
+        company { name_ 'compuglobal' }
+        company { name_ 'newerOS' }
+      }
+    }
   end
 
   it 'should find records with finder condition <' do
@@ -54,13 +54,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        company { name_ 'big_corp' }
-#        without! { company { name_ 'compuglobal' } }
-#        without! { company { name_ 'newerOS' } }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        company { name_ 'big_corp' }
+        without! { company { name_ 'compuglobal' } }
+        without! { company { name_ 'newerOS' } }
+      }
+    }
   end
 
   it 'should find records with finder condition <=' do
@@ -69,13 +69,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        company { name_ 'big_corp' }
-#        without! { company { name_ 'compuglobal' } }
-#        without! { company { name_ 'newerOS' } }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        company { name_ 'big_corp' }
+        without! { company { name_ 'compuglobal' } }
+        without! { company { name_ 'newerOS' } }
+      }
+    }
   end
 
   it 'should find records with finder condition =' do
@@ -84,13 +84,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        without! { company { name_ 'big_corp' } }
-#        company { name_ 'compuglobal' }
-#        without! { company { name_ 'newerOS' } }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        without! { company { name_ 'big_corp' } }
+        company { name_ 'compuglobal' }
+        without! { company { name_ 'newerOS' } }
+      }
+    }
   end
 
   it 'should find records with finder condition <>' do
@@ -99,13 +99,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        company { name_ 'big_corp' }
-#        without! { company { name_ 'compuglobal' } }
-#        company { name_ 'newerOS' }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        company { name_ 'big_corp' }
+        without! { company { name_ 'compuglobal' } }
+        company { name_ 'newerOS' }
+      }
+    }
   end
 
   it 'should find records with finder condition IS NULL' do
@@ -114,11 +114,11 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        without! { company }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        without! { company }
+      }
+    }
   end
 
   it 'should find records with finder condition IS NOT NULL' do
@@ -127,13 +127,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        company { name_ 'big_corp' }
-#        company { name_ 'compuglobal' }
-#        company { name_ 'newerOS' }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        company { name_ 'big_corp' }
+        company { name_ 'compuglobal' }
+        company { name_ 'newerOS' }
+      }
+    }
   end
 
   it 'should find records with finder condition IN [array]' do
@@ -142,13 +142,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        company { name_ 'big_corp' }
-#        without! { company { name_ 'compuglobal' } }
-#        company { name_ 'newerOS' }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        company { name_ 'big_corp' }
+        without! { company { name_ 'compuglobal' } }
+        company { name_ 'newerOS' }
+      }
+    }
   end
 
   it 'should find records with finder condition NOT IN [array]' do
@@ -157,13 +157,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        without! { company { name_ 'big_corp' } }
-#        company { name_ 'compuglobal' }
-#        without! { company { name_ 'newerOS' } }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        without! { company { name_ 'big_corp' } }
+        company { name_ 'compuglobal' }
+        without! { company { name_ 'newerOS' } }
+      }
+    }
   end
 
 #### Not supported by SQLite
@@ -173,7 +173,7 @@ describe CompaniesController do
 #
 #    response.should be_success
 #
-#    response.body.should be_html_with {
+#    response.body.should be_xml_with {
 #      company(:type => :array) {
 #        without! { company { name_ 'big_corp' } }
 #        company { name_ 'compuglobal' }
@@ -190,13 +190,13 @@ describe CompaniesController do
 
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        without! { company { name_ 'big_corp' } }
-#        company { name_ 'compuglobal' }
-#        without! { company { name_ 'newerOS' } }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        without! { company { name_ 'big_corp' } }
+        company { name_ 'compuglobal' }
+        without! { company { name_ 'newerOS' } }
+      }
+    }
   end
 
 end

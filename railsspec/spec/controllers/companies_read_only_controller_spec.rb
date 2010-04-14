@@ -17,37 +17,37 @@ describe CompaniesReadOnlyController do
     get :index, :format => 'xml'
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company(:type => :array) {
-#        company {
-#          id_ 1, :type => :integer
-#          name_ 'big_corp'
-#        }
-#        company {
-#          id_ 2, :type => :integer
-#          name_ 'compuglobal'
-#        }
-#        company {
-#          id_ 3, :type => :integer
-#          name_ 'newerOS'
-#        }
-#      }
-#    }
+    response.body.should be_xml_with {
+      company(:type => :array) {
+        company {
+          id_ 1, :type => :integer
+          name_ 'big_corp'
+        }
+        company {
+          id_ 2, :type => :integer
+          name_ 'compuglobal'
+        }
+        company {
+          id_ 3, :type => :integer
+          name_ 'newerOS'
+        }
+      }
+    }
   end
 
   it 'should allow get a user by its ID' do
     get :show, :id => @c2.id,  :format => 'xml'
     response.should be_success
 
-#    response.body.should be_html_with {
-#      company {
-#        city 'Springfield'
-#        id_ 2, :type => :integer
-#        name_ 'compuglobal'
-#        street 'Bart\'s road'
-#        zip '513'
-#      }
-#    }
+    response.body.should be_xml_with {
+      company {
+        city 'Springfield'
+        id_ 2, :type => :integer
+        name_ 'compuglobal'
+        street 'Bart\'s road'
+        zip '513'
+      }
+    }
   end
 
   it 'should NOT allow POST action' do
