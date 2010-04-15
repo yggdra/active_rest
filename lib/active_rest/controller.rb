@@ -214,7 +214,6 @@ module Controller
     find_options = {}
     find_options[:select] = select unless select.blank?
     find_options[:joins] = joins unless joins.blank?
-
     @target = target_model.find(tid, find_options)
   end
 

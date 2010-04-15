@@ -54,7 +54,9 @@ module Actions
     end
 
     def validate_update(&blk)
+      find_target
       guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
+      puts "TARGET -- #{@target.inspect}"
       @target.send(:attributes=, params[target_model_to_underscore], guard_protected_attributes)
 
       validation_response(target)
@@ -124,9 +126,10 @@ module Actions
     #
     def check_validation_action
       if params.has_key?(:_only_validation) && (params[:_only_validation].to_s.to_sym == :true)
-         action = 'validate_' + action_name
-         # redirect to a different action
-         self.action_name = action if(respond_to?(action))
+        action = 'validate_' + action_name
+        # redirect to a different action
+        #self.action_name = action if(respond_to?(action))
+        self.send(action) if(respond_to?(action))
       end
     end
 
