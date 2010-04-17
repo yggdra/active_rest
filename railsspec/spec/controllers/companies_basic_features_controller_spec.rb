@@ -213,7 +213,7 @@ describe CompaniesController do
 
   it 'should be able to validate resource creation without creating the object' do
     post :create, :format => 'xml',
-         :_only_validation => :true,
+         :ar_only_validation => :true,
          :company => {
            :name => 'Brand new PRO company',
            :city => 'no where',
@@ -221,7 +221,7 @@ describe CompaniesController do
            :zip => '00000'
          }
 
-    response.status.should == 201
+    response.status.should == 202
 
     # check the full list
     get :index,  :format => 'xml'
@@ -230,7 +230,7 @@ describe CompaniesController do
 
   it 'should be able to validate resource update without creating the object' do
     put :update, :id => @c2.id, :format => 'xml',
-        :_only_validation => :true,
+        :ar_only_validation => :true,
         :company => {
           :name => 'Renamed to Compuglobal TM'
         }
