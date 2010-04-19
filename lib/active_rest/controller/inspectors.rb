@@ -16,10 +16,8 @@
 
 module ActiveRest
 module Controller
-module Actions
 
   module Inspectors
-
     #
     # in your controller you can override schema action this way:
     #
@@ -91,6 +89,5 @@ module Actions
     end
   end
 
-end
 end
 end

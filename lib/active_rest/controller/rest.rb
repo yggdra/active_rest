@@ -17,8 +17,6 @@
 
 module ActiveRest
 module Controller
-module Actions
-
   module Rest
 
     def self.included(base)
@@ -288,6 +286,5 @@ module Actions
     end
   end
 
-end
 end
 end

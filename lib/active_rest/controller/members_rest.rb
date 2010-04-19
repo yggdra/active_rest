@@ -17,8 +17,6 @@
 
 module ActiveRest
 module Controller
-module Actions
-
   module MembersRest
 
     private
@@ -220,6 +218,5 @@ module Actions
     end
   end
 
-end
 end
 end
