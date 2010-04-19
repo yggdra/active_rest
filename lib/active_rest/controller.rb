@@ -21,16 +21,17 @@ require 'ostruct'
 module ActiveRest
 module Controller
 
-  CONFIG = OpenStruct.new
-  CONFIG.cache_path = File.join(Rails.root, 'tmp', 'cache', 'active_rest')
-  CONFIG.x_sendfiel = false
-  CONFIG.save_pagination = true
-  CONFIG.default_page_size = true
-  CONFIG.members_crud = false
-  CONFIG.route_expand_model_namespace = false
+  @config = OpenStruct.new(
+    :cache_path => File.join(Rails.root, 'tmp', 'cache', 'active_rest'),
+    :x_sendfile => false,
+    :save_pagination => true,
+    :default_page_size => true,
+    :members_crud => false,
+    :route_expand_model_namespace => false
+  )
 
-  def self.config
-    return CONFIG
+  class << self
+    attr_reader :config
   end
 
   class MethodNotAllowed < StandardError; end
@@ -67,27 +68,27 @@ module Controller
     # bind a controller-model
     #
     def rest_controller_for(model, params={})
-      self.target_model = model
-      self.target_model_read_only = params[:read_only] || false
+      target_model = model
+      target_model_read_only = params[:read_only] || false
 
       #
       # index_options ammitted key
       # - extra_conditions (a controller def method)
       #
 
-      self.index_options = params[:index_options] || {}
+      index_options = params[:index_options] || {}
       #
       # extjs_options ammitted key
       #
-      self.extjs_options = params[:extjs_options] || {}
+      extjs_options = params[:extjs_options] || {}
 
       #
       # options for model level
       # - join (an hash to build a custom select with join - see ActiveRest::Controller::Core.build_joins
       #
-      self.model_options = params[:model_options] || {}
+      model_options = params[:model_options] || {}
 
-      self.rest_xact_handler = :rest_default_transaction_handler
+      rest_xact_handler = :rest_default_transaction_handler
 
 #      build_associations_proxies
 
@@ -170,6 +171,11 @@ module Controller
   end
 
   private
+
+  TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE'].to_set
+  def is_true?(val)
+    TRUE_VALUES.include?(val)
+  end
 
   #
   # generic rescue action. when html will handle a block
