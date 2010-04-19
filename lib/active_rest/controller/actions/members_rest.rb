@@ -69,7 +69,7 @@ module Actions
         # don't do nothing, let the controller respond
       end
 
-      if params[:_suppress_response]
+      if is_true?(params[:_suppress_response])
         render :nothing => true, :status => status
       else
         if saved
@@ -110,7 +110,7 @@ module Actions
         # don't do nothing, let the controller respond
       end
 
-      if params[:_suppress_response]
+      if is_true?(params[:_suppress_response])
         render :nothing => true, :status => status
       else
         if saved

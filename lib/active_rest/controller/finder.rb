@@ -143,9 +143,9 @@ module Controller
     #
     def get_finder_relation
 
-      if params[:filter]
+      if params[:_filter]
         begin
-          expr = Expression.from_json(params[:filter], target_model)
+          expr = Expression.from_json(params[:_filter], target_model)
           cond = expr.to_sql(target_model)
         end
       end
