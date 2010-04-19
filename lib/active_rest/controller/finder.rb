@@ -50,6 +50,7 @@ module Controller
 
       def self.from_json(json, model)
         newobj = self.new
+        newobj.model = model
 
         begin
           newobj.tree = ActiveSupport::JSON.decode(json)
@@ -57,81 +58,68 @@ module Controller
           raise InvalidJSON
         end
 
-        newobj.model = model
         return newobj
       end
 
-      def to_sql(model)
-        @sql = ''
-        @pars = []
-
+      def to_arel(model)
         @tree.symbolize_keys!
 
         if @tree[:field]
-          to_sql_recur_handle_term(@tree)
+          # Valid for boolean fields
+          return model.scoped.table[@tree[:field]]
         else
-          to_sql_recur(@tree)
+          return to_arel_recur(@tree)
         end
-
-        return [@sql] + @pars
       end
 
       private
 
-      def to_sql_recur_handle_term(term)
-        if term.is_a?(String) || term.is_a?(Numeric)
-          @sql += '?'
-          @pars << term
+      def to_arel_recur_handle_term(term)
+        if term.is_a?(String) || term.is_a?(Numeric) || term.is_a?(Array)
+          return term
         elsif term.is_a?(Hash)
           term.symbolize_keys!
 
-          if term[:field]
+          attr = term[:field]
 
-            attr = term[:field]
-
+          if attr
             raise SyntaxError, "Attribute '#{attr}' name has invalid chars" if attr =~ /[^a-zA-Z0-9_]/
-
             raise UnknownField, "Unknown field '#{attr}'" if !model.columns_hash[attr]
 
-            @sql += model.connection.quote_column_name(attr)
+            return model.scoped.table[attr]
           else
-            to_sql_recur(term)
+            return to_arel_recur(term)
           end
-        elsif term.is_a?(Array)
-          @sql += '(' + term.map { |x| model.connection.quote(x) }.join(',') + ')'
         end
       end
 
-      def to_sql_recur(tree)
+      def to_arel_recur(tree)
 
         raise SyntaxError, "Expected operator for expression '#{tree}'" if !tree[:o]
 
+        term_a = tree[:a] ? to_arel_recur_handle_term(tree[:a]) : nil
+        term_b = tree[:b] ? to_arel_recur_handle_term(tree[:b]) : nil
+
         op = tree[:o].upcase
         case op
-        when '>', '>=', '<', '<=', '=', '<>', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'AND', 'OR'
-          raise SyntaxError, "Expected operand a for operator '#{op}'" if !tree[:a]
-          raise SyntaxError, "Expected operand b for operator '#{op}'" if !tree[:b]
-
-          to_sql_recur_handle_term(tree[:a])
-          @sql += ' ' + op + ' '
-          to_sql_recur_handle_term(tree[:b])
-
-        when 'IS NULL', 'IS NOT NULL'
-          # Unary operator
-          raise SyntaxError, "Expected operand a for operator '#{op}'" if !tree[:a]
-          raise SyntaxError, "Unexpected operand b for operator '#{op}'" if tree[:b]
-
-          to_sql_recur_handle_term(tree[:a])
-          @sql += ' ' + op + ' '
-
-        when 'NOT'
-          # Unary operator
-          raise SyntaxError, "Expected operand b for operator '#{op}i" if !tree[:b]
-          raise SyntaxError, "Unexpected operand a for operator '#{op}'" if tree[:a]
-
-          @sql += ' ' + op + ' '
-          to_sql_recur_handle_term(tree[:b])
-
+        when 'IS NULL';     return term_a.eq(nil)
+        when 'IS NOT NULL'; return term_a.not(nil)
+        when '>';           return term_a.gt(term_b)
+        when '>=';          return term_a.gteq(term_b)
+        when '<';           return term_a.lt(term_b)
+        when '<=';          return term_a.lteq(term_b)
+        when '=';           return term_a.eq(term_b)
+        when '<>';          return term_a.not(term_b)
+        when 'LIKE';        return term_a.matches(term_b)
+        when 'IN';          return term_a.in(term_b)
+        when 'AND';         return term_a.and(term_b)
+        when 'OR';          return term_a.or(term_b)
+#        when 'NOT IN';
+#          return term_a.notin(term_b)
+#        when 'NOT LIKE'
+#          return term_a.notlike(term_b)
+##        when 'NOT'
+##          # Unary operator
         else
           raise UnknownOperator, "Unknown operator '#{op}'"
         end
@@ -144,10 +132,8 @@ module Controller
     def get_finder_relation
 
       if params[:_filter]
-        begin
-          expr = Expression.from_json(params[:_filter], target_model)
-          cond = expr.to_sql(target_model)
-        end
+        expr = Expression.from_json(params[:_filter], target_model)
+        cond = expr.to_arel(target_model)
       end
 
       return target_model.where(cond)

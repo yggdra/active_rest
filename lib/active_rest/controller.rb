@@ -68,27 +68,27 @@ module Controller
     # bind a controller-model
     #
     def rest_controller_for(model, params={})
-      target_model = model
-      target_model_read_only = params[:read_only] || false
+      self.target_model = model
+      self.target_model_read_only = params[:read_only] || false
 
       #
       # index_options ammitted key
       # - extra_conditions (a controller def method)
       #
 
-      index_options = params[:index_options] || {}
+      self.index_options = params[:index_options] || {}
       #
       # extjs_options ammitted key
       #
-      extjs_options = params[:extjs_options] || {}
+      self.extjs_options = params[:extjs_options] || {}
 
       #
       # options for model level
       # - join (an hash to build a custom select with join - see ActiveRest::Controller::Core.build_joins
       #
-      model_options = params[:model_options] || {}
+      self.model_options = params[:model_options] || {}
 
-      rest_xact_handler = :rest_default_transaction_handler
+      self.rest_xact_handler = :rest_default_transaction_handler
 
 #      build_associations_proxies
 
@@ -117,10 +117,10 @@ module Controller
         include ActiveRest::Controller # common stuff
         include ActiveRest::Controller::Finder
         include ActiveRest::Controller::Pagination # manage pagination
-        include ActiveRest::Controller::Actions::Rest # default verbs and actions
-        include ActiveRest::Controller::Actions::MembersRest # default verbs and actions
-        include ActiveRest::Controller::Actions::Inspectors # extra default actions
-        include ActiveRest::Controller::Actions::Validations # contains validation actions
+        include ActiveRest::Controller::Rest # default verbs and actions
+        include ActiveRest::Controller::MembersRest # default verbs and actions
+        include ActiveRest::Controller::Inspectors # extra default actions
+        include ActiveRest::Controller::Validations # contains validation actions
       end
     end
 
@@ -360,11 +360,3 @@ module Controller
 end
 
 end
-
-require 'active_rest/controller/finder'
-require 'active_rest/controller/pagination'
-
-require 'active_rest/controller/actions/rest'
-require 'active_rest/controller/actions/members_rest'
-require 'active_rest/controller/actions/inspectors'
-require 'active_rest/controller/actions/validations'
