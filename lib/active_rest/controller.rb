@@ -94,13 +94,13 @@ module Controller
 
       class_eval do
         # if read only not allow these actions
-        before_filter :check_read_only, :only=> [ :new, :create, :update, :destroy, :validate_create, :validate_update ]
+        prepend_before_filter :check_validation_action, :only => [ :update, :create ] # are we just requiring validations ?
+        prepend_before_filter :check_read_only
 
         # if we get here, chek for polymorphic associations
         before_filter :prepare_polymorphic_association, :only => :create
 
         before_filter :prepare_i18n
-        before_filter :check_validation_action, :only => [ :update, :create ] # are we just requiring validations ?
         before_filter :find_target, :only => [ :show, :edit, :update, :destroy, :validate_update ] # 1 resource?
         before_filter :find_targets, :only => [ :index ] # find all resources ?
 
@@ -278,7 +278,7 @@ module Controller
   # avoid any action that can modify the record or change the table
   #
   def check_read_only
-    raise MethodNotAllowed if target_model_read_only
+    raise MethodNotAllowed if target_model_read_only && request.method != 'GET'
   end
 
 
