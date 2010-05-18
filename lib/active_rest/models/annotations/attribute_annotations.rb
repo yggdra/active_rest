@@ -99,8 +99,6 @@ module Annotations
 
       #
       # map_filter, hash like:
-      # attr_annotate :group_id, :alternative_filter => {:refer_to=>:group_label}
-      # attr_annotate :group_label, :alternative_filter => {:model=>:group, :field=>:name}
       #
       # is read as, the real group_id (number) field can be queried in two way:
       # - normal query with query_id=1
@@ -108,9 +106,6 @@ module Annotations
       #   and rewritten conditions to group_table_name.field (name in this example)
       #
       #
-      def attr_alternative_filter(attribute)
-        return attr_annotation(attribute, :alternative_filter) unless attr_annotation(attribute, :alternative_filter).nil?
-      end
 
       private
 

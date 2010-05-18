@@ -21,7 +21,6 @@ class UserVirtualAttrs < ActiveRecord::Base
   # build a join and search on the active_rest_tables.name field
   #
   attr_annotate :company_id
-  attr_annotate :company_label, :alternative_filter => { :model => :company, :field => :name }
 
   attr_order :company_label
   attr_groups :virtual_attributes => [:company_label]

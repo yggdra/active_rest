@@ -31,16 +31,20 @@ module Controller
 
     def schema(&blk)
 
-      @schema = { :type => target_model.name,
-                  :type_symbolized => target_model_to_underscore }
-
-      target_model.columns.each { |x| @schema[x.name] = {
-        :type => x.type,
-        :primary => x.primary,
-        :null => x.null,
-        :default => x.default,
-        :alternative_filter => target_model.attr_alternative_filter(x.name.to_sym) # this column must be sent for query filter?}
-        }
+      @schema = {
+        :type => target_model.name,
+        :type_symbolized => target_model_to_underscore,
+        :attributes => Hash[*target_model.columns.collect { |x|
+          [x.name, {
+            :type => x.type,
+            :primary => x.primary,
+            :null => x.null,
+            :default => x.default,
+            :creatable => true,
+            :readable => true,
+            :writeable => true
+          }]
+        }.flatten]
       }
 
       if target_model.respond_to?(:ordered_attributes)
