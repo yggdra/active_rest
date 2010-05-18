@@ -90,15 +90,11 @@ module Controller
               :status => status
           }
 
-          format.jsone {
-            render :json => {
-                :success => valid,
-                :errors => build_response(target_model_to_underscore, target.errors) }.to_json,
-              :status => status
-          }
+          yield(format, valid, status) if block_given?
         end
       end
     end
+    alias ar_validation_response validation_response
 
     #
     # prepare a response format that when decoded in json looks like this:
@@ -123,10 +119,7 @@ module Controller
     #
     def check_validation_action
       if is_true?(params[:_only_validation])
-        action = 'validate_' + action_name
-        # redirect to a different action
-        #self.action_name = action if(respond_to?(action))
-        self.send(action) if(respond_to?(action))
+        redirect_to :action => 'validate_' + action_name
       end
     end
 

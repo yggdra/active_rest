@@ -21,6 +21,13 @@ require 'ostruct'
 module ActiveRest
 module Controller
 
+  include Finder
+  include Pagination # manage pagination
+  include Rest # default verbs and actions
+  include MembersRest # default verbs and actions
+  include Inspectors # extra default actions
+  include Validations # contains validation actions
+
   @config = OpenStruct.new(
     :cache_path => File.join(Rails.root, 'tmp', 'cache', 'active_rest'),
     :x_sendfile => false,
@@ -40,35 +47,21 @@ module Controller
   class NotAcceptable < StandardError; end
 
   def self.included(base)
-    base.extend(ClassMethods)
+#    base.extend(ClassMethods)
 
     base.class_eval do
       class_inheritable_accessor :target_model
       class_inheritable_accessor :target_model_read_only # check actions new, create, update, edit, delete, validate_*
 
       class_inheritable_accessor :index_options # options for index
-      class_inheritable_accessor :extjs_options # options for ext js framework
       class_inheritable_accessor :model_options # model options
 
       class_inheritable_accessor :rest_xact_handler
 
       attr_accessor :target, :targets
-    end
-  end
 
-  def rest_default_transaction_handler
-    target_model.transaction do
-      yield
-    end
-  end
-
-  module ClassMethods
-
-    #
-    # bind a controller-model
-    #
-    def rest_controller_for(model, params={})
-      self.target_model = model
+params = {}
+#      self.target_model = model
       self.target_model_read_only = params[:read_only] || false
 
       #
@@ -77,10 +70,6 @@ module Controller
       #
 
       self.index_options = params[:index_options] || {}
-      #
-      # extjs_options ammitted key
-      #
-      self.extjs_options = params[:extjs_options] || {}
 
       #
       # options for model level
@@ -92,40 +81,53 @@ module Controller
 
 #      build_associations_proxies
 
-      class_eval do
-        # if read only not allow these actions
-        prepend_before_filter :check_validation_action, :only => [ :update, :create ] # are we just requiring validations ?
-        prepend_before_filter :check_read_only
+      # if read only not allow these actions
+      prepend_before_filter :check_validation_action, :only => [ :update, :create ] # are we just requiring validations ?
+      prepend_before_filter :check_read_only
 
-        # if we get here, chek for polymorphic associations
-        before_filter :prepare_polymorphic_association, :only => :create
+      # if we get here, chek for polymorphic associations
+      before_filter :prepare_polymorphic_association, :only => :create
 
-        before_filter :prepare_i18n
-        before_filter :find_target, :only => [ :show, :edit, :update, :destroy, :validate_update ] # 1 resource?
-        before_filter :find_targets, :only => [ :index ] # find all resources ?
+      before_filter :prepare_i18n
+      before_filter :find_target, :only => [ :show, :edit, :update, :destroy, :validate_update ] # 1 resource?
+      before_filter :find_targets, :only => [ :index ] # find all resources ?
 
-        rescue_from Controller::Finder::Expression::SyntaxError, :with => lambda { generic_rescue_action(:bad_request) }
-        rescue_from NotFound, :with => lambda { generic_rescue_action(:not_found) }
-        rescue_from ActiveRecord::RecordNotFound, :with => lambda { generic_rescue_action(:not_found) }
-        rescue_from MethodNotAllowed, :with => lambda { generic_rescue_action(:method_not_allowed) }
-        rescue_from BadRequest, :with => lambda { generic_rescue_action(:bad_request) }
-        rescue_from NotAcceptable, :with => lambda { generic_rescue_action(:not_acceptable) }
-        rescue_from NotAcceptable, :with => lambda { generic_rescue_action(:not_acceptable) }
-      end
+      base.append_after_filter :x_sendfile, :only => [ :index ]
 
-      module_eval do
-        include ActiveRest::Controller # common stuff
-        include ActiveRest::Controller::Finder
-        include ActiveRest::Controller::Pagination # manage pagination
-        include ActiveRest::Controller::Rest # default verbs and actions
-        include ActiveRest::Controller::MembersRest # default verbs and actions
-        include ActiveRest::Controller::Inspectors # extra default actions
-        include ActiveRest::Controller::Validations # contains validation actions
-      end
+      rescue_from Controller::Finder::Expression::SyntaxError, :with => lambda { generic_rescue_action(:bad_request) }
+      rescue_from NotFound, :with => lambda { generic_rescue_action(:not_found) }
+      rescue_from ActiveRecord::RecordNotFound, :with => lambda { generic_rescue_action(:not_found) }
+      rescue_from MethodNotAllowed, :with => lambda { generic_rescue_action(:method_not_allowed) }
+      rescue_from BadRequest, :with => lambda { generic_rescue_action(:bad_request) }
+      rescue_from NotAcceptable, :with => lambda { generic_rescue_action(:not_acceptable) }
+      rescue_from NotAcceptable, :with => lambda { generic_rescue_action(:not_acceptable) }
+
+
     end
+
+    base.extend(ClassMethods)
+
+  end
+
+  def rest_default_transaction_handler
+    target_model.transaction do
+      yield
+    end
+  end
+
+  module ClassMethods
 
     def rest_transaction_handler(method)
       self.rest_xact_handler = method
+    end
+
+    def rest_controller_for(model)
+      self.target_model = model
+    end
+
+    def rest_controller
+      self.target_model = self.controller_name.classify
+      self.target_model.constantize
     end
   end
 
@@ -145,17 +147,17 @@ module Controller
   #
   # handle authenticity token (html in primis)
   #
-  def verify_authenticity_token(&blk)
-    respond_to do | format |
-      format.html { super }
-      format.xml {}
-      format.json {}
-      format.jsone {}
-      format.yaml {}
-      blk.call(format) if blk # overriding to handle other format
-      format.any { super } # unhandled format? do authenticity token!
-    end
-  end
+#  def verify_authenticity_token(&blk)
+#    respond_to do | format |
+#      format.html { super }
+#      format.xml {}
+#      format.json {}
+#      format.jsone {}
+#      format.yaml {}
+#      blk.call(format) if blk # overriding to handle other format
+#      format.any { super } # unhandled format? do authenticity token!
+#    end
+#  end
 
   #
   # setup I18n if params has this information
@@ -180,22 +182,9 @@ module Controller
   #
   # generic rescue action. when html will handle a block
   #
-  def generic_rescue_action(status, &blk)
+  def generic_rescue_action(status)
     respond_to do |format|
-      format.html do
-        if block_given?
-          yield
-        else
-          render :nothing => true, :status => status
-        end
-      end
-
-#        format.xml { render :nothing => true, :status => status }
-#        format.yaml  { head :status => status, :nothing => true }
-#        format.json { render :nothing => true, :status => status }
-#        format.jsone { render :nothing => true, :status => status }
-
-      blk.call(format) if blk # when overriding to handle other format
+      yield format if block_given? # when overriding to handle other format
       format.any { head :status => status, :nothing => true } # any other format
     end
   end

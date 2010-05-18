@@ -19,11 +19,6 @@ module ActiveRest
 module Controller
   module Rest
 
-    def self.included(base)
-      #:nodoc:
-      base.append_after_filter :x_sendfile, :only => [ :index ]
-    end
-
     #
     # Notes for overrinding methods in controller to handle more mime-types
     #
@@ -59,8 +54,6 @@ module Controller
     # end
     #
 
-
-
     #
     # REST VERBS
     #
@@ -68,44 +61,31 @@ module Controller
     # can be called with the following parameters:
     # - no_cache: any number will trigger the response cache mechanism
     #
-    def index(&blk)
-      respond_to do |format|
-        format.html
-        format.xml { render :xml => @targets.to_xml(:root => target_model_to_underscore) }
-        format.yaml { render :text => @targets.to_yaml }
-        format.json { render :json => @targets }
-        format.jsone { render :json => { target_model_to_underscore => @targets, :total => @count, :success => true } }
-        blk.call(format, nil) if blk
+
+    def index
+      respond_with(@targets) do |format|
+        yield(format) if block_given?
       end
     end
+    alias ar_index index
 
     # GET /target/1
     def show(&blk)
-      respond_to do |format|
-        format.html
-        format.xml { render :xml => target.to_xml(:root => target_model_to_underscore) } ## see above note
-        format.yaml { render :text => target.to_yaml }
-        format.json { render :json => target }
-        format.jsone {
-          root = target_model_to_underscore
-          render :json => { :ns => target_model_to_underscore, root => target, :success => true }
-        }
-        blk.call(format) if blk
+      respond_with(@target) do |format|
+        yield(format) if block_given?
       end
     end
+    alias ar_show show
 
     # GET /target/new
     def new(&blk)
       @target = target_model.new
-      respond_to do | format |
-        format.html
-        format.xml { render :xml => @target.to_xml(:root => target_model_to_underscore) } ## see above note
-        format.yaml { render :text => @target.to_yaml }
-        format.json { render :json => @target.to_json }
-        format.jsone { render :json => @target.to_json }
-        blk.call(format) if blk
+
+      respond_with(@target) do |format|
+        yield(format) if block_given?
       end
     end
+    alias ar_new new
 
 
     # POST /targets
@@ -143,16 +123,12 @@ module Controller
     end
 
     # GET /target/1/edit
-    def edit(&blk)
-      respond_to do |format|
-        format.html
-        format.xml { render :xml => target.to_xml(:root => target_model_to_underscore) } ## see above note
-        format.yaml { render :text => target.to_yaml }
-        format.json { render :json => target.to_json }
-        format.jsone { render :json => { :ns => target_model_to_underscore, :data => target.to_json, :success => true } }
-        blk.call(format)
+    def edit
+      respond_with(@target) do |format|
+        yield(format) if block_given?
       end
     end
+    alias ar_edit edit
 
     # PUT /target/1
     # if parameter '_only_validation' is present only validation actions will be runned;
@@ -189,7 +165,7 @@ module Controller
 
 
     # DELETE /target/1
-    def destroy(&blk)
+    def destroy
       @target.destroy
 
       respond_to do |format|
@@ -202,10 +178,10 @@ module Controller
         format.xml { head :status => :ok }
         format.yaml { head :status => :ok }
         format.json { head :status => :ok }
-        format.jsone { render :json => { :success => true }, :status => :ok }
-        blk.call(format) if blk
+        yield(format) if block_given?
       end
     end
+    alias ar_destroy destroy
 
     protected
 
@@ -221,14 +197,10 @@ module Controller
         format.xml { render :xml => @target.to_xml(:root => target_model_to_underscore), :status => status }
         format.yaml { render :text => @target.to_yaml, :status => status }
         format.json { render :json => @target, :status => status }
-
-        format.jsone {
-          root = target_model_to_underscore
-          render :json => { :ns => target_model_to_underscore, root => @target, :success => true },
-                 :status => status
-        }
+        yield format if block_given?
       end
     end
+    alias ar_write_action_successful_response write_action_successful_response
 
     def write_action_error_response
       respond_to do |format|
@@ -257,14 +229,10 @@ module Controller
                    :status => :not_acceptable
         }
 
-        format.jsone {
-          render :json => {
-                   :success => false,
-                   :errors => build_response(target_model_to_underscore, @target.errors) }.to_json,
-                   :status => :ok # 406 not welcome to ExtJs
-        }
+        yield format if block_given?
       end
     end
+    alias ar_write_action_error_response write_action_error_response
 
     def x_sendfile
       return if !ActiveRest::Controller.config.x_sendfile ||
@@ -277,7 +245,7 @@ module Controller
       cache_full_path_file_name = File.join(ActiveRest::Controller.config.cache_path, cache_file_name)
 
       #unless File.exists?(cache_full_path_file_name)
-      f = File.new(cache_full_path_file_name,  "w+")
+      f = File.new(cache_full_path_file_name,  'w+')
       f << response.body
       f.close
 
