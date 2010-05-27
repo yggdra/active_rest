@@ -47,35 +47,14 @@ module Controller
   class NotAcceptable < StandardError; end
 
   def self.included(base)
-#    base.extend(ClassMethods)
-
     base.class_eval do
-      class_inheritable_accessor :target_model
-      class_inheritable_accessor :target_model_read_only # check actions new, create, update, edit, delete, validate_*
+      class_inheritable_accessor :model
 
-      class_inheritable_accessor :index_options # options for index
-      class_inheritable_accessor :model_options # model options
+      class_inheritable_accessor :options
 
       class_inheritable_accessor :rest_xact_handler
 
       attr_accessor :target, :targets
-
-params = {}
-#      self.target_model = model
-      self.target_model_read_only = params[:read_only] || false
-
-      #
-      # index_options ammitted key
-      # - extra_conditions (a controller def method)
-      #
-
-      self.index_options = params[:index_options] || {}
-
-      #
-      # options for model level
-      # - join (an hash to build a custom select with join - see ActiveRest::Controller::Core.build_joins
-      #
-      self.model_options = params[:model_options] || {}
 
       self.rest_xact_handler = :rest_default_transaction_handler
 
@@ -100,17 +79,13 @@ params = {}
       rescue_from MethodNotAllowed, :with => lambda { generic_rescue_action(:method_not_allowed) }
       rescue_from BadRequest, :with => lambda { generic_rescue_action(:bad_request) }
       rescue_from NotAcceptable, :with => lambda { generic_rescue_action(:not_acceptable) }
-      rescue_from NotAcceptable, :with => lambda { generic_rescue_action(:not_acceptable) }
-
-
     end
 
     base.extend(ClassMethods)
-
   end
 
   def rest_default_transaction_handler
-    target_model.transaction do
+    model.transaction do
       yield
     end
   end
@@ -121,13 +96,13 @@ params = {}
       self.rest_xact_handler = method
     end
 
-    def rest_controller_for(model)
-      self.target_model = model
+    def rest_controller_for(model, options = {})
+      self.model = model
+      self.options = options
     end
 
-    def rest_controller
-      self.target_model = self.controller_name.classify
-      self.target_model.constantize
+    def rest_controller(options = {})
+      rest_controller_for(self.controller_name.classify.constantize, options)
     end
   end
 
@@ -160,21 +135,15 @@ params = {}
 #  end
 
   #
-  # setup I18n if params has this information
+  # setup I18n if options has this information
   #
   def prepare_i18n
     I18n.locale = params[:language].to_sym if params[:language]
   end
 
-  #
-  # raise a rescue action with forbidden status
-  #
-  def active_rest_deny_access
-  end
-
   private
 
-  TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE'].to_set
+  TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE', 'y', 'yes', 'Y', 'YES', :true, :t].to_set
   def is_true?(val)
     TRUE_VALUES.include?(val)
   end
@@ -192,8 +161,8 @@ params = {}
   #
   # model name to underscore, even when namespaced
   #
-  def target_model_to_underscore
-    target_model.to_s.underscore.gsub(/\//, '_')
+  def model_symbol
+    model.to_s.underscore.gsub(/\//, '_')
   end
 
   #
@@ -209,7 +178,7 @@ params = {}
     find_options = {}
     find_options[:select] = select unless select.blank?
     find_options[:joins] = joins unless joins.blank?
-    @target = target_model.find(tid, find_options)
+    @target = model.find(tid, find_options)
   end
 
   #
@@ -238,7 +207,7 @@ params = {}
 #      end
 
 #      # 3^ detect has_many through associations (in that case try to use the right finder)
-#      hmt_habtm_finder = ActiveRest::Helpers::Routes::Mapper.has_many_through_or_habtm?(target_model, params)
+#      hmt_habtm_finder = ActiveRest::Helpers::Routes::Mapper.has_many_through_or_habtm?(model, params)
 
 #      if hmt_habtm_finder
 ######FIXME
@@ -256,8 +225,8 @@ params = {}
     params.each do |p|
       if p[0].match(/.*_id$/)
         lookup_for_polymorphic_association(p) { |param_id|
-          params[target_model_to_underscore][ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s][:foreign_type]] = ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_model]
-          params[target_model_to_underscore][ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_primary_key]] = p[1]
+          params[model_symbol][ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[model.to_s][:foreign_type]] = ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_model]
+          params[model_symbol][ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_primary_key]] = p[1]
         }
       end
     end
@@ -267,7 +236,7 @@ params = {}
   # avoid any action that can modify the record or change the table
   #
   def check_read_only
-    raise MethodNotAllowed if target_model_read_only && request.method != 'GET'
+    raise MethodNotAllowed if options[:read_only] && request.method != 'GET'
   end
 
 
@@ -289,11 +258,11 @@ params = {}
   # associa i campi specificati, usa i nomi specificati
   #
   def parse_joins
-    join_options = model_options.has_key?(:join) ? model_options[:join] : {}
+    join_options = options.has_key?(:join) ? options[:join] : {}
 
     # any unknown reflection will be ignored
     joins = join_options.keys.select do | j |
-      join_options[j] && target_model.reflections.has_key?(j.to_sym)
+      join_options[j] && model.reflections.has_key?(j.to_sym)
     end if join_options
 
     parsed = {}
@@ -302,8 +271,8 @@ params = {}
       fields = []
       join = join_options[reflection_key].is_a?(Symbol) || join_options[reflection_key].is_a?(String) ? [join_options[reflection_key]] : join_options[reflection_key]
 
-      table_name = target_model.reflections[reflection_key].class_name.constantize.table_name
-      quoted_table_name = target_model.connection.quote_table_name(table_name)
+      table_name = model.reflections[reflection_key].class_name.constantize.table_name
+      quoted_table_name = model.connection.quote_table_name(table_name)
 
       #puts "JOIN OPTIONS  --> #{join.inspect}"
       if join.is_a?(Array)
@@ -311,14 +280,14 @@ params = {}
         # { :users => [:name] }
         #
         join.each do | f |
-            parsed["#{quoted_table_name}.#{target_model.connection.quote_column_name(f.to_s)}"] = target_model.connection.quote_column_name("#{reflection_key.to_s}_#{f.to_s}")
+            parsed["#{quoted_table_name}.#{model.connection.quote_column_name(f.to_s)}"] = model.connection.quote_column_name("#{reflection_key.to_s}_#{f.to_s}")
         end
       elsif join.is_a?(Hash) && !join.empty?
         #
         # { :users => { :name => 'user_name' } } # this permit field name rewriting
         #
         join.each do | f, f1 |
-            parsed["#{quoted_table_name}.#{target_model.connection.quote_column_name(f.to_s)}"] = target_model.connection.quote_column_name(f1.to_s)
+            parsed["#{quoted_table_name}.#{model.connection.quote_column_name(f.to_s)}"] = model.connection.quote_column_name(f1.to_s)
         end
       else
         #
@@ -326,8 +295,8 @@ params = {}
         # { :users => [:name], :contacts => true } # array
         # { :users => :name, :contacts => true } # string
         #
-        target_model.reflections[reflection_key].klass.column_names.each do | f |
-            parsed["#{quoted_table_name}.#{target_model.connection.quote_column_name(f.to_s)}"] = target_model.connection.quote_column_name("#{reflection_key.to_s}_#{f.to_s}")
+        model.reflections[reflection_key].klass.column_names.each do | f |
+            parsed["#{quoted_table_name}.#{model.connection.quote_column_name(f.to_s)}"] = model.connection.quote_column_name("#{reflection_key.to_s}_#{f.to_s}")
         end
       end
     end
@@ -342,7 +311,7 @@ params = {}
       "#{a} AS #{b}"
     end
 
-    select = "#{target_model.quoted_table_name}.*, #{ select.join(', ') }" unless select.nil? || select.empty?
+    select = "#{model.quoted_table_name}.*, #{ select.join(', ') }" unless select.nil? || select.empty?
 
     return [joins,select]
   end

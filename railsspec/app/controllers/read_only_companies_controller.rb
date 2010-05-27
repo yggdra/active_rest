@@ -1,5 +1,5 @@
 
-class CompaniesReadOnlyController < ApplicationController
+class ReadOnlyCompaniesController < ApplicationController
   include ActiveRest::Controller
 
   layout false

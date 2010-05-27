@@ -63,7 +63,7 @@ module Controller
     #
 
     def index
-      respond_with(@targets) do |format|
+      respond_with(@targets, :root => model_symbol.pluralize) do |format|
         yield(format) if block_given?
       end
     end
@@ -79,7 +79,7 @@ module Controller
 
     # GET /target/new
     def new(&blk)
-      @target = target_model.new
+      @target = model.new
 
       respond_with(@target) do |format|
         yield(format) if block_given?
@@ -89,16 +89,15 @@ module Controller
 
 
     # POST /targets
-    # if parameter '_only_validation' is present only validation actions will be runned;
-    # see ActiveRest::Controller::Actions::Validations
+  # if parameter '_only_validation' is present only validation actions will be ran
     def create(&blk)
       saved = false
 
       begin
         send(rest_xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
-          @target = target_model.new
-          @target.send(:attributes=, params[target_model_to_underscore], guard_protected_attributes)
+          @target = model.new
+          @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
           saved = @target.save!
         end
       rescue ActiveRecord::RecordInvalid
@@ -131,14 +130,13 @@ module Controller
     alias ar_edit edit
 
     # PUT /target/1
-    # if parameter '_only_validation' is present only validation actions will be runned;
-    # see ActiveRest::Controller::Actions::Validations
+    # if parameter '_only_validation' is present only validation actions will be ran
     def update(&blk)
       saved = false
       begin
         send(rest_xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
-          @target.send(:attributes=, params[target_model_to_underscore], guard_protected_attributes)
+          @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
           saved = @target.save!
         end
       rescue ActiveRecord::RecordInvalid => ex
@@ -170,7 +168,7 @@ module Controller
 
       respond_to do |format|
         format.html {
-          flash[:notice] = '#{target_model.to_s.underscore} was successfully destroyed.'
+          flash[:notice] = '#{model.to_s.underscore} was successfully destroyed.'
           redirect_to :action => :index
         }
 
@@ -194,7 +192,7 @@ module Controller
         }
 
         # 202 Accepted
-        format.xml { render :xml => @target.to_xml(:root => target_model_to_underscore), :status => status }
+        format.xml { render :xml => @target.to_xml(:root => model_symbol), :status => status }
         format.yaml { render :text => @target.to_yaml, :status => status }
         format.json { render :json => @target, :status => status }
         yield format if block_given?
@@ -205,7 +203,7 @@ module Controller
     def write_action_error_response
       respond_to do |format|
         format.html {
-          flash[:notice] = '#{target_model.to_s.underscore} was unable to save. Some errors occured.'
+          flash[:notice] = '#{model.to_s.underscore} was unable to save. Some errors occured.'
           render :action => :new
         }
 
@@ -213,7 +211,7 @@ module Controller
         format.xml {
           render :xml => {
                    :success => false,
-                   :errors => build_response(target_model_to_underscore, @target.errors) }.to_xml,
+                   :errors => build_response(model_symbol, @target.errors) }.to_xml,
                  :status => :not_acceptable
         }
 
@@ -225,7 +223,7 @@ module Controller
         format.json {
           render :json => {
                    :success => false,
-                   :errors => build_response(target_model_to_underscore, @target.errors) }.to_json,
+                   :errors => build_response(model_symbol, @target.errors) }.to_json,
                    :status => :not_acceptable
         }
 

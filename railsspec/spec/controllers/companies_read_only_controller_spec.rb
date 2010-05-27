@@ -5,7 +5,7 @@ require 'assert2/xhtml'
 #
 # CONTROLLER IN READ ONLY MODE
 #
-describe CompaniesReadOnlyController do
+describe ReadOnlyCompaniesController do
 
   before(:each) do
     @c1 = Factory(:company_1)
@@ -18,7 +18,7 @@ describe CompaniesReadOnlyController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         company {
           id_ 1, :type => :integer
           name_ 'big_corp'

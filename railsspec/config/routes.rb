@@ -9,11 +9,11 @@ Railsspec::Application.routes.draw do |map|
   aresources :contacts do
   end
 
-  aresources :companies_transaction do
+  aresources :transaction_companies do
 #, :model => Company
   end
 
-  aresources :companies_read_only do
+  aresources :read_only_companies do
 #, :model => Company
   end
 #

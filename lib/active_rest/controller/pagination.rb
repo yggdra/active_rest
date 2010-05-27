@@ -70,7 +70,7 @@ module Controller
     end
 
     def get_pagination_relation
-      return target_model.limit(@pagination[:limit]).offset(@pagination[:offset])
+      return model.limit(@pagination[:limit]).offset(@pagination[:offset])
     end
 
     private
@@ -113,13 +113,13 @@ module Controller
 #      column = reflection.primary_key_name
 #
 #      # dot79 - populate criteria only if we found the field
-#      if target_model.column_names.include?(column)
-#        cond = " #{target_model.quoted_table_name}.#{target_model.connection.quote_column_name(column)} = :#{column} "
+#      if model.column_names.include?(column)
+#        cond = " #{model.quoted_table_name}.#{model.connection.quote_column_name(column)} = :#{column} "
 #        criteria[column.to_sym] = params[parent_id.key]
 #
 #        if (reflection_as)
 #          key = "#{reflection_as}_type"
-#          cond += " AND #{target_model.quoted_table_name}.#{target_model.connection.quote_column_name(key)} = :#{key} "
+#          cond += " AND #{model.quoted_table_name}.#{model.connection.quote_column_name(key)} = :#{key} "
 #          criteria[key.to_sym] = parent_model.to_s #class_name
 #        end
 #
@@ -147,13 +147,13 @@ module Controller
 #        if p[0].match(/.*_id$/)
 #          begin
 #            reflection = p[0].sub('_id', '').to_sym
-#            cond = " #{target_model.reflections[reflection].options[:foreign_key] || target_model.reflections[reflection].primary_key_name}=:#{p[0]} "
+#            cond = " #{model.reflections[reflection].options[:foreign_key] || model.reflections[reflection].primary_key_name}=:#{p[0]} "
 #            criteria[eval(":#{p[0]}")] = p[1]
 #          rescue
 #            # there_is a foobar_id field but it's not a clear reflection
 #            # let's see if it is a polymorphic association
 #            cond, criteria = lookup_for_polymorphic_association(p) { |param_id|
-#              cond = " #{ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s][:foreign_type]}=:association_foreign_type AND #{ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_primary_key]}=:association_foreing_key "
+#              cond = " #{ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[model.to_s][:foreign_type]}=:association_foreign_type AND #{ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_primary_key]}=:association_foreing_key "
 #              criteria = {
 #              :association_foreign_type => ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_model],
 #              :association_foreing_key => p[1]
@@ -173,8 +173,8 @@ module Controller
     # and information collected during bootstrap process in routes declaration
     #
 #    def lookup_for_polymorphic_association(p)
-#      if ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s]
-#        param_id = '%s_%s' % [ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[target_model.to_s][:reflection], p[0]]
+#      if ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[model.to_s]
+#        param_id = '%s_%s' % [ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[model.to_s][:reflection], p[0]]
 #        if ActiveRest::Helpers::Routes::Mapper::AS.has_key?(param_id)
 #          yield param_id if block_given?
 #        else
@@ -189,14 +189,14 @@ module Controller
     # get pagination state from session
     #
     def load_pagination_state
-      @pagination = session["#{target_model.to_s.pluralize.underscore}_pagination"] || {}
+      @pagination = session["#{model.to_s.pluralize.underscore}_pagination"] || {}
     end
 
     #
     # save pagination state to session
     #
     def save_pagination_state
-      session["#{target_model.to_s.pluralize.underscore}_pagination"] = @pagination
+      session["#{model.to_s.pluralize.underscore}_pagination"] = @pagination
     end
   end
 

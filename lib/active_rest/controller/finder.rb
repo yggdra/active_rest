@@ -132,11 +132,11 @@ module Controller
     def get_finder_relation
 
       if params[:_filter]
-        expr = Expression.from_json(params[:_filter], target_model)
-        cond = expr.to_arel(target_model)
+        expr = Expression.from_json(params[:_filter], model)
+        cond = expr.to_arel(model)
       end
 
-      return target_model.where(cond)
+      return model.where(cond)
 
 
 ##      options = {
@@ -145,7 +145,7 @@ module Controller
 ##        :criteria_parent => criteria_parent,
 ##        :order_parent => order_parent,
 ##        :joins => {:reflections => joins[0], :fields => joins[1]},
-##        :target_model_to_underscore => target_model_to_underscore,
+##        :model_symbol => model_symbol,
 ##        :polymorphic => index_options.has_key?(:polymorphic) ? index_options[:polymorphic] : []
 ##        # add here other options that can be setted per controller
 ##      }

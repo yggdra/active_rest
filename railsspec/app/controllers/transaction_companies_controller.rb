@@ -1,4 +1,4 @@
-class CompaniesTransactionController < ApplicationController
+class TransactionCompaniesController < ApplicationController
   include ActiveRest::Controller
 
   layout false
@@ -6,7 +6,7 @@ class CompaniesTransactionController < ApplicationController
   rest_transaction_handler :xact_handler
 
   def xact_handler
-    target_model.transaction do
+    model.transaction do
       yield
     end
   end

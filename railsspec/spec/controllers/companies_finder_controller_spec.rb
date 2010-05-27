@@ -25,7 +25,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         without! { company { name_ 'big_corp' } }
         company { name_ 'compuglobal' }
         company { name_ 'newerOS' }
@@ -40,7 +40,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         without! { company { name_ 'big_corp' } }
         company { name_ 'compuglobal' }
         company { name_ 'newerOS' }
@@ -55,7 +55,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         company { name_ 'big_corp' }
         without! { company { name_ 'compuglobal' } }
         without! { company { name_ 'newerOS' } }
@@ -70,7 +70,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         company { name_ 'big_corp' }
         without! { company { name_ 'compuglobal' } }
         without! { company { name_ 'newerOS' } }
@@ -85,7 +85,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         without! { company { name_ 'big_corp' } }
         company { name_ 'compuglobal' }
         without! { company { name_ 'newerOS' } }
@@ -100,7 +100,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         company { name_ 'big_corp' }
         without! { company { name_ 'compuglobal' } }
         company { name_ 'newerOS' }
@@ -115,7 +115,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         without! { company }
       }
     }
@@ -129,7 +129,7 @@ describe CompaniesController do
 #    response.should be_success
 #
 #    response.body.should be_xml_with {
-#      company(:type => :array) {
+#      companies(:type => :array) {
 #        company { name_ 'big_corp' }
 #        company { name_ 'compuglobal' }
 #        company { name_ 'newerOS' }
@@ -144,7 +144,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         company { name_ 'big_corp' }
         without! { company { name_ 'compuglobal' } }
         company { name_ 'newerOS' }
@@ -160,7 +160,7 @@ describe CompaniesController do
 #    response.should be_success
 #
 #    response.body.should be_xml_with {
-#      company(:type => :array) {
+#      companies(:type => :array) {
 #        without! { company { name_ 'big_corp' } }
 #        company { name_ 'compuglobal' }
 #        without! { company { name_ 'newerOS' } }
@@ -176,7 +176,7 @@ describe CompaniesController do
 #    response.should be_success
 #
 #    response.body.should be_xml_with {
-#      company(:type => :array) {
+#      companies(:type => :array) {
 #        without! { company { name_ 'big_corp' } }
 #        company { name_ 'compuglobal' }
 #        without! { company { name_ 'newerOS' } }
@@ -197,7 +197,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         company { name_ 'big_corp' }
         company { name_ 'compuglobal' }
         without! { company { name_ 'newerOS' } }
@@ -238,7 +238,7 @@ end
 #    response.should include_text('<users-name type="">' + users(:maggie_simpson).name + '</users-name>')
 #  end
 #
-#  it 'should fallback to target_model field correctly (1)' do
+#  it 'should fallback to model field correctly (1)' do
 #    get :index, :format => 'xml', :_filter => "[[id,gt,2]]"
 #
 #    response.should be_success
@@ -252,7 +252,7 @@ end
 #  end
 #
 #
-#  it 'should fallback to target_model field correctly (2)' do
+#  it 'should fallback to model field correctly (2)' do
 #    get :index, :format => 'xml', :_filter => "[['company[id]',gt,2]]"
 #
 #    response.should be_success
@@ -265,7 +265,7 @@ end
 #    response.should include_text('<users-name type="">' + users(:bart_simpson).name + '</users-name>')
 #  end
 #
-#  it 'should fallback to target_model field correctly (2)' do
+#  it 'should fallback to model field correctly (2)' do
 #    get :index, :format => 'xml', :_filter => "[['users_id',gt,2]]"
 #
 #    #puts response.body

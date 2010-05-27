@@ -68,7 +68,7 @@ describe CompaniesController do
     response.should be_success
 
     response.body.should be_xml_with {
-      company(:type => :array) {
+      companies(:type => :array) {
         company {
           city 'NY'
           id_ 1, :type => :integer

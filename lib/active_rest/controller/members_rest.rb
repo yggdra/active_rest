@@ -22,11 +22,11 @@ module Controller
     private
 
     def member_model(member_name)
-      target_model.reflections[member_name.to_sym].class_name.constantize
+      model.reflections[member_name.to_sym].class_name.constantize
     end
 
-    def member_model_to_underscore(member_name)
-      tamrget_model.reflections[member_name.to_sym].class_name.underscore.gsub(/\//, '_')
+    def member_model_symbol(member_name)
+      model.reflections[member_name.to_sym].class_name.underscore.gsub(/\//, '_')
     end
 
     # GET /target/1/member
@@ -57,7 +57,7 @@ module Controller
 
       begin
         member_model(member_name).transaction do
-          @member = member_model(member_name).new(params[member_model_to_underscore(member_name)])
+          @member = member_model(member_name).new(params[member_model_symbol(member_name)])
           @target.send("#{member_name}=".to_sym, @member)
           saved = @target.save!
           @target.reload
@@ -101,7 +101,7 @@ module Controller
       saved = false
       begin
         member_model(member_name).transaction do
-          saved = @member.update_attributes!(params[member_model_to_underscore(member_name)])
+          saved = @member.update_attributes!(params[member_model_symbol(member_name)])
           @member.reload
         end
       rescue ActiveRecord::RecordInvalid => ex
@@ -136,7 +136,7 @@ module Controller
         @member.destroy
         respond_to do |format|
           format.html {
-            flash[:notice] = '#{member_model_to_underscore(member_name)} was successfully destroyed.'
+            flash[:notice] = '#{member_model_symbol(member_name)} was successfully destroyed.'
             redirect_to :action => :index
           }
           # 200 - Ok
@@ -152,12 +152,12 @@ module Controller
     def member_output(association, member_name)
       respond_to do |format|
         format.html
-        format.xml { render :xml => [@member].to_xml(:root => member_model_to_underscore(member_name)) } ## see above note
+        format.xml { render :xml => [@member].to_xml(:root => member_model_symbol(member_name)) } ## see above note
         format.yaml { render :text => target.to_yaml }
         format.json { render :json => @member }
         format.jsone {
-          root = member_model_to_underscore(member_name)
-          render :json => { :ns => member_model_to_underscore(member_name), root => @member, :success => true }
+          root = member_model_symbol(member_name)
+          render :json => { :ns => member_model_symbol(member_name), root => @member, :success => true }
         }
       end
     end
@@ -172,14 +172,14 @@ module Controller
         }
 
         # 201 Created
-        format.xml { render :xml => @member.to_xml(:root => member_model_to_underscore(member_name)), :status => status }
+        format.xml { render :xml => @member.to_xml(:root => member_model_symbol(member_name)), :status => status }
         format.json { render :json => @member, :status => status }
         format.yaml { render :text => @member.to_yaml, :status => status }
 
         # extjs prevede come risposte a create o update di usare il namespace, non 'data' come root per la risposta...
         format.jsone {
-          root = member_model_to_underscore(member_name)
-          render :json => { :ns => member_model_to_underscore(member_name), root => @member.attributes, :success => true },
+          root = member_model_symbol(member_name)
+          render :json => { :ns => member_model_symbol(member_name), root => @member.attributes, :success => true },
                  :status => status
         }
       end
@@ -188,14 +188,14 @@ module Controller
     def member_write_action_error_respnse(member_name)
       respond_to do |format|
         format.html {
-          flash[:notice] = '#{member_model_to_underscore(member_name)} was unable to save. Some errors occured.'
+          flash[:notice] = '#{member_model_symbol(member_name)} was unable to save. Some errors occured.'
           render :action => :edit
         }
         # 406 Not acceptable
         format.xml {
           render :xml => {
                    :success => false,
-                   :errors => build_response(member_model_to_underscore(member_name), @member.errors) }.to_xml,
+                   :errors => build_response(member_model_symbol(member_name), @member.errors) }.to_xml,
                  :status => :not_acceptable
         }
 
@@ -204,14 +204,14 @@ module Controller
         format.json {
           render :json => {
                    :success => false,
-                   :errors => build_response(member_model_to_underscore(member_name), @member.errors) }.to_json,
+                   :errors => build_response(member_model_symbol(member_name), @member.errors) }.to_json,
                  :status => :not_acceptable
         }
 
         format.jsone {
           render :json => {
                    :success => false,
-                   :errors => build_response(member_model_to_underscore(member_name), @member.errors) }.to_json,
+                   :errors => build_response(member_model_symbol(member_name), @member.errors) }.to_json,
                  :status => :not_acceptable
         }
       end

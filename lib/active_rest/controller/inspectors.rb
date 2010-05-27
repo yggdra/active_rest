@@ -32,9 +32,9 @@ module Controller
     def schema(&blk)
 
       @schema = {
-        :type => target_model.name,
-        :type_symbolized => target_model_to_underscore,
-        :attributes => Hash[*target_model.columns.collect { |x|
+        :type => model.name,
+        :type_symbolized => model_symbol,
+        :attributes => Hash[*model.columns.collect { |x|
           [x.name, {
             :type => x.type,
             :primary => x.primary,
@@ -47,12 +47,12 @@ module Controller
         }.flatten]
       }
 
-      if target_model.respond_to?(:ordered_attributes)
-        if target_model.attribute_groups.has_key?(:virtual_attributes)
+      if model.respond_to?(:ordered_attributes)
+        if model.attribute_groups.has_key?(:virtual_attributes)
 
-          target_model.ordered_attributes(:virtual_attributes).each do |v|
-            type = target_model.attr_type(v)
-            search = target_model.attr_search(v)
+          model.ordered_attributes(:virtual_attributes).each do |v|
+            type = model.attr_type(v)
+            search = model.attr_search(v)
             @schema[v] = {
               :name => v,
               :type => (type.nil?) ? :string : type,
@@ -66,7 +66,7 @@ module Controller
         end
       end
 
-      target_model.reflections.each { |name, reflection|
+      model.reflections.each { |name, reflection|
         case reflection.macro
         when :composed_of
           @schema[name] = {

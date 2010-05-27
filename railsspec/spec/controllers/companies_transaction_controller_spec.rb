@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'assert2/xhtml'
 
-describe CompaniesTransactionController do
+describe TransactionCompaniesController do
 
   before(:each) do
   end

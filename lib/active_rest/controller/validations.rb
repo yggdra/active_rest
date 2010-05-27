@@ -44,9 +44,9 @@ module Controller
     #
 
     def validate_create(&blk)
-      target = target_model.new
+      target = model.new
       guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
-      target.send(:attributes=, params[target_model_to_underscore], guard_protected_attributes)
+      target.send(:attributes=, params[model_symbol], guard_protected_attributes)
 
       validation_response(target)
     end
@@ -54,7 +54,7 @@ module Controller
     def validate_update(&blk)
       find_target
       guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
-      @target.send(:attributes=, params[target_model_to_underscore], guard_protected_attributes)
+      @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
 
       validation_response(target)
     end
@@ -72,21 +72,21 @@ module Controller
           format.xml {
             render :xml => {
                 :success => valid,
-                :errors => build_response(target_model_to_underscore, target.errors) }.to_xml,
+                :errors => build_response(model_symbol, target.errors) }.to_xml,
               :status => status
           }
 
           format.yaml {
             render :text => {
                 :success => valid,
-                :errors => build_response(target_model_to_underscore, target.errors) }.to_yaml,
+                :errors => build_response(model_symbol, target.errors) }.to_yaml,
               :status => status
           }
 
           format.json {
             render :json => {
                 :success => valid,
-                :errors => build_response(target_model_to_underscore, target.errors) }.to_json,
+                :errors => build_response(model_symbol, target.errors) }.to_json,
               :status => status
           }
 
@@ -119,7 +119,7 @@ module Controller
     #
     def check_validation_action
       if is_true?(params[:_only_validation])
-        redirect_to :action => 'validate_' + action_name
+        send 'validate_' + action_name
       end
     end
 
