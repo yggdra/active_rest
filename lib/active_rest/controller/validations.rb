@@ -43,7 +43,7 @@ module Controller
     # end
     #
 
-    def validate_create(&blk)
+    def validate_create
       target = model.new
       guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
       target.send(:attributes=, params[model_symbol], guard_protected_attributes)
@@ -51,7 +51,7 @@ module Controller
       validation_response(target)
     end
 
-    def validate_update(&blk)
+    def validate_update
       find_target
       guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
       @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
@@ -61,7 +61,7 @@ module Controller
 
     private
 
-    def validation_response(target)
+    def validation_response(target, &blk)
       valid = target.valid?
       status = valid ? :accepted : :not_acceptable
 
