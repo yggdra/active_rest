@@ -237,7 +237,7 @@ module Controller
                 @targets.length < ActiveRest::Controller.config.default_page_size
 
       # DEFAULT
-      cache_file_name =  UUID.timestamp_create.to_s
+      cache_file_name =  UUID.random_create.to_s
       #cache_file_name = Digest::MD5.hexdigest(request.env['REMOTE_ADDR']+'_'+request.env['REQUEST_URI'])
       #cache_file_name += '.'+params[:format] if params[:format]
       cache_full_path_file_name = File.join(ActiveRest::Controller.config.cache_path, cache_file_name)
