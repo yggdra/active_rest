@@ -82,15 +82,12 @@ module Controller
         end
       }
 
-      respond_to do |format|
-        format.html { render :template => 'active_rest/schema' }
-        format.xml { render :xml => @schema.to_xml, :status => :ok }
-        format.json { render :json => @schema.to_json, :status => :ok }
-        format.jsone { render :json => @schema.to_json, :status => :ok }
-        format.yaml { render :yaml => @schema.to_yaml, :status => :ok }
-        blk.call(format) if blk
+      respond_with(@schema) do |format|
+        yield(format) if block_given?
       end
     end
+    alias ar_schema schema
+
   end
 
 end
