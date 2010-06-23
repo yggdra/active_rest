@@ -143,7 +143,7 @@ module Controller
           format.xml { head :status => :ok }
           format.yaml { head :status => :ok }
           format.json { head :status => :ok }
-          format.jsone { render :json => { :success => true }, :status => :ok }
+          format.jsone { render :json => { }, :status => :ok }
           blk.call(format) if blk
         end
       end
@@ -157,7 +157,7 @@ module Controller
         format.json { render :json => @member }
         format.jsone {
           root = member_model_symbol(member_name)
-          render :json => { :ns => member_model_symbol(member_name), root => @member, :success => true }
+          render :json => { :ns => member_model_symbol(member_name), root => @member }
         }
       end
     end
@@ -179,7 +179,10 @@ module Controller
         # extjs prevede come risposte a create o update di usare il namespace, non 'data' come root per la risposta...
         format.jsone {
           root = member_model_symbol(member_name)
-          render :json => { :ns => member_model_symbol(member_name), root => @member.attributes, :success => true },
+          render :json => {
+                   :ns => member_model_symbol(member_name),
+                   root => @member.attributes
+                 },
                  :status => status
         }
       end
@@ -194,8 +197,8 @@ module Controller
         # 406 Not acceptable
         format.xml {
           render :xml => {
-                   :success => false,
-                   :errors => build_response(member_model_symbol(member_name), @member.errors) }.to_xml,
+                   :errors => build_response(member_model_symbol(member_name), @member.errors)
+                 }.to_xml,
                  :status => :not_acceptable
         }
 
@@ -203,15 +206,15 @@ module Controller
 
         format.json {
           render :json => {
-                   :success => false,
-                   :errors => build_response(member_model_symbol(member_name), @member.errors) }.to_json,
+                   :errors => build_response(member_model_symbol(member_name), @member.errors)
+                 }.to_json,
                  :status => :not_acceptable
         }
 
         format.jsone {
           render :json => {
-                   :success => false,
-                   :errors => build_response(member_model_symbol(member_name), @member.errors) }.to_json,
+                   :errors => build_response(member_model_symbol(member_name), @member.errors)
+                 }.to_json,
                  :status => :not_acceptable
         }
       end

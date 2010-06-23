@@ -210,8 +210,8 @@ module Controller
         # 406 Not acceptable
         format.xml {
           render :xml => {
-                   :success => false,
-                   :errors => build_response(model_symbol, @target.errors) }.to_xml,
+                   :errors => build_response(model_symbol, @target.errors)
+                 }.to_xml,
                  :status => :not_acceptable
         }
 
@@ -222,9 +222,9 @@ module Controller
 
         format.json {
           render :json => {
-                   :success => false,
-                   :errors => build_response(model_symbol, @target.errors) }.to_json,
-                   :status => :not_acceptable
+                   :errors => build_response(model_symbol, @target.errors)
+                 }.to_json,
+                 :status => :not_acceptable
         }
 
         yield format if block_given?
