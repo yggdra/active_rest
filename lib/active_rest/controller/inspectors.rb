@@ -32,11 +32,11 @@ module Controller
     def schema(&blk)
 
       @schema = {
-        :type => model.name,
-        :type_symbolized => model_symbol,
-        :attributes => Hash[*model.columns.collect { |x|
+        :_type => model.name,
+        :_type_symbolized => model_symbol,
+        :_attrs => Hash[*model.columns.collect { |x|
           [x.name, {
-            :type => x.type,
+            :type => map_column_type(x.type),
             :primary => x.primary,
             :null => x.null,
             :default => x.default,
@@ -71,13 +71,11 @@ module Controller
         when :composed_of
           @schema[name] = {
             :type => reflection.macro,
-            :entries => []
           }
         else
           @schema[name] = {
             :type => reflection.macro,
             :embedded => !!(reflection.options[:embedded]),
-            :entries => []
           }
         end
       }
@@ -88,6 +86,16 @@ module Controller
     end
     alias ar_schema schema
 
+    private
+
+    def map_column_type(type)
+      case type
+      when :datetime
+        :timestamp
+      else
+        type
+      end
+    end
   end
 
 end
