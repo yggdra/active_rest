@@ -63,7 +63,7 @@ module Controller
     #
 
     def index
-      respond_with(@targets, :root => model_symbol.pluralize) do |format|
+      respond_with(@targets, :total => @count) do |format|
         yield(format) if block_given?
       end
     end
