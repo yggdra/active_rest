@@ -63,32 +63,15 @@ module Controller
 
     def validation_response(target, &blk)
       valid = target.valid?
+      status = target.valid? ? :accepted : :not_acceptable
 
       if is_true?(params[:_suppress_response])
         render :nothing => true, :status => status
       else
         respond_to do | format |
-          format.xml {
-            render :xml => {
-                     :errors => build_response(model_symbol, target.errors)
-                   }.to_xml,
-                   :status => status
-          }
-
-          format.yaml {
-            render :text => {
-                     :errors => build_response(model_symbol, target.errors)
-                   }.to_yaml,
-                   :status => status
-          }
-
-          format.json {
-            render :json => {
-                     :errors => build_response(model_symbol, target.errors)
-                   }.to_json,
-                   :status => status
-          }
-
+          format.xml { render :xml => { :errors => build_response(model_symbol, target.errors) }.to_xml, :status => status }
+          format.yaml { render :text => { :errors => build_response(model_symbol, target.errors) }.to_yaml, :status => status }
+          format.json { render :json => { :errors => build_response(model_symbol, target.errors) }.to_json, :status => status }
           yield(format, valid, status) if block_given?
         end
       end
