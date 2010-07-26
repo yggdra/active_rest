@@ -42,7 +42,7 @@ module Controller
             :default => x.default,
             :creatable => true,
             :readable => true,
-            :writeable => true
+            :writable => true
           }]
         }.flatten]
       }
@@ -69,18 +69,21 @@ module Controller
       model.reflections.each { |name, reflection|
         case reflection.macro
         when :composed_of
-          @schema[name] = {
+          @schema[:_attrs][name] = {
             :type => reflection.macro,
           }
         else
-          @schema[name] = {
+          @schema[:_attrs][name] = {
             :type => reflection.macro,
             :embedded => !!(reflection.options[:embedded]),
           }
         end
       }
 
-      respond_with(@schema) do |format|
+      respond_to do | format |
+        format.xml { render :xml => @schema.to_xml(:dasherize => false) }
+        format.yaml { render :text => @schema }
+        format.json { render :json => @schema }
         yield(format) if block_given?
       end
     end
