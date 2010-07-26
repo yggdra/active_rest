@@ -69,9 +69,9 @@ module Controller
         render :nothing => true, :status => status
       else
         respond_to do | format |
-          format.xml { render :xml => { :errors => build_response(model_symbol, target.errors) }.to_xml, :status => status }
-          format.yaml { render :text => { :errors => build_response(model_symbol, target.errors) }.to_yaml, :status => status }
-          format.json { render :json => { :errors => build_response(model_symbol, target.errors) }.to_json, :status => status }
+          format.xml { render :xml => { :errors => build_response(model_symbol, target.errors) }, :status => status }
+          format.yaml { render :text => { :errors => build_response(model_symbol, target.errors) }, :status => status }
+          format.json { render :json => { :errors => build_response(model_symbol, target.errors) }, :status => status }
           yield(format, valid, status) if block_given?
         end
       end

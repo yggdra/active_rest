@@ -16,46 +16,59 @@ describe CompaniesController do
 
     response.body.should be_xml_with {
       hash_ {
-        type_ 'Company'
-        send(:'type-symbolized', 'company')
+        _type 'Company'
+        _type_symbolized 'company'
 
-        id {
-          type_ 'integer', :type => :symbol
-          primary true, :type => :boolean
-          null false, :type => :boolean
-          default :nil => :true
-        }
-
-        name {
-          type_ 'string', :type => :symbol
-          primary false, :type => :boolean
-          null false, :type => :boolean
-          default :nil => :true
-        }
-
-        city {
-          type_ 'string', :type => :symbol
-          primary false, :type => :boolean
-          null true, :type => :boolean
-          default :nil => :true
-        }
-
-        street { }
-        zip { }
-        send(:'created-at') { }
-        send(:'updated-at') { }
-
-        users {
-          type_ 'has_many', :type => :symbol
-          embedded false, :type => :boolean
-          entries(:type => :array) {
+        _attrs {
+          id {
+            type_ 'integer', :type => :symbol
+            primary true, :type => :boolean
+            null false, :type => :boolean
+            default :nil => :true
+            creatable true
+            readable true
+            writable true
           }
-        }
 
-        contacts {
-          type_ 'has_many', :type => :symbol
-          embedded false, :type => :boolean
-          entries(:type => :array) {
+          name {
+            type_ 'string', :type => :symbol
+            primary false, :type => :boolean
+            null false, :type => :boolean
+            default :nil => :true
+            creatable true
+            readable true
+            writable true
+          }
+
+          city {
+            type_ 'string', :type => :symbol
+            primary false, :type => :boolean
+            null true, :type => :boolean
+            default :nil => :true
+            creatable true
+            readable true
+            writable true
+          }
+
+          street { }
+          zip { }
+          is_active { }
+
+          created_at { }
+          updated_at { }
+
+          users {
+            type 'has_many', :type => :symbol
+            embedded false, :type => :boolean
+#            entries(:type => :array) {
+#            }
+          }
+
+          contacts {
+            type 'has_many', :type => :symbol
+            embedded false, :type => :boolean
+#            entries(:type => :array) {
+#            }
           }
         }
       }
