@@ -109,7 +109,7 @@ module Controller
         when '<';           return term_a.lt(term_b)
         when '<=';          return term_a.lteq(term_b)
         when '=';           return term_a.eq(term_b)
-        when '<>';          return term_a.not(term_b)
+        when '<>';          return term_a.not_eq(term_b)
         when 'LIKE';        return term_a.matches(term_b)
         when 'IN';          return term_a.in(term_b)
         when 'AND';         return term_a.and(term_b)
