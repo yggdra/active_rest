@@ -1,4 +1,4 @@
-Railsspec::Application.routes.draw do |map|
+Railsspec::Application.routes.draw do
 
   aresources :companies do
   end
