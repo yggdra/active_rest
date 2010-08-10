@@ -69,7 +69,7 @@ module Controller
       end
     end
 
-    def get_pagination_relation
+    def build_pagination_relation
       rel = model.limit(@pagination[:limit]).offset(@pagination[:offset])
       rel = rel.order(@pagination[:sort_field] + ' ' + @pagination[:sort_direction]) if @pagination[:sort_field]
       rel

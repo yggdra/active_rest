@@ -129,28 +129,31 @@ module Controller
     #
     # build options for index search
     #
-    def get_finder_relation
+    def build_finder_relation
 
+      # If a complex filter expression es present, decode and apply it
       if params[:_filter]
-        expr = Expression.from_json(params[:_filter], model)
-        cond = expr.to_arel(model)
+        cond = Expression.from_json(params[:_filter], model).to_arel(model)
+      end
+
+      # For each parameter matching a column name add an equality relation to the conditions
+      params.each do |k,v|
+        next if k =~ /^-/
+
+        if attr = model.scoped.table[k]
+          raise UnknownField, "Unknown field '#{attr}'" if !attr
+
+          if cond
+            cond = cond & attr.eq(v)
+          else
+            cond = attr.eq(v)
+          end
+        end
       end
 
       return model.where(cond)
-
-
-##      options = {
-##        :extra_conditions => extra_conditions.nil? ? {} : extra_conditions,
-##        :condition_parent => condition_parent,
-##        :criteria_parent => criteria_parent,
-##        :order_parent => order_parent,
-##        :joins => {:reflections => joins[0], :fields => joins[1]},
-##        :model_symbol => model_symbol,
-##        :polymorphic => index_options.has_key?(:polymorphic) ? index_options[:polymorphic] : []
-##        # add here other options that can be setted per controller
-##      }
     end
+  end
 
-end
 end
 end

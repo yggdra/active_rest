@@ -49,14 +49,13 @@ module Controller
   def self.included(base)
     base.class_eval do
       class_inheritable_accessor :model
-
       class_inheritable_accessor :options
-
-      class_inheritable_accessor :rest_xact_handler
+      class_inheritable_accessor :xact_handler
+      class_inheritable_accessor :additional_attrs
 
       attr_accessor :target, :targets
 
-      self.rest_xact_handler = :rest_default_transaction_handler
+      self.xact_handler = :rest_default_transaction_handler
 
 #      build_associations_proxies
 
@@ -90,19 +89,49 @@ module Controller
     end
   end
 
+  class Attribute < Hel::PublicModel::Attribute
+    def virtual(type, &block)
+      @type = type
+      @source = block
+      @readable = true
+      @writable = false
+      @creatable = false
+    end
+  end
+
   module ClassMethods
 
     def rest_transaction_handler(method)
-      self.rest_xact_handler = method
+      self.xact_handler = method
     end
 
     def rest_controller_for(model, options = {})
       self.model = model
       self.options = options
+
+      self.additional_attrs = {}
     end
 
     def rest_controller(options = {})
       rest_controller_for(self.controller_name.classify.constantize, options)
+    end
+
+    def attribute(name, &block)
+      attr = Attribute.new(name)
+      attr.instance_eval(&block)
+      self.additional_attrs[name] = attr
+      attr
+    end
+
+    private
+
+    def map_column_type(type)
+      case type
+      when :datetime
+        :timestamp
+      else
+        type
+      end
     end
   end
 
@@ -191,8 +220,8 @@ module Controller
 
     # 1^ prepare basic conditions
 
-    finder_rel = get_finder_relation
-    pagination_rel = get_pagination_relation
+    finder_rel = build_finder_relation
+    pagination_rel = build_pagination_relation
 
 #      # 2^ build joins - some finder may change :select and :joins argument or can clash with them
 #      joins, select = build_joins
