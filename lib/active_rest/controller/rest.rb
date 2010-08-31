@@ -98,7 +98,7 @@ module Controller
       saved = false
 
       begin
-        send(rest_xact_handler) do
+        send(xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
           @target = model.new
           @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
@@ -138,7 +138,7 @@ module Controller
     def update(&blk)
       saved = false
       begin
-        send(rest_xact_handler) do
+        send(xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
           @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
           saved = @target.save!
