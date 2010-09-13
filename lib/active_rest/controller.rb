@@ -51,7 +51,7 @@ module Controller
       class_inheritable_accessor :model
       class_inheritable_accessor :options
       class_inheritable_accessor :xact_handler
-      class_inheritable_accessor :additional_attrs
+      class_inheritable_accessor :attrs
 
       attr_accessor :target, :targets
 
@@ -90,12 +90,30 @@ module Controller
   end
 
   class Attribute < Hel::PublicModel::Attribute
+    attr_accessor :sub_attributes
+
+    def initialize(*args)
+      super(*args)
+      @sub_attributes = {}
+    end
+
     def virtual(type, &block)
+
+      raise 'Double defined attribute' if @type
+
       @type = type
       @source = block
       @readable = true
       @writable = false
       @creatable = false
+    end
+
+    def attribute(name, &block)
+      # TODO Check that attribute is embedded/nested
+
+      @sub_attributes[name] ||= Attribute.new(name)
+      @sub_attributes[name].instance_eval(&block)
+      @sub_attributes[name]
     end
   end
 
@@ -108,8 +126,7 @@ module Controller
     def rest_controller_for(model, options = {})
       self.model = model
       self.options = options
-
-      self.additional_attrs = {}
+      self.attrs = {}
     end
 
     def rest_controller(options = {})
@@ -117,10 +134,9 @@ module Controller
     end
 
     def attribute(name, &block)
-      attr = Attribute.new(name)
-      attr.instance_eval(&block)
-      self.additional_attrs[name] = attr
-      attr
+      self.attrs[name] ||= Attribute.new(name)
+      self.attrs[name].instance_eval(&block)
+      self.attrs[name]
     end
 
     private
