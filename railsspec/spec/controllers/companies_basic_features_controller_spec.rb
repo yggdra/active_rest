@@ -16,38 +16,24 @@ describe CompaniesController do
 
     response.body.should be_xml_with {
       hash_ {
-        _type 'Company'
-        _type_symbolized 'company'
+        type 'Company'
+        type_symbolized 'company'
 
-        _attrs {
+        attrs {
           id {
             type_ 'integer', :type => :symbol
             primary true, :type => :boolean
             null false, :type => :boolean
-            default :nil => :true
-            creatable true
-            readable true
-            writable true
           }
 
           name {
             type_ 'string', :type => :symbol
-            primary false, :type => :boolean
             null false, :type => :boolean
-            default :nil => :true
-            creatable true
-            readable true
-            writable true
           }
 
           city {
             type_ 'string', :type => :symbol
-            primary false, :type => :boolean
             null true, :type => :boolean
-            default :nil => :true
-            creatable true
-            readable true
-            writable true
           }
 
           street { }
@@ -59,17 +45,29 @@ describe CompaniesController do
 
           users {
             type 'has_many', :type => :symbol
-            embedded false, :type => :boolean
-#            entries(:type => :array) {
-#            }
+            members_schema {
+            }
           }
 
           contacts {
             type 'has_many', :type => :symbol
-            embedded false, :type => :boolean
-#            entries(:type => :array) {
-#            }
+            members_schema {
+            }
           }
+        }
+
+        object_actions {
+          read { }
+          write { }
+          delete_ { }
+        }
+
+        class_actions {
+          create { }
+        }
+
+        class_perms {
+          create true
         }
       }
     }
