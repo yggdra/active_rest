@@ -58,9 +58,15 @@ module Controller
     # REST VERBS
     #
 
-    # can be called with the following parameters:
-    # - no_cache: any number will trigger the response cache mechanism
-    #
+    def schema
+      respond_to do |format|
+        format.xml { render :xml => @schema.to_xml(:dasherize => false) }
+        format.yaml { render :text => @schema }
+        format.json { render :json => @schema }
+        yield(format) if block_given?
+      end
+    end
+    alias ar_schema schema
 
     def index
       # Avoid responding with nil-classes when the array is empty
@@ -74,7 +80,7 @@ module Controller
     alias ar_index index
 
     # GET /target/1
-    def show(&blk)
+    def show
       respond_with(@target) do |format|
         yield(format) if block_given?
       end
@@ -82,7 +88,7 @@ module Controller
     alias ar_show show
 
     # GET /target/new
-    def new(&blk)
+    def new
       @target = model.new
 
       respond_with(@target) do |format|
@@ -94,7 +100,7 @@ module Controller
 
     # POST /targets
   # if parameter '_only_validation' is present only validation actions will be ran
-    def create(&blk)
+    def create
       saved = false
 
       begin
@@ -135,7 +141,7 @@ module Controller
 
     # PUT /target/1
     # if parameter '_only_validation' is present only validation actions will be ran
-    def update(&blk)
+    def update
       saved = false
       begin
         send(xact_handler) do

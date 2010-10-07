@@ -25,7 +25,6 @@ module Controller
   include Pagination # manage pagination
   include Rest # default verbs and actions
   include MembersRest # default verbs and actions
-  include Inspectors # extra default actions
   include Validations # contains validation actions
 
   @config = OpenStruct.new(
@@ -69,6 +68,7 @@ module Controller
       before_filter :prepare_i18n
       before_filter :find_target, :only => [ :show, :edit, :update, :destroy, :validate_update ] # 1 resource?
       before_filter :find_targets, :only => [ :index ] # find all resources ?
+      before_filter :prepare_schema, :only => :schema
 
       base.append_after_filter :x_sendfile, :only => [ :index ]
 
@@ -89,7 +89,7 @@ module Controller
     end
   end
 
-  class Attribute < Hel::PublicModel::Attribute
+  class Attribute < Model::Attribute
     attr_accessor :sub_attributes
 
     def initialize(*args)
@@ -103,9 +103,6 @@ module Controller
 
       @type = type
       @source = block
-      @readable = true
-      @writable = false
-      @creatable = false
     end
 
     def attribute(name, &block)
@@ -114,6 +111,20 @@ module Controller
       @sub_attributes[name] ||= Attribute.new(name)
       @sub_attributes[name].instance_eval(&block)
       @sub_attributes[name]
+    end
+
+    def definition
+      res = super
+
+      if !sub_attributes.empty?
+        res[:members_schema] ||= {}
+        sub_attributes.each do |k,v|
+          res[:members_schema][:attrs] ||= {}
+          res[:members_schema][:attrs][k] = v.definition
+        end
+      end
+
+      res
     end
   end
 
@@ -215,14 +226,14 @@ module Controller
   # into a object ruleset, return an hash
   #
   def find_target(options={})
-    joins, select = build_joins
+#    joins, select = build_joins
 
     tid = options[:id] || params[:id]
     options.delete(:id)
 
     find_options = {}
-    find_options[:select] = select unless select.blank?
-    find_options[:joins] = joins unless joins.blank?
+#    find_options[:select] = select unless select.blank?
+#    find_options[:joins] = joins unless joins.blank?
     @target = model.find(tid, find_options)
   end
 
@@ -234,47 +245,17 @@ module Controller
     # Update our pagination state from params[] and session if persistant
     update_pagination_state
 
-    # 1^ prepare basic conditions
+    # prepare relations based on conditions
 
     finder_rel = build_finder_relation
     pagination_rel = build_pagination_relation
 
-#      # 2^ build joins - some finder may change :select and :joins argument or can clash with them
-#      joins, select = build_joins
-#      opts[:select] = select unless select.nil?||select.empty?
-#      opts[:joins] = joins unless joins.nil?||joins.empty?
-#
-#      preprocessor = index_options[:preprocess]
-#      if preprocessor && (preprocessor.is_a?(String) || preprocessor.instance_of?(Module))
-#        preprocessor = preprocessor.constantize if preprocessor.is_a?(String)
-#        preprocessor = preprocessor.to_s.constantize if preprocessor.is_a?(Symbol)
-#        opts = preprocessor::preprocess(opts, :params => params)
-#      end
-
-#      # 3^ detect has_many through associations (in that case try to use the right finder)
-#      hmt_habtm_finder = ActiveRest::Helpers::Routes::Mapper.has_many_through_or_habtm?(model, params)
-
-#      if hmt_habtm_finder
-######FIXME
-#        resources = eval(hmt_habtm_finder+'.find(:all, pagination_and_conditions.dup)') #attention! .dup to avoid :readonly => true ??
-#      else
-        @targets = (finder_rel & pagination_rel).all
-        @count = finder_rel.count
-#      end
+    @targets = (finder_rel & pagination_rel).all
+    @count = finder_rel.count
   end
 
-  #
-  # loop parameters trying to guess polymorphic fields to setup
-  #
-  def prepare_polymorphic_association
-    params.each do |p|
-      if p[0].match(/.*_id$/)
-        lookup_for_polymorphic_association(p) { |param_id|
-          params[model_symbol][ActiveRest::Helpers::Routes::Mapper::POLYMORPHIC[model.to_s][:foreign_type]] = ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_model]
-          params[model_symbol][ActiveRest::Helpers::Routes::Mapper::AS[param_id][:map_to_primary_key]] = p[1]
-        }
-      end
-    end
+  def prepare_schema
+    @schema = model.schema(:additional_attrs => self.attrs)
   end
 
   #
@@ -285,81 +266,6 @@ module Controller
   end
 
 
-  #
-  # parse join if controller declared the option :join => ...
-  #
-  # there are these cases:
-  #
-  # 1) :join => { :genus => [:name] }
-  # this tell to join the class genus and return only the field name
-  #
-  # 2) :join => { :assoc => true }
-  # associa tutti i campi, rimappa i nomi come #{table_name}_#{column_name}
-  #
-  # 3) :join => { :assoc => [:colonna1, :colonna2....] }
-  # associa i campi specificati, rimappa i nomi come #{table_name}_#{column_name}
-  #
-  # 4) :join => { :assoc => { :colonna1 => 'nome1', :colonna2 => 'nome2',.... } }
-  # associa i campi specificati, usa i nomi specificati
-  #
-  def parse_joins
-    join_options = options.has_key?(:join) ? options[:join] : {}
-
-    # any unknown reflection will be ignored
-    joins = join_options.keys.select do | j |
-      join_options[j] && model.reflections.has_key?(j.to_sym)
-    end if join_options
-
-    parsed = {}
-
-    joins.each do | reflection_key |
-      fields = []
-      join = join_options[reflection_key].is_a?(Symbol) || join_options[reflection_key].is_a?(String) ? [join_options[reflection_key]] : join_options[reflection_key]
-
-      table_name = model.reflections[reflection_key].class_name.constantize.table_name
-      quoted_table_name = model.connection.quote_table_name(table_name)
-
-      #puts "JOIN OPTIONS  --> #{join.inspect}"
-      if join.is_a?(Array)
-        #
-        # { :users => [:name] }
-        #
-        join.each do | f |
-            parsed["#{quoted_table_name}.#{model.connection.quote_column_name(f.to_s)}"] = model.connection.quote_column_name("#{reflection_key.to_s}_#{f.to_s}")
-        end
-      elsif join.is_a?(Hash) && !join.empty?
-        #
-        # { :users => { :name => 'user_name' } } # this permit field name rewriting
-        #
-        join.each do | f, f1 |
-            parsed["#{quoted_table_name}.#{model.connection.quote_column_name(f.to_s)}"] = model.connection.quote_column_name(f1.to_s)
-        end
-      else
-        #
-        # { :crap => true, :contacts => true }  # ex. crap does not exist and has been ignored
-        # { :users => [:name], :contacts => true } # array
-        # { :users => :name, :contacts => true } # string
-        #
-        model.reflections[reflection_key].klass.column_names.each do | f |
-            parsed["#{quoted_table_name}.#{model.connection.quote_column_name(f.to_s)}"] = model.connection.quote_column_name("#{reflection_key.to_s}_#{f.to_s}")
-        end
-      end
-    end
-
-    return [joins, parsed]
-  end
-
-  def build_joins
-    joins, select = parse_joins
-
-    select = select.collect do | a, b |
-      "#{a} AS #{b}"
-    end
-
-    select = "#{model.quoted_table_name}.*, #{ select.join(', ') }" unless select.nil? || select.empty?
-
-    return [joins,select]
-  end
 end
 
 end
