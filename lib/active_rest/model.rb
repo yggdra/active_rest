@@ -209,7 +209,7 @@ module Model
         :type => self.to_s,
         :type_symbolized => self.to_s.underscore.gsub(/\//, '_'),
         :attrs => defs,
-        :objec_actions => object_actions,
+        :object_actions => object_actions,
         :class_actions => class_actions,
         :class_perms => class_perms,
       }
