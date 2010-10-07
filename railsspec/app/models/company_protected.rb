@@ -6,6 +6,8 @@
 class CompanyProtected < ActiveRecord::Base
   set_table_name 'active_rest_companies'
 
+  include ActiveRest::Model
+
   has_many :users
   has_many :contacts,:as => :owner
 

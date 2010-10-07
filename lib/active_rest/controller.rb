@@ -49,21 +49,18 @@ module Controller
     base.class_eval do
       class_inheritable_accessor :model
       class_inheritable_accessor :options
-      class_inheritable_accessor :xact_handler
+      class_inheritable_accessor :ar_xact_handler
       class_inheritable_accessor :attrs
 
       attr_accessor :target, :targets
 
-      self.xact_handler = :rest_default_transaction_handler
+      self.ar_xact_handler = :rest_default_transaction_handler
 
 #      build_associations_proxies
 
       # if read only not allow these actions
       prepend_before_filter :check_validation_action, :only => [ :update, :create ] # are we just requiring validations ?
       prepend_before_filter :check_read_only
-
-      # if we get here, chek for polymorphic associations
-      before_filter :prepare_polymorphic_association, :only => :create
 
       before_filter :prepare_i18n
       before_filter :find_target, :only => [ :show, :edit, :update, :destroy, :validate_update ] # 1 resource?
@@ -131,7 +128,7 @@ module Controller
   module ClassMethods
 
     def rest_transaction_handler(method)
-      self.xact_handler = method
+      self.ar_xact_handler = method
     end
 
     def rest_controller_for(model, options = {})

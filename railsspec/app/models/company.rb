@@ -1,4 +1,7 @@
 class Company < ActiveRecord::Base
+
+  include ActiveRest::Model
+
   has_many :users
   has_many :contacts,:as => :owner
 

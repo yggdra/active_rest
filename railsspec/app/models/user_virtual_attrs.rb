@@ -6,6 +6,8 @@
 class UserVirtualAttrs < ActiveRecord::Base
   set_table_name 'active_rest_users'
 
+  include ActiveRest::Model
+
   belongs_to :company
   has_many :contacts,:as => :owner
 

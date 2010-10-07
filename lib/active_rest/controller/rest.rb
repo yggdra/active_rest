@@ -102,9 +102,8 @@ module Controller
   # if parameter '_only_validation' is present only validation actions will be ran
     def create
       saved = false
-
       begin
-        send(xact_handler) do
+        send(ar_xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
           @target = model.new
           @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
@@ -144,7 +143,7 @@ module Controller
     def update
       saved = false
       begin
-        send(xact_handler) do
+        send(ar_xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
           @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
           saved = @target.save!
