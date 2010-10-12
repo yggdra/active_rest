@@ -75,6 +75,14 @@ module Model
       res[:null] = @null
       res[:default] = @default if @default
 
+      res[:edit_on_creation] = true
+      res[:visible_on_creation] = true
+
+      res[:after_creation_perms] = {
+        :write => true,
+        :read => true,
+      }
+
       res
     end
 
@@ -99,10 +107,10 @@ module Model
       res[:embedded] = @embedded if @embedded
 
       if @embedded
-        res[:members_schema] = @model_class.constantize.schema
+        res[:schema] = @model_class.constantize.schema
       else
-        res[:members_schema] = {}
-        res[:members_schema][:type] = @model_class
+        res[:schema] = {}
+        res[:schema][:type] = @model_class
       end
 
       res
@@ -110,6 +118,26 @@ module Model
   end
 
   class CollectionAttribute < StructuredAttribute
+    def definition
+      res = super
+
+      if @embedded
+        res[:members_schema] = @model_class.constantize.schema
+      else
+        res[:members_schema] = {}
+        res[:members_schema][:type] = @model_class
+      end
+
+      res[:edit_on_creation] = true
+      res[:visible_on_creation] = true
+
+      res[:after_creation_perms] = {
+        :write => true,
+        :read => true,
+      }
+
+      res
+    end
   end
 
   def self.included(base)
