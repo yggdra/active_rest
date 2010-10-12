@@ -229,10 +229,14 @@ module Model
 
   def as_json(options = {})
     values = {}
+    perms = {}
 
     attrs.each do |attrname,attr|
       if attr.kind_of?(SimpleAttribute)
         values[attrname] = attr.value(self)
+        perms[attrname] ||= {}
+        perms[attrname][:read] = true
+        perms[attrname][:write] = true
       elsif attr.kind_of?(CollectionAttribute) && attr.embedded
 
         add = {}
@@ -243,6 +247,9 @@ module Model
         end
 
         values[attrname] = attr.value(self).map { |x| x.as_json(add) }
+        perms[attrname] ||= {}
+        perms[attrname][:read] = true
+        perms[attrname][:write] = true
       end
 
     end
@@ -251,6 +258,9 @@ module Model
       options[:additional_attrs].each do |attrname,attr|
         if attr.source
           values[attrname] = attr.value(self).as_json
+          perms[attrname] ||= {}
+          perms[attrname][:read] = true
+          perms[attrname][:write] = true
         end
       end
     end
@@ -261,14 +271,11 @@ module Model
       :delete => true
     }
 
-    attr_perms = {
-    }
-
     res = {
       :_type => self.class.to_s,
       :_type_symbolized => self.class.to_s.underscore.gsub(/\//, '_'),
       :_object_perms => object_perms,
-      :_attr_perms => attr_perms,
+      :_attr_perms => perms,
     }.merge(values)
 
     res
