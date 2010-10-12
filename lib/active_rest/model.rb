@@ -80,7 +80,7 @@ module Model
 
   end
 
-  class CollectionAttribute < Attribute
+  class StructuredAttribute < Attribute
     attr_accessor :model_class
     attr_accessor :embedded
     attr_accessor :member_attributes
@@ -107,6 +107,9 @@ module Model
 
       res
     end
+  end
+
+  class CollectionAttribute < StructuredAttribute
   end
 
   def self.included(base)
@@ -145,7 +148,15 @@ module Model
               :source => nil,
               :type => reflection.macro,
               )
-        else
+        when :belongs_to, :has_one
+          attrs[name] =
+            StructuredAttribute.new(name,
+              :source => name.to_sym,
+              :type => reflection.macro,
+              :model_class => reflection.class_name,
+              :embedded => !!(reflection.options[:embedded]),
+              )
+        when :has_many
           attrs[name] =
             CollectionAttribute.new(name,
               :source => name.to_sym,
@@ -153,6 +164,8 @@ module Model
               :model_class => reflection.class_name,
               :embedded => !!(reflection.options[:embedded]),
               )
+        else
+          raise "Usupported reflection of type '#{reflection.macro}'"
         end
       end
 
@@ -232,11 +245,13 @@ module Model
     perms = {}
 
     attrs.each do |attrname,attr|
+
       if attr.kind_of?(SimpleAttribute)
         values[attrname] = attr.value(self)
-        perms[attrname] ||= {}
-        perms[attrname][:read] = true
-        perms[attrname][:write] = true
+      elsif attr.kind_of?(StructuredAttribute) && attr.embedded
+
+        values[attrname] = attr.value(self) ? attr.value(self).to_json : nil
+
       elsif attr.kind_of?(CollectionAttribute) && attr.embedded
 
         add = {}
@@ -247,11 +262,11 @@ module Model
         end
 
         values[attrname] = attr.value(self).map { |x| x.as_json(add) }
-        perms[attrname] ||= {}
-        perms[attrname][:read] = true
-        perms[attrname][:write] = true
       end
 
+      perms[attrname] ||= {}
+      perms[attrname][:read] = true
+      perms[attrname][:write] = true
     end
 
     if options[:additional_attrs]
