@@ -278,7 +278,7 @@ module Model
         values[attrname] = attr.value(self)
       elsif attr.kind_of?(StructuredAttribute) && attr.embedded
 
-        values[attrname] = attr.value(self) ? attr.value(self).to_json : nil
+        values[attrname] = attr.value(self) ? attr.value(self).as_json : nil
 
       elsif attr.kind_of?(CollectionAttribute) && attr.embedded
 
