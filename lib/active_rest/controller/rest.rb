@@ -120,7 +120,7 @@ module Controller
           find_target(:id => @target.id)
           write_action_successful_response(:created)
         else
-          write_action_error_response
+          raise NotAcceptable.new(@target.errors.map { |k,v| { "#{model_symbol}[#{name}]" => v } })
         end
       end
     rescue Exception => ex
@@ -159,7 +159,7 @@ module Controller
           find_target
           write_action_successful_response(:accepted)
         else
-          write_action_error_response
+          raise NotAcceptable.new(@target.errors.map { |k,v| { "#{model_symbol}[#{name}]" => v } })
         end
       end
 
@@ -208,38 +208,6 @@ module Controller
       end
     end
     alias ar_write_action_successful_response write_action_successful_response
-
-    def write_action_error_response
-      respond_to do |format|
-        format.html {
-          flash[:notice] = '#{model.to_s.underscore} was unable to save. Some errors occured.'
-          render :action => :new
-        }
-
-        # 406 Not acceptable
-        format.xml {
-          render :xml => {
-                   :errors => build_response(model_symbol, @target.errors)
-                 }.to_xml,
-                 :status => :not_acceptable
-        }
-
-        format.yaml {
-          render :text => @target.errors.to_yaml,
-                 :status => :not_acceptable
-        }
-
-        format.json {
-          render :json => {
-                   :errors => build_response(model_symbol, @target.errors)
-                 }.to_json,
-                 :status => :not_acceptable
-        }
-
-        yield format if block_given?
-      end
-    end
-    alias ar_write_action_error_response write_action_error_response
 
     def x_sendfile
       return if !ActiveRest::Controller.config.x_sendfile ||

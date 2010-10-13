@@ -40,10 +40,40 @@ module Controller
     attr_reader :config
   end
 
-  class MethodNotAllowed < StandardError; end
-  class BadRequest < StandardError; end
-  class NotFound < StandardError; end
-  class NotAcceptable < StandardError; end
+  class Exception < StandardError
+    attr_accessor :status
+    attr_accessor :user_data
+
+    def initialize(user_data = {}, status = :internal_server_error)
+      @user_data = user_data
+      @status = status
+      super user_data
+    end
+  end
+
+  class MethodNotAllowed < Exception
+    def initialize(user_data = {})
+      super user_data, :not_allowed
+    end
+  end
+
+  class BadRequest < Exception
+    def initialize(user_data = {})
+      super user_data, :bad_request
+    end
+  end
+
+  class NotFound < Exception
+    def initialize(user_data = {})
+      super user_data, :not_found
+    end
+  end
+
+  class NotAcceptable < Exception
+    def initialize(user_data = {})
+      super user_data, :not_acceptable
+    end
+  end
 
   def self.included(base)
     base.class_eval do
@@ -69,12 +99,7 @@ module Controller
 
       base.append_after_filter :x_sendfile, :only => [ :index ]
 
-      rescue_from Controller::Finder::Expression::SyntaxError, :with => lambda { generic_rescue_action(:bad_request) }
-      rescue_from NotFound, :with => lambda { generic_rescue_action(:not_found) }
-      rescue_from ActiveRecord::RecordNotFound, :with => lambda { generic_rescue_action(:not_found) }
-      rescue_from MethodNotAllowed, :with => lambda { generic_rescue_action(:method_not_allowed) }
-      rescue_from BadRequest, :with => lambda { generic_rescue_action(:bad_request) }
-      rescue_from NotAcceptable, :with => lambda { generic_rescue_action(:not_acceptable) }
+      rescue_from Exception, :with => :generic_rescue_action
     end
 
     base.extend(ClassMethods)
@@ -204,12 +229,21 @@ module Controller
   #
   # generic rescue action. when html will handle a block
   #
-  def generic_rescue_action(status)
-    respond_to do |format|
-      yield format if block_given? # when overriding to handle other format
-      format.any { head :status => status, :nothing => true } # any other format
+  def generic_rescue_action(e)
+
+    if is_true?(params[:_suppress_response])
+      render :nothing => true, :status => e.status
+    else
+      respond_to do |format|
+        format.xml { render :xml => e.user_data, :status => e.status }
+        format.yaml { render :text => e.user_data, :status => e.status }
+        format.json { render :json => e.user_data, :status => e.status }
+        yield(format) if block_given?
+      end
     end
   end
+  alias ar_generic_rescue_action generic_rescue_action
+
 
   #
   # model name to underscore, even when namespaced

@@ -40,7 +40,7 @@ module Controller
     protected
 
     class Expression
-      class SyntaxError < StandardError; end
+      class SyntaxError < Exception; end
       class InvalidJSON < SyntaxError; end
       class UnknownField < SyntaxError; end
       class UnknownOperator < SyntaxError; end

@@ -48,7 +48,11 @@ module Controller
       guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
       target.send(:attributes=, params[model_symbol], guard_protected_attributes)
 
-      validation_response(target)
+      if !target.valid?
+        raise NotAcceptable.new(target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
+      end
+
+      render :nothing => true, :status => :accepted
     end
 
     def validate_update
@@ -56,44 +60,14 @@ module Controller
       guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
       @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
 
-      validation_response(target)
+      if !target.valid?
+        raise NotAcceptable.new(target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
+      end
+
+      render :nothing => true, :status => :accepted
     end
 
     private
-
-    def validation_response(target, &blk)
-      valid = target.valid?
-      status = target.valid? ? :accepted : :not_acceptable
-
-      if is_true?(params[:_suppress_response])
-        render :nothing => true, :status => status
-      else
-        respond_to do | format |
-          format.xml { render :xml => { :errors => build_response(model_symbol, target.errors) }, :status => status }
-          format.yaml { render :text => { :errors => build_response(model_symbol, target.errors) }, :status => status }
-          format.json { render :json => { :errors => build_response(model_symbol, target.errors) }, :status => status }
-          yield(format, valid, status) if block_given?
-        end
-      end
-    end
-    alias ar_validation_response validation_response
-
-    #
-    # prepare a response format that when decoded in json looks like this:
-    #
-    # [{"hel_country[name]": "can't be blank"}, ... ]
-    #
-    # the default behaviour is to return a namespace field, but something is useful
-    # have only the field... an example is the datagrid column naming, here adopted
-    #
-    def build_response(namespace, errors)
-      risp = []
-      errors.each do |name, message|
-          risp << { "#{namespace}[#{name}]" => message }
-      end
-
-      return risp
-    end
 
     #
     # if the form contains a _only_validation field then RESTful request is considered a "dry-run" and gets routed to a different
