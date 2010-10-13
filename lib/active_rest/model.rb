@@ -172,7 +172,7 @@ module Model
         case reflection.macro
         when :composed_of
           attrs[name] =
-            CollectionAttribute.new(name,
+            StructuredAttribute.new(name,
               :source => nil,
               :type => reflection.macro,
               )
@@ -198,19 +198,6 @@ module Model
       end
 
       attrs
-    end
-
-    def recur_into_attr(key, options)
-
-      newopts = options.clone
-
-      if newopts[:ygg_additional_attrs] && newopts[:ygg_additional_attrs][key]
-        newopts[:ygg_additional_attrs] = newopts[:ygg_additional_attrs][key].sub_attributes
-      else
-        newopts[:ygg_additional_attrs] = nil
-      end
-
-      yield newopts
     end
 
     def schema(options = {})
@@ -269,6 +256,7 @@ module Model
   end
 
   def as_json(options = {})
+
     values = {}
     perms = {}
 
@@ -276,20 +264,23 @@ module Model
 
       if attr.kind_of?(SimpleAttribute)
         values[attrname] = attr.value(self)
-      elsif attr.kind_of?(StructuredAttribute) && attr.embedded
 
-        values[attrname] = attr.value(self) ? attr.value(self).as_json : nil
-
-      elsif attr.kind_of?(CollectionAttribute) && attr.embedded
-
-        add = {}
-        if options[:additional_attrs] &&
-           options[:additional_attrs][attrname] &&
-           options[:additional_attrs][attrname].respond_to?(:sub_attributes)
-          add = { :additional_attrs => options[:additional_attrs][attrname].sub_attributes }
+      elsif attr.kind_of?(CollectionAttribute)
+        if attr.embedded
+          recur_into_subattr(attrname, options) do |newopts|
+            values[attrname] = attr.value(self).map { |x| x.as_json(newopts) }
+          end
         end
 
-        values[attrname] = attr.value(self).map { |x| x.as_json(add) }
+      elsif attr.kind_of?(StructuredAttribute)
+        if attr.embedded
+          recur_into_subattr(attrname, options) do |newopts|
+            values[attrname] = attr.value(self) ? attr.value(self).as_json(newopts) : nil
+          end
+        end
+
+      else
+        raise "Don't know how to handle attributes of type '#{attr.class}'"
       end
 
       perms[attrname] ||= {}
@@ -300,7 +291,10 @@ module Model
     if options[:additional_attrs]
       options[:additional_attrs].each do |attrname,attr|
         if attr.source
-          values[attrname] = attr.value(self).as_json
+          recur_into_subattr(attrname, options) do |newopts|
+            values[attrname] = attr.value(self).as_json(newopts)
+          end
+
           perms[attrname] ||= {}
           perms[attrname][:read] = true
           perms[attrname][:write] = true
@@ -330,6 +324,16 @@ module Model
 
   private
 
+  def recur_into_subattr(attrname, options)
+    newopts = {}
+    if options[:additional_attrs] &&
+       options[:additional_attrs][attrname] &&
+       options[:additional_attrs][attrname].respond_to?(:sub_attributes)
+      newopts = { :additional_attrs => options[:additional_attrs][attrname].sub_attributes }
+    end
+
+    yield newopts
+  end
 
 end
 
