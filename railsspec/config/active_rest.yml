@@ -1,3 +1,0 @@
-route_expand_model_namespace: false
-plugins:
-  finder: :basic
