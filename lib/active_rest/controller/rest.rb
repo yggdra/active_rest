@@ -109,8 +109,8 @@ module Controller
           @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
           saved = @target.save!
         end
-      rescue ActiveRecord::RecordInvalid
-        # don't do anything, let the controller respond
+      rescue ActiveRecord::UnknownAttributeError, ActiveRecord::RecordInvalid
+        raise UnprocessableEntity
       end
 
       if is_true?(params[:_suppress_response])
@@ -120,14 +120,9 @@ module Controller
           find_target(:id => @target.id)
           write_action_successful_response(:created)
         else
-          raise NotAcceptable.new(@target.errors.map { |k,v| { "#{model_symbol}[#{name}]" => v } })
+          raise UnprocessableEntity.new(@target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
         end
       end
-    rescue Exception => ex
-      require 'pp'
-      Rails.logger.error ex.pretty_inspect
-      Rails.logger.error ex.backtrace.pretty_inspect
-      raise BadRequest # something nasty has happend
     end
 
     # GET /target/1/edit
@@ -148,8 +143,8 @@ module Controller
           @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
           saved = @target.save!
         end
-      rescue ActiveRecord::RecordInvalid => ex
-        # don't do nothing, let the controller respond
+      rescue ActiveRecord::UnknownAttributeError, ActiveRecord::RecordInvalid
+        raise UnprocessableEntity
       end
 
       if is_true?(params[:_suppress_response])
@@ -159,15 +154,9 @@ module Controller
           find_target
           write_action_successful_response(:accepted)
         else
-          raise NotAcceptable.new(@target.errors.map { |k,v| { "#{model_symbol}[#{name}]" => v } })
+          raise UnprocessableEntity.new(@target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
         end
       end
-
-    rescue Exception => ex
-      require 'pp'
-      Rails.logger.error ex.pretty_inspect
-      Rails.logger.error ex.backtrace.pretty_inspect
-      raise BadRequest # something nasty has happend
     end
 
 

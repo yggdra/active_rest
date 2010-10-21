@@ -131,27 +131,31 @@ module Controller
     #
     def build_finder_relation
 
-      # If a complex filter expression es present, decode and apply it
-      if params[:_filter]
-        cond = Expression.from_json(params[:_filter], model).to_arel(model)
-      end
+      begin
+        # If a complex filter expression es present, decode and apply it
+        if params[:_filter]
+          cond = Expression.from_json(params[:_filter], model).to_arel(model)
+        end
 
-      # For each parameter matching a column name add an equality relation to the conditions
-      params.each do |k,v|
-        next if k =~ /^-/
+        # For each parameter matching a column name add an equality relation to the conditions
+        params.each do |k,v|
+          next if k =~ /^-/
 
-        if attr = model.scoped.table[k]
-          raise UnknownField, "Unknown field '#{attr}'" if !attr
+          if attr = model.scoped.table[k]
+            raise Expression::UnknownField, "Unknown field '#{attr}'" if !attr
 
-          if cond
-            cond = cond & attr.eq(v)
-          else
-            cond = attr.eq(v)
+            if cond
+              cond = cond & attr.eq(v)
+            else
+              cond = attr.eq(v)
+            end
           end
         end
-      end
 
-      return model.where(cond)
+        return model.where(cond)
+      rescue Expression::UnknownField
+        raise UnprocessableEntity
+      end
     end
   end
 

@@ -49,7 +49,7 @@ module Controller
       target.send(:attributes=, params[model_symbol], guard_protected_attributes)
 
       if !target.valid?
-        raise NotAcceptable.new(target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
+        raise UnprocessableEntity.new(target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
       end
 
       render :nothing => true, :status => :accepted
@@ -61,7 +61,7 @@ module Controller
       @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
 
       if !target.valid?
-        raise NotAcceptable.new(target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
+        raise UnprocessableEntity.new(target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
       end
 
       render :nothing => true, :status => :accepted

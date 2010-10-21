@@ -40,7 +40,7 @@ module Controller
     attr_reader :config
   end
 
-  class Exception < StandardError
+  class ARException < StandardError
     attr_accessor :status
     attr_accessor :user_data
 
@@ -51,27 +51,33 @@ module Controller
     end
   end
 
-  class MethodNotAllowed < Exception
+  class MethodNotAllowed < ARException
     def initialize(user_data = {})
-      super user_data, :not_allowed
+      super user_data, :method_not_allowed
     end
   end
 
-  class BadRequest < Exception
+  class BadRequest < ARException
     def initialize(user_data = {})
       super user_data, :bad_request
     end
   end
 
-  class NotFound < Exception
+  class NotFound < ARException
     def initialize(user_data = {})
       super user_data, :not_found
     end
   end
 
-  class NotAcceptable < Exception
+  class NotAcceptable < ARException
     def initialize(user_data = {})
       super user_data, :not_acceptable
+    end
+  end
+
+  class UnprocessableEntity < ARException
+    def initialize(user_data = {})
+      super user_data, :unprocessable_entity
     end
   end
 
@@ -99,7 +105,7 @@ module Controller
 
       base.append_after_filter :x_sendfile, :only => [ :index ]
 
-      rescue_from Exception, :with => :generic_rescue_action
+      rescue_from ARException, :with => :generic_rescue_action
     end
 
     base.extend(ClassMethods)
