@@ -53,8 +53,8 @@ module Controller
         # fields may be passed as 'object[attr]'
         :sort_field => (params[:sort] || @pagination[:sort_field] || 'id').sub(/(\A[^\[]*)\[([^\]]*)\]/,'\2'),
         :sort_direction => (dir || @pagination[:sort_direction]).to_s.upcase,
-        :offset => params[:start] || @pagination[:offset] || 0,
-        :limit => params[:limit] || @pagination[:limit] || 100 # FIXME ActiveRest::Pagination.default_page_size
+        :offset => params[:start].to_i || @pagination[:offset] || 0,
+        :limit => params[:limit].to_i || @pagination[:limit] || 100 # FIXME ActiveRest::Pagination.default_page_size
       })
 
 # This should be done by our caller
