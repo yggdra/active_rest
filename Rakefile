@@ -1,18 +1,6 @@
 require 'rubygems'
 require 'rake'
 
-require 'rake/rdoctask'
-desc 'Generate documentation for the rest_controller plugin.'
-Rake::RDocTask.new(:rdoc) do |rdoc|
-  version = File.exist?('VERSION') ? File.read('VERSION') : ''
-
-  rdoc.rdoc_dir = 'rdoc'
-  rdoc.title    = "RestController #{version}"
-  rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('README')
-  rdoc.rdoc_files.include('lib/**/*.rb')
-end
-
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
@@ -29,3 +17,16 @@ begin
 rescue LoadError
   puts 'Jeweler (or a dependency) not available. Install it with: gem install jeweler'
 end
+
+require 'rake/rdoctask'
+desc 'Generate documentation for the rest_controller plugin.'
+Rake::RDocTask.new(:rdoc) do |rdoc|
+  version = File.exist?('VERSION') ? File.read('VERSION') : ''
+
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title    = "RestController #{version}"
+  rdoc.options << '--line-numbers' << '--inline-source'
+  rdoc.rdoc_files.include('README')
+  rdoc.rdoc_files.include('lib/**/*.rb')
+end
+
