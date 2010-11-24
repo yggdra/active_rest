@@ -153,8 +153,8 @@ module Controller
         end
 
         return model.where(cond)
-      rescue Expression::UnknownField
-        raise UnprocessableEntity
+      rescue Expression::UnknownField => e
+        raise UnprocessableEntity.new(e.message)
       end
     end
   end

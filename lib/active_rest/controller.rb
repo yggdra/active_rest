@@ -42,42 +42,49 @@ module Controller
 
   class ARException < StandardError
     attr_accessor :status
-    attr_accessor :user_data
+    attr_accessor :data
 
-    def initialize(user_data = {}, status = :internal_server_error)
-      @user_data = user_data
+    def initialize(msg, status = :internal_server_error, data = {})
+      @data = data
       @status = status
-      super user_data
+      super msg
+    end
+
+    # to_hash will be used by to_json
+    def to_hash
+     {
+      :short_msg => self.message,
+     }.merge(@data)
     end
   end
 
   class MethodNotAllowed < ARException
-    def initialize(user_data = {})
-      super user_data, :method_not_allowed
+    def initialize(msg = '', data = {})
+      super msg, :method_not_allowed, data
     end
   end
 
   class BadRequest < ARException
-    def initialize(user_data = {})
-      super user_data, :bad_request
+    def initialize(msg = '', data = {})
+      super msg, :bad_request
     end
   end
 
   class NotFound < ARException
-    def initialize(user_data = {})
-      super user_data, :not_found
+    def initialize(msg = '', data = {})
+      super msg, :not_found
     end
   end
 
   class NotAcceptable < ARException
-    def initialize(user_data = {})
-      super user_data, :not_acceptable
+    def initialize(msg = '', data = {})
+      super msg, :not_acceptable
     end
   end
 
   class UnprocessableEntity < ARException
-    def initialize(user_data = {})
-      super user_data, :unprocessable_entity
+    def initialize(msg = '', data = {})
+      super msg, :unprocessable_entity, data
     end
   end
 
@@ -241,9 +248,9 @@ module Controller
       render :nothing => true, :status => e.status
     else
       respond_to do |format|
-        format.xml { render :xml => e.user_data, :status => e.status }
-        format.yaml { render :text => e.user_data, :status => e.status }
-        format.json { render :json => e.user_data, :status => e.status }
+        format.xml { render :xml => e.to_hash, :status => e.status }
+        format.yaml { render :text => e.to_hash, :status => e.status }
+        format.json { render :json => e.to_hash, :status => e.status }
         yield(format) if block_given?
       end
     end

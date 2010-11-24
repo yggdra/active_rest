@@ -101,27 +101,31 @@ module Controller
     # POST /targets
   # if parameter '_only_validation' is present only validation actions will be ran
     def create
-      saved = false
       begin
         send(ar_xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
           @target = model.new
           @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
-          saved = @target.save!
+          @target.save!
         end
-      rescue ActiveRecord::UnknownAttributeError, ActiveRecord::RecordInvalid
-        raise UnprocessableEntity
+      rescue ActiveRecord::UnknownAttributeError => e
+        raise BadRequest.new(e.message,
+                :per_field_msgs => { e.name => 'Is not defined' },
+                :retry_possible => false)
+      rescue ActiveRecord::RecordInvalid => e
+        raise UnprocessableEntity.new(e.message,
+                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h["#{model_symbol}[#{k}]"] = v; h },
+                :retry_possible => false)
+      rescue ActiveRecord::RecordNotSaved => e
+        raise UnprocessableEntity.new(e.message,
+                :retry_possible => false)
       end
 
       if is_true?(params[:_suppress_response])
         render :nothing => true, :status => status
       else
-        if saved
-          find_target(:id => @target.id)
-          write_action_successful_response(:created)
-        else
-          raise UnprocessableEntity.new(@target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
-        end
+        find_target(:id => @target.id)
+        write_action_successful_response(:created)
       end
     end
 
@@ -136,26 +140,28 @@ module Controller
     # PUT /target/1
     # if parameter '_only_validation' is present only validation actions will be ran
     def update
-      saved = false
       begin
         send(ar_xact_handler) do
           guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
           @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
-          saved = @target.save!
+          @target.save!
         end
-      rescue ActiveRecord::UnknownAttributeError, ActiveRecord::RecordInvalid
-        raise UnprocessableEntity
+      rescue ActiveRecord::UnknownAttributeError => e
+        raise BadRequest.new(e.message,
+                :per_field_msgs => { e.name => 'Is not defined' },
+                :retry_possible => false)
+      rescue ActiveRecord::RecordInvalid => e
+        raise UnprocessableEntity.new(e.message,
+                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h["#{model_symbol}[#{k}]"] = v; h },
+                :retry_possible => false)
+      rescue ActiveRecord::RecordNotSaved => e
+        raise UnprocessableEntity.new(e.message,
+                :retry_possible => false)
       end
 
-      if is_true?(params[:_suppress_response])
-        render :nothing => true, :status => status
-      else
-        if saved
-          find_target
-          write_action_successful_response(:accepted)
-        else
-          raise UnprocessableEntity.new(@target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
-        end
+      if !is_true?(params[:_suppress_response])
+        find_target
+        write_action_successful_response(:accepted)
       end
     end
 

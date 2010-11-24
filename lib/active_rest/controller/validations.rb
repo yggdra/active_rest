@@ -49,7 +49,9 @@ module Controller
       target.send(:attributes=, params[model_symbol], guard_protected_attributes)
 
       if !target.valid?
-        raise UnprocessableEntity.new(target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
+        raise UnprocessableEntity.new('The form is invalid',
+                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h["#{model_symbol}[#{k}]"] = v; h },
+                :retry_possible => false)
       end
 
       render :nothing => true, :status => :accepted
@@ -61,7 +63,9 @@ module Controller
       @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
 
       if !target.valid?
-        raise UnprocessableEntity.new(target.errors.map { |k,v| { "#{model_symbol}[#{k}]" => v } })
+        raise UnprocessableEntity.new('The form is invalid',
+                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h["#{model_symbol}[#{k}]"] = v; h },
+                :retry_possible => false)
       end
 
       render :nothing => true, :status => :accepted
