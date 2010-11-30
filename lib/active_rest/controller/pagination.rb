@@ -46,7 +46,7 @@ module Controller
       dir = nil
       if params[:dir]
         dir = params[:dir].to_s.upcase
-        raise "Invalid sort direction #{}" unless %w(ASC DESC).include?(dir)
+        raise BadRequest.new("Invalid sort direction #{dir}") unless %w(ASC DESC).include?(dir)
       end
 
       @pagination.merge!({

@@ -41,50 +41,48 @@ module Controller
   end
 
   class ARException < StandardError
-    attr_accessor :status
-    attr_accessor :data
+    attr_accessor :http_status_code
+    attr_accessor :public_data
+    attr_accessor :private_data
 
-    def initialize(msg, status = :internal_server_error, data = {})
-      @data = data
-      @status = status
+    def initialize(msg, status = :internal_server_error, public_data = {}, private_data = {})
+      @http_status_code = status
+      @public_data = public_data
+      @private_data = private_data
       super msg
-    end
 
-    # to_hash will be used by to_json
-    def to_hash
-     {
-      :short_msg => self.message,
-     }.merge(@data)
+      # Avoid autofilling of additional_info
+      @public_data[:additional_info] ||= ''
     end
   end
 
   class MethodNotAllowed < ARException
-    def initialize(msg = '', data = {})
-      super msg, :method_not_allowed, data
+    def initialize(msg = '', public_data = {}, private_data = {})
+      super msg, :method_not_allowed, public_data, private_data
     end
   end
 
   class BadRequest < ARException
-    def initialize(msg = '', data = {})
-      super msg, :bad_request
+    def initialize(msg = '', public_data = {}, private_data = {})
+      super msg, :bad_request, public_data, private_data
     end
   end
 
   class NotFound < ARException
-    def initialize(msg = '', data = {})
-      super msg, :not_found
+    def initialize(msg = '', public_data = {}, private_data = {})
+      super msg, :not_found, public_data, private_data
     end
   end
 
   class NotAcceptable < ARException
-    def initialize(msg = '', data = {})
-      super msg, :not_acceptable
+    def initialize(msg = '', public_data = {}, private_data = {})
+      super msg, :not_acceptable, public_data, private_data
     end
   end
 
   class UnprocessableEntity < ARException
-    def initialize(msg = '', data = {})
-      super msg, :unprocessable_entity, data
+    def initialize(msg = '', public_data = {}, private_data = {})
+      super msg, :unprocessable_entity, public_data, private_data
     end
   end
 
@@ -112,7 +110,7 @@ module Controller
 
       base.append_after_filter :x_sendfile, :only => [ :index ]
 
-      rescue_from ARException, :with => :generic_rescue_action
+      rescue_from ARException, :with => :arexception_rescue_action
     end
 
     base.extend(ClassMethods)
@@ -242,21 +240,38 @@ module Controller
   #
   # generic rescue action. when html will handle a block
   #
-  def generic_rescue_action(e)
+  def arexception_rescue_action(e)
 
     if is_true?(params[:_suppress_response])
       render :nothing => true, :status => e.status
     else
+      res = {
+        :short_msg => e.message,
+        :long_msg => '',
+        :retry_possible => false,
+        :additional_info => "Exception of class '#{e.class}'",
+      }
+
+      res.merge!(e.public_data) if e.respond_to?(:public_data)
+
+      if request.local? || consider_all_requests_local?
+        res.merge!(e.private_data) if e.respond_to?(:private_data)
+
+        res[:annotated_source_code] = e.annoted_source_code.to_s if e.respond_to?(:annoted_source_code)
+        res[:application_backtrace] = clean_backtrace(e, :silent)
+        res[:framework_backtrace] = clean_backtrace(e, :noise)
+      end
+
       respond_to do |format|
-        format.xml { render :xml => e.to_hash, :status => e.status }
-        format.yaml { render :text => e.to_hash, :status => e.status }
-        format.json { render :json => e.to_hash, :status => e.status }
+        format.xml { render :xml => res, :status => e.http_status_code }
+        format.xml { render :yaml => res, :status => e.http_status_code }
+        format.json { render :json => res, :status => e.http_status_code }
+        format.jsone { render :json => res, :status => e.http_status_code }
         yield(format) if block_given?
       end
     end
   end
-  alias ar_generic_rescue_action generic_rescue_action
-
+  alias ar_arexception_rescue_action arexception_rescue_action
 
   #
   # model name to underscore, even when namespaced
@@ -306,9 +321,8 @@ module Controller
   # avoid any action that can modify the record or change the table
   #
   def check_read_only
-    raise MethodNotAllowed if options[:read_only] && request.method != 'GET'
+    raise MethodNotAllowed.new('Read only in effect') if options[:read_only] && request.method != 'GET'
   end
-
 
 end
 
