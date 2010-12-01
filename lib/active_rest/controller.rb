@@ -95,22 +95,49 @@ module Controller
 
       attr_accessor :target, :targets
 
+      rescue_from ARException, :with => :arexception_rescue_action
+
       self.ar_xact_handler = :rest_default_transaction_handler
 
-#      build_associations_proxies
+      # are we just requiring validations ?
+      prepend_before_filter(:only => [ :update, :create ]) do
+        # if the form contains a _only_validation field then RESTful request is considered a "dry-run" and gets rerouted to
+        # a different action named validate_*
 
-      # if read only not allow these actions
-      prepend_before_filter :check_validation_action, :only => [ :update, :create ] # are we just requiring validations ?
-      prepend_before_filter :check_read_only
+        if is_true?(params[:_only_validation])
+          # I didn't find a better way to internal redirect to a different action
+          new_action = 'validate_' + action_name
+          action_name = new_action
+          send(action_name)
+          return false
+        end
 
-      before_filter :prepare_i18n
-      before_filter :find_target, :only => [ :show, :edit, :update, :destroy, :validate_update ] # 1 resource?
-      before_filter :find_targets, :only => [ :index ] # find all resources ?
-      before_filter :prepare_schema, :only => :schema
+        true
+      end
+
+      prepend_before_filter do
+        # prevent any action that can modify the record or change the table
+        raise MethodNotAllowed.new('Read only in effect') if options[:read_only] && request.method != 'GET'
+
+        # setup I18n if options has this information
+        I18n.locale = params[:language].to_sym if params[:language]
+
+        true
+      end
+
+      # collection requests
+      before_filter :only => [ :index ] do
+        find_targets
+        true
+      end
+
+      # member requests
+      before_filter :only => [ :show, :edit, :update, :destroy, :validate_update ] do
+        find_target
+        true
+      end
 
       base.append_after_filter :x_sendfile, :only => [ :index ]
-
-      rescue_from ARException, :with => :arexception_rescue_action
     end
 
     base.extend(ClassMethods)
@@ -223,13 +250,6 @@ module Controller
 #    end
 #  end
 
-  #
-  # setup I18n if options has this information
-  #
-  def prepare_i18n
-    I18n.locale = params[:language].to_sym if params[:language]
-  end
-
   private
 
   TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE', 'y', 'yes', 'Y', 'YES', :true, :t].to_set
@@ -254,7 +274,7 @@ module Controller
 
       res.merge!(e.public_data) if e.respond_to?(:public_data)
 
-      if request.local? || consider_all_requests_local?
+      if request.local? || Rails.application.config.consider_all_requests_local
         res.merge!(e.private_data) if e.respond_to?(:private_data)
 
         res[:annotated_source_code] = e.annoted_source_code.to_s if e.respond_to?(:annoted_source_code)
@@ -313,17 +333,13 @@ module Controller
     @count = finder_rel.count
   end
 
-  def prepare_schema
-    @schema = model.schema(:additional_attrs => self.attrs)
-  end
+  protected
 
-  #
-  # avoid any action that can modify the record or change the table
-  #
-  def check_read_only
-    raise MethodNotAllowed.new('Read only in effect') if options[:read_only] && request.method != 'GET'
+  def clean_backtrace(exception, *args)
+    defined?(Rails) && Rails.respond_to?(:backtrace_cleaner) ?
+      Rails.backtrace_cleaner.clean(exception.backtrace, *args) :
+      exception.backtrace
   end
-
 end
 
 end

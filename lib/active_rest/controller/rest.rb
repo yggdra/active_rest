@@ -58,11 +58,14 @@ module Controller
     # REST VERBS
     #
 
+
     def schema
+      s = generate_schema
+
       respond_to do |format|
-        format.xml { render :xml => @schema.to_xml(:dasherize => false) }
-        format.yaml { render :text => @schema }
-        format.json { render :json => @schema }
+        format.xml { render :xml => s.to_xml(:dasherize => false) }
+        format.yaml { render :text => s }
+        format.json { render :json => s }
         yield(format) if block_given?
       end
     end
@@ -186,6 +189,10 @@ module Controller
     alias ar_destroy destroy
 
     protected
+
+    def generate_schema
+      model.schema(:additional_attrs => self.attrs)
+    end
 
     def write_action_successful_response(status)
       respond_to do |format|

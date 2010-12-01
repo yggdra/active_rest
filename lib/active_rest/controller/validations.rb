@@ -70,19 +70,6 @@ module Controller
 
       render :nothing => true, :status => :accepted
     end
-
-    private
-
-    #
-    # if the form contains a _only_validation field then RESTful request is considered a "dry-run" and gets routed to a different
-    # action named validate_*
-    #
-    def check_validation_action
-      if is_true?(params[:_only_validation])
-        send 'validate_' + action_name
-      end
-    end
-
   end
 
 end
