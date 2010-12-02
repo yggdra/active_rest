@@ -79,7 +79,6 @@ module Controller
         yield(format) if block_given?
       end
     end
-    alias ar_index index
 
     # GET /target/1
     def show
@@ -87,7 +86,6 @@ module Controller
         yield(format) if block_given?
       end
     end
-    alias ar_show show
 
     # GET /target/new
     def new
@@ -97,7 +95,6 @@ module Controller
         yield(format) if block_given?
       end
     end
-    alias ar_new new
 
 
     # POST /targets
@@ -137,7 +134,6 @@ module Controller
         yield(format) if block_given?
       end
     end
-    alias ar_edit edit
 
     # PUT /target/1
     # if parameter '_only_validation' is present only validation actions will be ran
@@ -185,7 +181,6 @@ module Controller
         yield(format) if block_given?
       end
     end
-    alias ar_destroy destroy
 
     protected
 
@@ -208,7 +203,6 @@ module Controller
         yield format if block_given?
       end
     end
-    alias ar_write_action_successful_response write_action_successful_response
 
     def x_sendfile
       return if !ActiveRest::Controller.config.x_sendfile ||
