@@ -60,16 +60,15 @@ module Controller
 
 
     def schema
-      s = generate_schema
+      @schema = generate_schema
 
       respond_to do |format|
-        format.xml { render :xml => s.to_xml(:dasherize => false) }
-        format.yaml { render :text => s }
-        format.json { render :json => s }
+        format.xml { render :xml => @schema.to_xml(:dasherize => false) }
+        format.yaml { render :text => @schema }
+        format.json { render :json => @schema }
         yield(format) if block_given?
       end
     end
-    alias ar_schema schema
 
     def index
       # Avoid responding with nil-classes when the array is empty
