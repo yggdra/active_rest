@@ -284,14 +284,12 @@ module Controller
 
       respond_to do |format|
         format.xml { render :xml => res, :status => e.http_status_code }
-        format.xml { render :yaml => res, :status => e.http_status_code }
+        format.yaml { render :yaml => res, :status => e.http_status_code }
         format.json { render :json => res, :status => e.http_status_code }
-        format.jsone { render :json => res, :status => e.http_status_code }
         yield(format) if block_given?
       end
     end
   end
-  alias ar_arexception_rescue_action arexception_rescue_action
 
   #
   # model name to underscore, even when namespaced
