@@ -174,16 +174,8 @@ module Controller
       @target.destroy
 
       respond_to do |format|
-        format.html {
-          flash[:notice] = '#{model.to_s.underscore} was successfully destroyed.'
-          redirect_to :action => :index
-        }
-
-        # 200 - Ok
-        format.xml { head :status => :ok }
-        format.yaml { head :status => :ok }
-        format.json { head :status => :ok }
         yield(format) if block_given?
+        format.any { head :status => :ok }
       end
     end
 
