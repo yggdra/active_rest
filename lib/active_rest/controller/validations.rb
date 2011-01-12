@@ -54,7 +54,7 @@ module Controller
                 :retry_possible => false)
       end
 
-      render :nothing => true, :status => :accepted
+      render :nothing => true
     end
 
     def validate_update
@@ -68,7 +68,7 @@ module Controller
                 :retry_possible => false)
       end
 
-      render :nothing => true, :status => :accepted
+      render :nothing => true
     end
   end
 

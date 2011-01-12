@@ -121,10 +121,12 @@ module Controller
       end
 
       if is_true?(params[:_suppress_response])
-        render :nothing => true, :status => status
+        render :nothing => true, :status => :created
       else
         find_target(:id => @target.id)
-        write_action_successful_response(:created)
+        respond_with(@target, :status => :created) do |format|
+          yield(format) if block_given?
+        end
       end
     end
 
@@ -157,12 +159,15 @@ module Controller
                 :retry_possible => false)
       end
 
-      if !is_true?(params[:_suppress_response])
+      if is_true?(params[:_suppress_response])
+        render :nothing => true
+      else
         find_target
-        write_action_successful_response(:accepted)
+        respond_with(@target) do |format|
+          yield(format) if block_given?
+        end
       end
     end
-
 
     # DELETE /target/1
     def destroy
@@ -186,22 +191,6 @@ module Controller
 
     def generate_schema
       model.schema(:additional_attrs => self.attrs)
-    end
-
-    def write_action_successful_response(status)
-      respond_to do |format|
-
-        format.html {
-          flash[:notice] = 'Operation successful.'
-          redirect_to :action => :index
-        }
-
-        # 202 Accepted
-        format.xml { render :xml => @target.to_xml(:root => model_symbol), :status => status }
-        format.yaml { render :text => @target.to_yaml, :status => status }
-        format.json { render :json => @target, :status => status }
-        yield format if block_given?
-      end
     end
 
     def x_sendfile
