@@ -262,6 +262,10 @@ module Controller
   #
   def arexception_rescue_action(e)
 
+    message = "\nRendered exception: #{e.class} (#{e.message}):\n"
+    message << "  " << clean_backtrace(e, :silent).join("\n  ")
+    logger.warn("#{message}\n\n")
+
     if is_true?(params[:_suppress_response])
       render :nothing => true, :status => e.status
     else
