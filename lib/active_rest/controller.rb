@@ -286,12 +286,7 @@ module Controller
         res[:framework_backtrace] = clean_backtrace(e, :noise)
       end
 
-      respond_to do |format|
-        format.xml { render :xml => res, :status => e.http_status_code }
-        format.yaml { render :yaml => res, :status => e.http_status_code }
-        format.json { render :json => res, :status => e.http_status_code }
-        yield(format, res, e.http_status_code) if block_given?
-      end
+      respond_with(res, :status => e.http_status_code)
     end
   end
 
