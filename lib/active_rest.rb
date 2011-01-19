@@ -22,10 +22,6 @@ require 'active_rest/routes' # route mapper
 ## MODELS annotations, overrides
 require 'active_rest/models/annotations/attribute_annotations'
 require 'active_rest/models/annotations/ordered_attributes'
-#require 'active_rest/models/overrides'
 
 ## BASIC FEATURES
 require 'active_rest/controller'
-
-#require 'active_rest/controller/proxies'
-

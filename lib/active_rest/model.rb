@@ -16,6 +16,22 @@
 #
 #
 
+class Hash
+  def export_to_hash(opts = {})
+    out = {}
+    self.each do |k,v|
+      out[k] = v.export_to_hash(options)
+    end
+    out
+  end
+end
+
+class Array
+  def export_to_hash(opts = {})
+    self.map { |v| v.export_to_hash(options) }
+  end
+end
+
 module ActiveRest
 module Model
 
@@ -255,27 +271,28 @@ module Model
     end
   end
 
-  def as_json(options = {})
-
+  def export_as_hash(opts = {})
     values = {}
     perms = {}
 
     attrs.each do |attrname,attr|
 
+      attrname = attrname.to_sym
+
       if attr.kind_of?(SimpleAttribute)
         values[attrname] = attr.value(self)
-
+        values[attrname] = values[attrname].export_as_hash(opts) if values[attrname].respond_to?(:export_as_hash)
       elsif attr.kind_of?(CollectionAttribute)
         if attr.embedded
-          recur_into_subattr(attrname, options) do |newopts|
-            values[attrname] = attr.value(self).map { |x| x.as_json(newopts) }
+          recur_into_subattr(attrname, opts) do |newopts|
+            values[attrname] = attr.value(self).map { |x| x.export_as_hash(newopts) }
           end
         end
 
       elsif attr.kind_of?(StructuredAttribute)
         if attr.embedded
-          recur_into_subattr(attrname, options) do |newopts|
-            values[attrname] = attr.value(self) ? attr.value(self).as_json(newopts) : nil
+          recur_into_subattr(attrname, opts) do |newopts|
+            values[attrname] = attr.value(self) ? attr.value(self).export_as_hash(newopts) : nil
           end
         end
 
@@ -288,11 +305,12 @@ module Model
       perms[attrname][:write] = true
     end
 
-    if options[:additional_attrs]
-      options[:additional_attrs].each do |attrname,attr|
+    if opts[:additional_attrs]
+      opts[:additional_attrs].each do |attrname,attr|
         if attr.source
-          recur_into_subattr(attrname, options) do |newopts|
-            values[attrname] = attr.value(self).as_json(newopts)
+          recur_into_subattr(attrname, opts) do |newopts|
+            values[attrname] = attr.value(self)
+            values[attrname] = values[attrname].export_as_hash(opts) if values[attrname].respond_to?(:export_as_hash)
           end
 
           perms[attrname] ||= {}
@@ -302,20 +320,30 @@ module Model
       end
     end
 
-    object_perms = {
-      :read => true,
-      :write => true,
-      :delete => true
-    }
+    res = values
 
-    res = {
-      :_type => self.class.to_s,
-      :_type_symbolized => self.class.to_s.underscore.gsub(/\//, '_'),
-      :_object_perms => object_perms,
-      :_attr_perms => perms,
-    }.merge(values)
+    res[:_type] = self.class.to_s
+    res[:_type_symbolized] = self.class.to_s.underscore.gsub(/\//, '_').to_sym
+
+    if opts[:with_perms]
+      res[:_object_perms] = {
+          :read => true,
+          :write => true,
+          :delete => true
+        }
+
+      res[:_attr_perms] = perms
+    end
 
     res
+  end
+
+  def export_as_yaml(opts = {})
+    export_as_hash.to_yaml(opts)
+  end
+
+  def as_json(opts = {})
+    export_as_hash(opts.merge(:with_perms => true))
   end
 
   def attrs
