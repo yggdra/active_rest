@@ -1,36 +1,36 @@
 #
-# ActiveRest, a more powerful rest resources manager
-# Copyright (C) 2008, Intercom s.r.l., windmillmedia
+# ActiveRest
 #
-# = ActiveRest::Finder
+# Copyright (C) 2008-2011, Intercom Srl, Daniele Orlandi
 #
-# Author:: Lele Forzani <lele@windmill.it>, Alfredo Cerutti <acerutti@intercom.it>
-# License:: Proprietary
+# Author:: Daniele Orlandi <daniele@orlandi.com>
+#          Lele Forzani <lele@windmill.it>
+#          Alfredo Cerutti <acerutti@intercom.it>
 #
-# Revision:: $Id: base.rb 5105 2009-08-05 12:30:05Z dot79 $
-#
-# == Description
-#
-# Finder module implements index action filtering through a filter= URI parameter
-#
-# The filter parameter should contain a JSON serialized tree structure representing the expression
-# Each node can be a String, a Numeric, an Array and a Hash.
-#
-# - Strings, Numeric and Arrays are quoted and inserted into the SQL expression.
-#
-# - Hashes may:
-#   - Contain just one key "field". The value is inserted into the SQL as a field name.
-#   - Contain "o" and "a" and/or "b" keys. In this case the Hash represent an expression, "a" and "b" are the
-#     two terms, "o" is an operator. "a" or "b" may be missing in case of unary operators.
-#
-# Supported operators:
-#
-# Binary: >, >=, <, <=, =, <>, LIKE, NOT LIKE, IN, NOT IN, AND, OR
-# Unary: IS NULL, IS NOT NULL, NOT
+# License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
 module ActiveRest
 module Controller
+
+  #
+  # Finder module implements index action filtering through a filter= URI parameter
+  #
+  # The filter parameter should contain a JSON serialized tree structure representing the expression
+  # Each node can be a String, a Numeric, an Array and a Hash.
+  #
+  # - Strings, Numeric and Arrays are quoted and inserted into the SQL expression.
+  #
+  # - Hashes may:
+  #   - Contain just one key "field". The value is inserted into the SQL as a field name.
+  #   - Contain "o" and "a" and/or "b" keys. In this case the Hash represent an expression, "a" and "b" are the
+  #     two terms, "o" is an operator. "a" or "b" may be missing in case of unary operators.
+  #
+  # Supported operators:
+  #
+  # Binary: >, >=, <, <=, =, <>, LIKE, NOT LIKE, IN, NOT IN, AND, OR
+  # Unary: IS NULL, IS NOT NULL, NOT
+  #
   module Finder
 
     def self.included(base)

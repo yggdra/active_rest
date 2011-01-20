@@ -1,19 +1,13 @@
 #
-# ActiveRest, a more powerful rest resources manager
-# Copyright (C) 2010, Daniele Orlandi
+# ActiveRest
 #
-# = ActiveRest::Controller::Core
+# Copyright (C) 2008-2011, Intercom Srl, Daniele Orlandi
 #
-# Author:: Lele Forzani <lele@windmill.it>, Alfredo Cerutti <acerutti@intercom.it>,
-#          Angelo Grossini <angelo@intercom.it>
+# Author:: Daniele Orlandi <daniele@orlandi.com>
+#          Lele Forzani <lele@windmill.it>
+#          Alfredo Cerutti <acerutti@intercom.it>
 #
-# License:: Proprietary
-#
-# Revision:: $Id: core.rb 5105 2009-08-05 12:30:05Z dot79 $
-#
-# == Description
-#
-#
+# License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
 class Hash
@@ -36,17 +30,43 @@ module ActiveRest
 module Model
 
   class Attribute
+
+    class DSL
+      def initialize(klass)
+        @klass = klass
+      end
+
+      def human_name(name)
+        @klass.human_name = name
+      end
+
+      def meta(meta)
+        @klass.meta ||= {}
+        @klass.meta.merge!(meta)
+      end
+    end
+
     attr_accessor :name
     attr_accessor :type
     attr_accessor :source
     attr_accessor :human_name
+    attr_accessor :meta
+    attr_accessor :klass
 
-    def initialize(name, h = {})
+    def initialize(klass, name, h = {})
+      @klass = klass
       @name = name
+
+      if h[:clone_from]
+        @human_name = h[:clone_from].human_name
+        @meta = h[:clone_from].meta
+      end
 
       @type = h[:type]
       @source = h[:source]
-      @human_name = h[:human_name]
+
+      @human_name ||= h[:human_name]
+      @meta ||= h[:meta]
     end
 
     def definition
@@ -76,8 +96,8 @@ module Model
     attr_accessor :null
     attr_accessor :default
 
-    def initialize(name, h = {})
-      super name, h
+    def initialize(klass, name, h = {})
+      super klass, name, h
 
       @primary = h[:primary]
       @null = h[:null]
@@ -109,8 +129,8 @@ module Model
     attr_accessor :embedded
     attr_accessor :member_attributes
 
-    def initialize(name, h = {})
-      super name, h
+    def initialize(klass, name, h = {})
+      super klass, name, h
 
       @relation = true
       @embedded = h[:embedded]
@@ -165,16 +185,27 @@ module Model
   end
 
   module ClassMethods
+
+    def attribute(name, &block)
+      @attrs ||= {}
+      @attrs[name] ||= Attribute.new(self, name)
+      Attribute::DSL.new(@attrs[name]).instance_eval(&block)
+      @attrs[name]
+    end
+
     def attrs
-      @attrs || @attrs = initialize_attrs
+      initialize_attrs if !@attrs_initialized
+      @attrs
     end
 
     def initialize_attrs
-      attrs = {}
+      @attrs ||= {}
 
       columns.each do |x|
-        attrs[x.name] =
-          SimpleAttribute.new(x.name,
+        name = x.name.to_sym
+        @attrs[name] =
+          SimpleAttribute.new(self, name,
+            :clone_from => @attrs[name],
             :source => x.name.to_sym,
             :type => map_column_type(x.type),
             :primary => x.primary,
@@ -187,22 +218,25 @@ module Model
 
         case reflection.macro
         when :composed_of
-          attrs[name] =
-            StructuredAttribute.new(name,
+          @attrs[name] =
+            StructuredAttribute.new(self, name,
+              :clone_from => @attrs[name],
               :source => nil,
               :type => reflection.macro,
               )
         when :belongs_to, :has_one
-          attrs[name] =
-            StructuredAttribute.new(name,
+          @attrs[name] =
+            StructuredAttribute.new(self, name,
+              :clone_from => @attrs[name],
               :source => name.to_sym,
               :type => reflection.macro,
               :model_class => reflection.class_name,
               :embedded => !!(reflection.options[:embedded]),
               )
         when :has_many
-          attrs[name] =
-            CollectionAttribute.new(name,
+          @attrs[name] =
+            CollectionAttribute.new(self, name,
+              :clone_from => @attrs[name],
               :source => name.to_sym,
               :type => reflection.macro,
               :model_class => reflection.class_name,
@@ -212,6 +246,8 @@ module Model
           raise "Usupported reflection of type '#{reflection.macro}'"
         end
       end
+
+      @attrs_initialized = true
 
       attrs
     end

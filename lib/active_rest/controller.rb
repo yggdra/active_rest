@@ -1,19 +1,13 @@
 #
-# ActiveRest, a more powerful rest resources manager
-# Copyright (C) 2008, Intercom s.r.l., windmillmedia
+# ActiveRest
 #
-# = ActiveRest::Controller::Core
+# Copyright (C) 2008-2011, Intercom Srl, Daniele Orlandi
 #
-# Author:: Lele Forzani <lele@windmill.it>, Alfredo Cerutti <acerutti@intercom.it>,
-#          Angelo Grossini <angelo@intercom.it>
+# Author:: Daniele Orlandi <daniele@orlandi.com>
+#          Lele Forzani <lele@windmill.it>
+#          Alfredo Cerutti <acerutti@intercom.it>
 #
-# License:: Proprietary
-#
-# Revision:: $Id: core.rb 5105 2009-08-05 12:30:05Z dot79 $
-#
-# == Description
-#
-#
+# License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
 require 'ostruct'
@@ -24,7 +18,6 @@ module Controller
   include Finder
   include Pagination # manage pagination
   include Rest # default verbs and actions
-  include MembersRest # default verbs and actions
   include Validations # contains validation actions
 
   @config = OpenStruct.new(
@@ -151,6 +144,7 @@ module Controller
 
   class Attribute < Model::Attribute
     attr_accessor :sub_attributes
+    attr_accessor :klass
 
     def initialize(*args)
       super(*args)
@@ -158,17 +152,21 @@ module Controller
     end
 
     def virtual(type, &block)
-
       raise 'Double defined attribute' if @type
 
       @type = type
       @source = block
     end
 
+    def meta(val)
+      @meta ||= {}
+      @meta.merge!(val)
+    end
+
     def attribute(name, &block)
       # TODO Check that attribute is embedded/nested
 
-      @sub_attributes[name] ||= Attribute.new(name)
+      @sub_attributes[name] ||= Attribute.new(self, name)
       @sub_attributes[name].instance_eval(&block)
       @sub_attributes[name]
     end
@@ -205,7 +203,7 @@ module Controller
     end
 
     def attribute(name, &block)
-      self.attrs[name] ||= Attribute.new(name)
+      self.attrs[name] ||= Attribute.new(self, name)
       self.attrs[name].instance_eval(&block)
       self.attrs[name]
     end

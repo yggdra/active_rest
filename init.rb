@@ -1,17 +1,13 @@
 #
-# ActiveRest, a more powerful rest resources manager
-# Copyright (C) 2008, Intercom s.r.l., windmillmedia
+# Yggdra DSL
 #
-# =
+# Copyright (C) 2008-2011, Intercom Srl, Daniele Orlandi
 #
-# Author:: Lele Forzani <lele@windmill.it>, Alfredo Cerutti <acerutti@intercom.it>
-# License:: Proprietary
+# Author:: Daniele Orlandi <daniele@orlandi.com>
+#          Lele Forzani <lele@windmill.it>
+#          Alfredo Cerutti <acerutti@intercom.it>
 #
-# Revision:: $Id: init.rb 5105 2009-08-05 12:30:05Z dot79 $
-#
-# == Description
-#
-#
+# License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
-require 'active_rest'
+require 'active_rest/routes'
