@@ -16,14 +16,12 @@ module ActiveRest
 module Controller
 
   include Finder
-  include Pagination # manage pagination
   include Rest # default verbs and actions
   include Validations # contains validation actions
 
   @config = OpenStruct.new(
     :cache_path => File.join(Rails.root, 'tmp', 'cache', 'active_rest'),
     :x_sendfile => false,
-    :save_pagination => true,
     :default_page_size => true,
     :members_crud => false,
     :route_expand_model_namespace => false
@@ -316,20 +314,44 @@ module Controller
     @target = model.find(tid, find_options)
   end
 
+  def apply_pagination_to_relation(rel)
+
+    if params[:start]
+      rel = rel.offset(params[:offset].to_i)
+    end
+
+    if params[:limit]
+      rel = rel.limit(params[:limit].to_i)
+    end
+
+    if params[:sort]
+      field = params[:sort].to_sym
+      if !rel.table[field]
+        raise BadRequest.new("Unknown field #{params[:sort]}")
+      end
+
+      dir = 'ASC'
+      if params[:dir]
+        dir = params[:dir].to_s.upcase
+        raise BadRequest.new("Invalid sort direction #{dir}") unless %w(ASC DESC).include?(dir)
+      end
+
+      rel = rel.order(field + ' ' + dir)
+    end
+
+    rel
+  end
+
   #
   # find all with conditions
   #
   def find_targets
-
-    # Update our pagination state from params[] and session if persistant
-    update_pagination_state
-
     # prepare relations based on conditions
 
-    finder_rel = build_finder_relation
-    pagination_rel = build_pagination_relation
+    finder_rel = apply_filter_to_relation(model.scoped)
+    paginated_rel = apply_pagination_to_relation(finder_rel)
 
-    @targets = (finder_rel & pagination_rel).all
+    @targets = paginated_rel.all
     @count = finder_rel.count
   end
 

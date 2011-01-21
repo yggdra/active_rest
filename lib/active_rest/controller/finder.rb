@@ -46,11 +46,11 @@ module Controller
       class UnknownOperator < SyntaxError; end
 
       attr_accessor :tree
-      attr_accessor :model
+      attr_accessor :rel
 
-      def self.from_json(json, model)
+      def self.from_json(json, rel)
         newobj = self.new
-        newobj.model = model
+        newobj.rel = rel
 
         begin
           newobj.tree = ActiveSupport::JSON.decode(json)
@@ -61,12 +61,12 @@ module Controller
         return newobj
       end
 
-      def to_arel(model)
+      def to_arel
         @tree.symbolize_keys!
 
         if @tree[:field]
           # Valid for boolean fields
-          return model.scoped.table[@tree[:field]]
+          return rel.scoped.table[@tree[:field]]
         else
           return to_arel_recur(@tree)
         end
@@ -84,9 +84,9 @@ module Controller
 
           if attr
             raise SyntaxError, "Attribute '#{attr}' name has invalid chars" if attr =~ /[^a-zA-Z0-9_]/
-            raise UnknownField, "Unknown field '#{attr}'" if !model.columns_hash[attr]
+            raise UnknownField, "Unknown field '#{attr}'" if !rel.columns_hash[attr]
 
-            return model.scoped.table[attr]
+            return rel.table[attr]
           else
             return to_arel_recur(term)
           end
@@ -127,35 +127,29 @@ module Controller
     end
 
     #
-    # build options for index search
+    # given a relation applies filtering from controller's parameters
     #
-    def build_finder_relation
+    def apply_filter_to_relation(rel)
 
-      begin
-        # If a complex filter expression es present, decode and apply it
-        if params[:_filter]
-          cond = Expression.from_json(params[:_filter], model).to_arel(model)
+      # If a complex filter expression es present, decode and apply it
+      if params[:_filter]
+        begin
+          rel = rel.where(Expression.from_json(params[:_filter], rel).to_arel)
+        rescue Expression::UnknownField => e
+          raise UnprocessableEntity.new(e.message)
         end
-
-        # For each parameter matching a column name add an equality relation to the conditions
-        params.each do |k,v|
-          next if k =~ /^-/
-
-          if attr = model.scoped.table[k]
-            raise Expression::UnknownField, "Unknown field '#{attr}'" if !attr
-
-            if cond
-              cond = cond & attr.eq(v)
-            else
-              cond = attr.eq(v)
-            end
-          end
-        end
-
-        return model.where(cond)
-      rescue Expression::UnknownField => e
-        raise UnprocessableEntity.new(e.message)
       end
+
+      # For each parameter matching a column name add an equality relation to the conditions
+      params.each do |k,v|
+        next if k =~ /^-/
+
+        if rel.table[k]
+          rel = rel.where(k => v)
+        end
+      end
+
+      return rel
     end
   end
 
