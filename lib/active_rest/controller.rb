@@ -314,16 +314,7 @@ module Controller
     @target = model.find(tid, find_options)
   end
 
-  def apply_pagination_to_relation(rel)
-
-    if params[:start]
-      rel = rel.offset(params[:offset].to_i)
-    end
-
-    if params[:limit]
-      rel = rel.limit(params[:limit].to_i)
-    end
-
+  def apply_sorting_to_relation(rel)
     if params[:sort]
       field = params[:sort].to_sym
       if !rel.table[field]
@@ -342,6 +333,12 @@ module Controller
     rel
   end
 
+  def apply_pagination_to_relation(rel)
+    rel = rel.offset(params[:offset].to_i) if params[:start]
+    rel = rel.limit(params[:limit].to_i) if params[:limit]
+    rel
+  end
+
   #
   # find all with conditions
   #
@@ -349,9 +346,10 @@ module Controller
     # prepare relations based on conditions
 
     finder_rel = apply_filter_to_relation(model.scoped)
-    paginated_rel = apply_pagination_to_relation(finder_rel)
+    out_rel = apply_sorting_to_relation(finder_rel)
+    out_rel = apply_pagination_to_relation(out_rel)
 
-    @targets = paginated_rel.all
+    @targets = out_rel.all
     @count = finder_rel.count
   end
 
