@@ -288,18 +288,14 @@ module Controller
 
   def apply_sorting_to_relation(rel)
     if params[:sort]
-      field = params[:sort].to_sym
-      if !rel.table[field]
-        raise BadRequest.new("Unknown field #{params[:sort]}")
+      attr = rel.table[params[:sort].to_sym]
+      raise BadRequest.new("Unknown field #{params[:sort]}") if !attr
+
+      if params[:dir] && params[:dir].to_s.upcase == 'DESC'
+        attr = attr.desc
       end
 
-      dir = 'ASC'
-      if params[:dir]
-        dir = params[:dir].to_s.upcase
-        raise BadRequest.new("Invalid sort direction #{dir}") unless %w(ASC DESC).include?(dir)
-      end
-
-      rel = rel.order(field + ' ' + dir)
+      rel = rel.order(attr)
     end
 
     rel
