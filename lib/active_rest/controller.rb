@@ -15,7 +15,7 @@ require 'ostruct'
 module ActiveRest
 module Controller
 
-  include Finder
+  include Filters
   include Rest # default verbs and actions
   include Validations # contains validation actions
 
@@ -218,34 +218,6 @@ module Controller
     end
   end
 
-  #
-  # in your controller you can override these methods this way:
-  #
-  # def verify_authenticity_token
-  #   super { |f|
-  #     f.format_one { render ... }
-  #     f.format_two { render ... }
-  #   }
-  # end
-  #
-
-  protected
-
-  #
-  # handle authenticity token (html in primis)
-  #
-#  def verify_authenticity_token(&blk)
-#    respond_to do | format |
-#      format.html { super }
-#      format.xml {}
-#      format.json {}
-#      format.jsone {}
-#      format.yaml {}
-#      blk.call(format) if blk # overriding to handle other format
-#      format.any { super } # unhandled format? do authenticity token!
-#    end
-#  end
-
   private
 
   TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE', 'y', 'yes', 'Y', 'YES', :true, :t].to_set
@@ -345,12 +317,14 @@ module Controller
   def find_targets
     # prepare relations based on conditions
 
-    finder_rel = apply_filter_to_relation(model.scoped)
-    out_rel = apply_sorting_to_relation(finder_rel)
-    out_rel = apply_pagination_to_relation(out_rel)
+    rel = apply_json_filter_to_relation(model.scoped)
+    rel = apply_simple_filter_to_relation(rel)
+    rel = apply_search_to_relation(rel)
+    rel = apply_sorting_to_relation(rel)
+    out_rel = apply_pagination_to_relation(rel)
 
     @targets = out_rel.all
-    @count = finder_rel.count
+    @count = rel.count
   end
 
   protected

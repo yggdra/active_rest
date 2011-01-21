@@ -14,7 +14,7 @@ module ActiveRest
 module Controller
 
   #
-  # Finder module implements index action filtering through a filter= URI parameter
+  # Filters module implements index action filtering through a filter= URI parameter
   #
   # The filter parameter should contain a JSON serialized tree structure representing the expression
   # Each node can be a String, a Numeric, an Array and a Hash.
@@ -31,7 +31,7 @@ module Controller
   # Binary: >, >=, <, <=, =, <>, LIKE, NOT LIKE, IN, NOT IN, AND, OR
   # Unary: IS NULL, IS NOT NULL, NOT
   #
-  module Finder
+  module Filters
 
     def self.included(base)
       #:nodoc:
@@ -129,7 +129,7 @@ module Controller
     #
     # given a relation applies filtering from controller's parameters
     #
-    def apply_filter_to_relation(rel)
+    def apply_json_filter_to_relation(rel)
 
       # If a complex filter expression es present, decode and apply it
       if params[:filter]
@@ -140,16 +140,42 @@ module Controller
         end
       end
 
-      # For each parameter matching a column name add an equality relation to the conditions
+      rel
+    end
+
+    # For each parameter matching a column name add an equality condition to the relation
+    #
+    def apply_simple_filter_to_relation(rel)
       params.each do |k,v|
         if k =~ /^f_(.*)/
           raise BadRequest.new("Unknown field #{$1}") if !rel.table[k]
-          rel = rel.where(k => v)
+          rel = rel.where($1.to_sym => v)
         end
       end
 
-      return rel
+      rel
     end
+
+    def apply_search_to_relation(rel, search_in = nil)
+      if params[:search]
+        if search_in
+          expr = nil
+
+          search_in.each { |x|
+            e = rel.table[x].matches('%' + params[:search] + '%')
+            expr = expr ? expr.or(e) : e
+          }
+
+          rel = rel.where(expr)
+        else
+          term = rel.table[attr]
+          rel = rel.where(term.matches('%' + params[:search] + '%'))
+        end
+      end
+
+      rel
+    end
+
   end
 
 end
