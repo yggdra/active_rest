@@ -103,7 +103,7 @@ module Controller
         op = tree[:o].upcase
         case op
         when 'IS NULL';     return term_a.eq(nil)
-        when 'IS NOT NULL'; return term_a.not(nil)
+        when 'IS NOT NULL'; return term_a.not_eq(nil)
         when '>';           return term_a.gt(term_b)
         when '>=';          return term_a.gteq(term_b)
         when '<';           return term_a.lt(term_b)
@@ -111,19 +111,35 @@ module Controller
         when '=';           return term_a.eq(term_b)
         when '<>';          return term_a.not_eq(term_b)
         when 'ILIKE';       return term_a.matches(term_b)
+        when 'NOT ILIKE';   return term_a.does_not_match(term_b)
         when 'IN';          return term_a.in(term_b)
+        when 'IN ANY';      return term_a.in_any(term_b)
+        when 'IN ALL';      return term_a.in_all(term_b)
+        when 'NOT IN';      return term_a.not_in(term_b)
+        when 'NOT IN ANY';  return term_a.not_in_any(term_b)
+        when 'NOT IN ALL';  return term_a.not_in_all(term_b)
         when 'AND';         return term_a.and(term_b)
         when 'OR';          return term_a.or(term_b)
-#        when 'NOT IN';
-#          return term_a.notin(term_b)
-#        when 'NOT LIKE'
-#          return term_a.notlike(term_b)
-##        when 'NOT'
-##          # Unary operator
         else
           raise UnknownOperator, "Unknown operator '#{op}'"
         end
       end
+    end
+
+    # For each parameter matching a column name add an equality condition to the relation
+    #
+    def apply_simple_filter_to_relation(rel)
+      params.each do |k,v|
+        if k =~ /^f_(.*)/
+          attr = rel.table[$1.to_sym]
+
+          raise BadRequest.new("Unknown field #{$1}") if !attr
+
+          rel = rel.where(attr.eq(v))
+        end
+      end
+
+      rel
     end
 
     #
@@ -137,19 +153,6 @@ module Controller
           rel = rel.where(Expression.from_json(params[:filter], rel).to_arel)
         rescue Expression::UnknownField => e
           raise BadRequest.new(e.message)
-        end
-      end
-
-      rel
-    end
-
-    # For each parameter matching a column name add an equality condition to the relation
-    #
-    def apply_simple_filter_to_relation(rel)
-      params.each do |k,v|
-        if k =~ /^f_(.*)/
-          raise BadRequest.new("Unknown field #{$1}") if !rel.table[k]
-          rel = rel.where($1.to_sym => v)
         end
       end
 
