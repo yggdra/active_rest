@@ -132,19 +132,18 @@ module Controller
     def apply_filter_to_relation(rel)
 
       # If a complex filter expression es present, decode and apply it
-      if params[:_filter]
+      if params[:filter]
         begin
-          rel = rel.where(Expression.from_json(params[:_filter], rel).to_arel)
+          rel = rel.where(Expression.from_json(params[:filter], rel).to_arel)
         rescue Expression::UnknownField => e
-          raise UnprocessableEntity.new(e.message)
+          raise BadRequest.new(e.message)
         end
       end
 
       # For each parameter matching a column name add an equality relation to the conditions
       params.each do |k,v|
-        next if k =~ /^-/
-
-        if rel.table[k]
+        if k =~ /^f_(.*)/
+          raise BadRequest.new("Unknown field #{$1}") if !rel.table[k]
           rel = rel.where(k => v)
         end
       end
