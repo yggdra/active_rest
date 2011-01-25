@@ -75,9 +75,7 @@ module Controller
       private
 
       def to_arel_recur_handle_term(term)
-        if term.is_a?(String) || term.is_a?(Numeric) || term.is_a?(Array)
-          return term
-        elsif term.is_a?(Hash)
+        if term.is_a?(Hash)
           term.symbolize_keys!
 
           attr = term[:field]
@@ -90,6 +88,8 @@ module Controller
           else
             return to_arel_recur(term)
           end
+        else
+          return term
         end
       end
 
