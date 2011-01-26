@@ -302,7 +302,7 @@ module Controller
   end
 
   def apply_pagination_to_relation(rel)
-    rel = rel.offset(params[:offset].to_i) if params[:start]
+    rel = rel.offset(params[:start].to_i) if params[:start]
     rel = rel.limit(params[:limit].to_i) if params[:limit]
     rel
   end
