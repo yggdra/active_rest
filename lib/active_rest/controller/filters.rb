@@ -160,8 +160,8 @@ module Controller
     end
 
     def apply_search_to_relation(rel, search_in = nil)
-      if params[:search]
-        if search_in
+      if search_in
+        if params[:search]
           expr = nil
 
           search_in.each { |x|
@@ -170,9 +170,6 @@ module Controller
           }
 
           rel = rel.where(expr)
-        else
-          term = rel.table[attr]
-          rel = rel.where(term.matches('%' + params[:search] + '%'))
         end
       end
 
