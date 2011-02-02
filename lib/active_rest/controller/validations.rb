@@ -50,7 +50,9 @@ module Controller
                 :retry_possible => false)
       end
 
-      render :nothing => true
+      respond_to do |format|
+        format.any { render :nothing => true }
+      end
     end
 
     def validate_update
@@ -64,7 +66,9 @@ module Controller
                 :retry_possible => false)
       end
 
-      render :nothing => true
+      respond_to do |format|
+        format.any { render :nothing => true }
+      end
     end
   end
 
