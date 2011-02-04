@@ -41,8 +41,7 @@ module Controller
 
     def validate_create
       target = model.new
-      guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
-      target.send(:attributes=, params[model_symbol], guard_protected_attributes)
+      target.send(:attributes=, @request_resource)
 
       if !target.valid?
         raise UnprocessableEntity.new('The form is invalid',
@@ -57,8 +56,8 @@ module Controller
 
     def validate_update
       find_target
-      guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
-      @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
+
+      @target.send(:attributes=, @request_resource)
 
       if !target.valid?
         raise UnprocessableEntity.new('The form is invalid',

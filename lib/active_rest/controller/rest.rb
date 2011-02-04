@@ -53,7 +53,6 @@ module Controller
     # REST VERBS
     #
 
-
     def schema
       @schema = generate_schema
 
@@ -99,9 +98,8 @@ module Controller
     def create
       begin
         send(ar_xact_handler) do
-          guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
           @target = model.new
-          @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
+          @target.send(:attributes=, @request_resource)
           @target.save!
         end
       rescue ActiveRecord::UnknownAttributeError => e
@@ -139,8 +137,7 @@ module Controller
     def update
       begin
         send(ar_xact_handler) do
-          guard_protected_attributes = self.respond_to?(:guard_protected_attributes) ? send(:guard_protected_attributes) : true
-          @target.send(:attributes=, params[model_symbol], guard_protected_attributes)
+          @target.send(:attributes=, @request_resource)
           @target.save!
         end
       rescue ActiveRecord::UnknownAttributeError => e
@@ -172,7 +169,10 @@ module Controller
 
       respond_to do |format|
         yield(format) if block_given?
-        format.any { head :status => :ok }
+        format.xml { render :xml => {} }
+        format.yaml { render :yaml => {} }
+        format.json { render :json => {} }
+        format.any { render :nothing => true }
       end
     end
 

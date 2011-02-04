@@ -92,10 +92,15 @@ module Controller
 
       # are we just requiring validations ?
       prepend_before_filter(:only => [ :update, :create ]) do
-        # if the form contains a _only_validation field then RESTful request is considered a "dry-run" and gets rerouted to
+
+        if request.content_mime_type == :json
+          @request_resource = ActiveSupport::JSON.decode(request.body)
+        end
+
+        # if a X-Validate-Only header is present RESTful request is considered a "dry-run" and gets rerouted to
         # a different action named validate_*
 
-        if is_true?(params[:_only_validation])
+        if is_true?(request.headers['X-Validate-Only'])
           # I didn't find a better way to internal redirect to a different action
           new_action = 'validate_' + action_name
           action_name = new_action
