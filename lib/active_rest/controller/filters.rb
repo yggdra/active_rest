@@ -47,6 +47,7 @@ module Controller
 
       attr_accessor :tree
       attr_accessor :rel
+      attr_reader :joins
 
       def self.from_json(json, rel)
         newobj = self.new
@@ -61,12 +62,16 @@ module Controller
         return newobj
       end
 
+      def initialize
+        @joins = []
+      end
+
       def to_arel
         @tree.symbolize_keys!
 
         if @tree[:field]
           # Valid for boolean fields
-          return rel.scoped.table[@tree[:field]]
+          return @rel.scoped.table[@tree[:field]]
         else
           return to_arel_recur(@tree)
         end
@@ -81,10 +86,27 @@ module Controller
           attr = term[:field]
 
           if attr
-            raise SyntaxError, "Attribute '#{attr}' name has invalid chars" if attr =~ /[^a-zA-Z0-9_]/
-            raise UnknownField, "Unknown field '#{attr}'" if !rel.columns_hash[attr]
+            raise SyntaxError, "Attribute '#{attr}' name has invalid chars" if attr =~ /[^a-zA-Z0-9._]/
 
-            return rel.table[attr]
+            attr_split = attr.split('.')
+            if attr_split.count > 1
+
+              raise "Unsupported joins deeper than one level" if attr_split.count > 2
+
+              relation = @rel.reflections[attr_split[0].to_sym]
+              raise UnknownField, "Unknown relation #{attr_split[0]}" if !relation
+
+              @joins << attr_split[0]
+              attr = attr_split[1..-1].join('.')
+
+              raise UnknownField, "Unknown field '#{attr}'" if !@rel.columns_hash[attr]
+
+              return relation.klass.scoped.table[attr]
+            else
+              raise UnknownField, "Unknown field '#{attr}'" if !@rel.columns_hash[attr]
+
+              return @rel.table[attr]
+            end
           else
             return to_arel_recur(term)
           end
@@ -150,7 +172,15 @@ module Controller
       # If a complex filter expression es present, decode and apply it
       if params[:filter]
         begin
-          rel = rel.where(Expression.from_json(params[:filter], rel).to_arel)
+          exp = Expression.from_json(params[:filter], rel)
+          rel = rel.where(exp.to_arel)
+
+          # If the expression references linked relations, join them. 'includes' *should* produce a LEFT OUTER JOIN
+          # so the expression would match if the linked relation is missing
+          #
+          exp.joins.uniq.each do |join|
+            rel = rel.includes(join.to_sym)
+          end
         rescue Expression::UnknownField => e
           raise BadRequest.new(e.message)
         end
@@ -164,10 +194,10 @@ module Controller
         if params[:search]
           expr = nil
 
-          search_in.each { |x|
+          search_in.each do |x|
             e = rel.table[x].matches('%' + params[:search] + '%')
             expr = expr ? expr.or(e) : e
-          }
+          end
 
           rel = rel.where(expr)
         end
