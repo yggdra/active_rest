@@ -225,14 +225,16 @@ module Model
               :type => reflection.macro,
               )
         when :belongs_to, :has_one
+
           @attrs[name] =
             StructuredAttribute.new(self, name,
               :clone_from => @attrs[name],
               :source => name.to_sym,
               :type => reflection.macro,
               :model_class => reflection.class_name,
-              :embedded => !!(reflection.options[:embedded]),
+              :embedded => !!(reflection.options[:embedded])
               )
+
         when :has_many
           @attrs[name] =
             CollectionAttribute.new(self, name,
@@ -352,6 +354,10 @@ module Model
           perms[attrname] ||= {}
           perms[attrname][:read] = true
           perms[attrname][:write] = true
+        end
+
+        if attr.respond_to?(:do_include) && attr.do_include
+          values[attrname] = self.send(attrname)
         end
       end
     end

@@ -148,6 +148,7 @@ module Controller
   class Attribute < Model::Attribute
     attr_accessor :sub_attributes
     attr_accessor :klass
+    attr_accessor :do_include
 
     def initialize(*args)
       super(*args)
@@ -159,6 +160,10 @@ module Controller
 
       @type = type
       @source = block
+    end
+
+    def included
+      @do_include = true
     end
 
     def meta(val)
