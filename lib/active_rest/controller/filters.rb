@@ -99,7 +99,7 @@ module Controller
               @joins << attr_split[0]
               attr = attr_split[1..-1].join('.')
 
-              raise UnknownField, "Unknown field '#{attr}'" if !@rel.columns_hash[attr]
+              raise UnknownField, "Unknown field '#{attr}'" if !relation.klass.columns_hash[attr]
 
               return relation.klass.scoped.table[attr]
             else
@@ -181,7 +181,7 @@ module Controller
           exp.joins.uniq.each do |join|
             rel = rel.includes(join.to_sym)
           end
-        rescue Expression::UnknownField => e
+        rescue Expression::SyntaxError => e
           raise BadRequest.new(e.message)
         end
       end
