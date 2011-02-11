@@ -248,6 +248,7 @@ module Controller
       render :nothing => true, :status => e.status
     else
       res = {
+        :reason => :exception,
         :short_msg => e.message,
         :long_msg => '',
         :retry_possible => false,
