@@ -151,11 +151,11 @@ module Controller
     # For each parameter matching a column name add an equality condition to the relation
     #
     def apply_simple_filter_to_relation(rel)
-      params.each do |k,v|
-        if k =~ /^f_(.*)/
-          attr = rel.table[$1.to_sym]
 
-          raise BadRequest.new("Unknown field #{$1}") if !attr
+      params.each do |k,v|
+        if (attr = rel.table[k.to_sym])
+
+          raise BadRequest.new("Unknown field #{k}") if !attr
 
           rel = rel.where(attr.eq(v))
         end
