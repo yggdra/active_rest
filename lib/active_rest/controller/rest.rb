@@ -99,16 +99,18 @@ module Controller
       begin
         send(ar_xact_handler) do
           @target = model.new
-          @target.send(:attributes=, @request_resource)
+          @target.attributes = @request_resource
           @target.save!
         end
       rescue ActiveRecord::UnknownAttributeError => e
+        # Ugly heuristic, but didn't find anything better
+        field_name = $1 if e.message =~ /unknown attribute: (.*)/
         raise BadRequest.new(e.message,
-                :per_field_msgs => { e.name => 'Is not defined' },
+                :per_field_msgs => { field_name => 'Is not defined' },
                 :retry_possible => false)
       rescue ActiveRecord::RecordInvalid => e
         raise UnprocessableEntity.new(e.message,
-                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h["#{model_symbol}[#{k}]"] = v; h },
+                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
                 :retry_possible => false)
       rescue ActiveRecord::RecordNotSaved => e
         raise UnprocessableEntity.new(e.message,
@@ -137,16 +139,18 @@ module Controller
     def update
       begin
         send(ar_xact_handler) do
-          @target.send(:attributes=, @request_resource)
+          @target.attributes = @request_resource
           @target.save!
         end
       rescue ActiveRecord::UnknownAttributeError => e
+        # Ugly heuristic, but didn't find anything better
+        field_name = $1 if e.message =~ /unknown attribute: (.*)/
         raise BadRequest.new(e.message,
-                :per_field_msgs => { e.name => 'Is not defined' },
+                :per_field_msgs => { field_name => 'Is not defined' },
                 :retry_possible => false)
       rescue ActiveRecord::RecordInvalid => e
         raise UnprocessableEntity.new(e.message,
-                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h["#{model_symbol}[#{k}]"] = v; h },
+                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
                 :retry_possible => false)
       rescue ActiveRecord::RecordNotSaved => e
         raise UnprocessableEntity.new(e.message,
