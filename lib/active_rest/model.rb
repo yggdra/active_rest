@@ -385,6 +385,7 @@ module Model
   end
 
   def as_json(opts = {})
+    opts ||= {}
     export_as_hash({ :with_perms => true }.merge!(opts))
   end
 
