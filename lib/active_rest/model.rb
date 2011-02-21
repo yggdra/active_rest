@@ -32,17 +32,25 @@ module Model
   class Attribute
 
     class DSL
-      def initialize(klass)
-        @klass = klass
+      def initialize(model, attrs, name)
+        @model = model
+        @attrs = attrs
+        @name = name
       end
 
       def human_name(name)
-        @klass.human_name = name
+        @attrs[@name].human_name = name
       end
 
       def meta(meta)
-        @klass.meta ||= {}
-        @klass.meta.merge!(meta)
+        @attrs[@name].meta ||= {}
+        @attrs[@name].meta.merge!(meta)
+      end
+
+      def virtual(type, &block)
+        @attrs[@name] = SimpleAttribute.new(@model, @name, :clone => @attrs[@name])
+        @attrs[@name].type = type
+        @attrs[@name].source = block
       end
     end
 
@@ -189,7 +197,7 @@ module Model
     def attribute(name, &block)
       @attrs ||= {}
       @attrs[name] ||= Attribute.new(self, name)
-      Attribute::DSL.new(@attrs[name]).instance_eval(&block)
+      Attribute::DSL.new(self, @attrs, name).instance_eval(&block)
       @attrs[name]
     end
 
