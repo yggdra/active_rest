@@ -153,11 +153,21 @@ module Controller
     def apply_simple_filter_to_relation(rel)
 
       params.each do |k,v|
+
         if (attr = rel.table[k.to_sym])
-
-          raise BadRequest.new("Unknown field #{k}") if !attr
-
           rel = rel.where(attr.eq(v))
+        elsif (attr_split = k.split('.')).count > 1
+
+          raise "Unsupported joins deeper than one level" if attr_split.count > 2
+
+          relation = rel.reflections[attr_split[0].to_sym]
+          raise UnknownField, "Unknown relation #{attr_split[0]}" if !relation
+
+          attr = attr_split[1..-1].join('.')
+
+          raise UnknownField, "Unknown field '#{attr}'" if !relation.klass.columns_hash[attr]
+
+          rel = rel.joins(attr_split[0].to_sym).where(relation.klass.scoped.table[attr].eq(v))
         end
       end
 
