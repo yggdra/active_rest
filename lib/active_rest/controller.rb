@@ -323,15 +323,16 @@ module Controller
   #
   def find_targets
     # prepare relations based on conditions
+    @targets_relation ||= model.scoped
 
-    rel = apply_json_filter_to_relation(model.scoped)
-    rel = apply_simple_filter_to_relation(rel)
-    rel = apply_search_to_relation(rel)
-    rel = apply_sorting_to_relation(rel)
-    out_rel = apply_pagination_to_relation(rel)
+    @targets_relation = apply_json_filter_to_relation(@targets_relation)
+    @targets_relation = apply_simple_filter_to_relation(@targets_relation)
+    @targets_relation = apply_search_to_relation(@targets_relation)
+    @targets_relation = apply_sorting_to_relation(@targets_relation)
+    out_rel = apply_pagination_to_relation(@targets_relation)
 
-    @targets = out_rel.all
-    @count = rel.count
+    @targets = out_rel
+    @count = @targets_relation.count
   end
 
   protected
