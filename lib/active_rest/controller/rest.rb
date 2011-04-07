@@ -51,7 +51,7 @@ module Controller
 
     #
     # REST VERBS
-    #
+    #A
 
     def schema
       @schema = generate_schema
@@ -69,7 +69,6 @@ module Controller
 
       respond_with(@targets,
                    :total => @count,
-                   :with_perms => false,
                    :root => ActiveSupport::Inflector.pluralize(
                               ActiveSupport::Inflector.underscore(model.name)).tr('/', '_')) do |format|
         yield(format) if block_given?
@@ -97,7 +96,7 @@ module Controller
   # if parameter '_only_validation' is present only validation actions will be ran
     def create
       begin
-        send(ar_xact_handler) do
+        send(rest_xact_handler) do
           @target = model.new
           @target.attributes = @request_resource
           @target.save!
@@ -138,7 +137,7 @@ module Controller
     # if parameter '_only_validation' is present only validation actions will be ran
     def update
       begin
-        send(ar_xact_handler) do
+        send(rest_xact_handler) do
           @target.attributes = @request_resource
           @target.save!
         end
@@ -183,7 +182,7 @@ module Controller
     protected
 
     def generate_schema
-      model.schema(:additional_attrs => self.attrs)
+      model.schema
     end
 
     def x_sendfile

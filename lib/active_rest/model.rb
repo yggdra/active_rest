@@ -10,26 +10,41 @@
 # License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
-class Hash
-  def export_to_hash(opts = {})
-    out = {}
-    self.each do |k,v|
-      out[k] = v.export_to_hash(options)
-    end
-    out
-  end
-end
-
-class Array
-  def export_to_hash(opts = {})
-    self.map { |v| v.export_to_hash(options) }
-  end
-end
-
 module ActiveRest
 module Model
 
+  # Base class for attributes
+  #
   class Attribute
+
+    attr_accessor :binding
+
+    attr_accessor :name
+    attr_accessor :human_name
+    attr_accessor :meta
+
+    def initialize(binding, name, h = {})
+      @binding = binding
+      @name = name
+
+      @human_name ||= h[:human_name]
+      @meta = h[:meta] || {}
+    end
+
+    def definition
+      res = { :type => type }
+      res[:human_name] = @human_name if @human_name
+      res
+    end
+
+    def type
+      self.class.name.split('::').last.underscore.to_sym
+    end
+
+    def apply(attr)
+      @human_name = attr.human_name
+      @meta.merge!(attr.meta)
+    end
 
     class DSL
       def initialize(model, attrs, name)
@@ -48,176 +63,188 @@ module Model
       end
 
       def virtual(type, &block)
-        @attrs[@name] = SimpleAttribute.new(@model, @name, :clone => @attrs[@name])
-        @attrs[@name].type = type
-        @attrs[@name].source = block
+        @attrs[@name] = Attribute::Virtual.new(@model, @name, :clone => @attrs[@name], :type => type, :value => block)
       end
     end
 
-    attr_accessor :name
-    attr_accessor :type
-    attr_accessor :source
-    attr_accessor :human_name
-    attr_accessor :meta
-    attr_accessor :klass
+    # Simple attribute describes an attribute containing a single flat value
+    # Database columns are normally mapped to simple attributes
+    #
+    class Simple < Attribute
+      attr_accessor :default
+      attr_reader :type
 
-    def initialize(klass, name, h = {})
-      @klass = klass
-      @name = name
+      def initialize(klass, name, h = {})
+        super klass, name, h
 
-      if h[:clone_from]
-        @human_name = h[:clone_from].human_name
-        @meta = h[:clone_from].meta
+        @type = h[:type]
       end
 
-      @type = h[:type]
-      @source = h[:source]
+      def definition
+        res = super
 
-      @human_name ||= h[:human_name]
-      @meta ||= h[:meta]
-    end
+        res[:default] = @default if @default
 
-    def definition
-      res = {
-        :type => type,
-      }
+        res[:edit_on_creation] = true
+        res[:visible_on_creation] = true
 
-      res[:human_name] = @human_name if @human_name
+        res[:after_creation_perms] = {
+          :write => true,
+          :read => true,
+        }
 
-      res
-    end
-
-    def value(object)
-#      object.instance_eval(&@source) if @source
-
-      # FIXME Workaround for ruby bug
-      if @source.is_a?(Symbol)
-        object.send(@name)
-      elsif @source.is_a?(Proc)
-        object.instance_eval(&@source)
+        res
       end
     end
-  end
 
-  class SimpleAttribute < Attribute
-    attr_accessor :primary
-    attr_accessor :null
-    attr_accessor :default
-
-    def initialize(klass, name, h = {})
-      super klass, name, h
-
-      @primary = h[:primary]
-      @null = h[:null]
-      @default = h[:default]
+    #
+    class Structure < Attribute
     end
 
-    def definition
-      res = super
+    # Reference to another linked but not embedded model. It may come from a has_one or belongs_to
+    #
+    class Reference < Attribute
+      def initialize(klass, name, h = {})
+        super klass, name, h
 
-      res[:primary] = @primary if @primary
-      res[:null] = @null
-      res[:default] = @default if @default
+        @referenced_class_name = h[:referenced_class_name]
+      end
 
-      res[:edit_on_creation] = true
-      res[:visible_on_creation] = true
-
-      res[:after_creation_perms] = {
-        :write => true,
-        :read => true,
-      }
-
-      res
+      def definition
+        res = super
+        res[:referenced_class] = @referenced_class_name
+        res
+      end
     end
 
-  end
+    # EmbeddedModel describes an attribute containing an embedded model
+    #
+    class EmbeddedModel < Attribute
+      def initialize(klass, name, h = {})
+        super klass, name, h
 
-  class StructuredAttribute < Attribute
-    attr_accessor :model_class
-    attr_accessor :embedded
-    attr_accessor :member_attributes
+        @model_class = h[:model_class]
+      end
 
-    def initialize(klass, name, h = {})
-      super klass, name, h
-
-      @relation = true
-      @embedded = h[:embedded]
-      @model_class = h[:model_class]
-    end
-
-    def definition
-      res = super
-
-      res[:embedded] = @embedded if @embedded
-
-      if @embedded
+      def definition
+        res = super
         res[:schema] = @model_class.constantize.schema
-      else
-        res[:schema] = {}
-        res[:schema][:type] = @model_class
+        res
       end
-
-      res
     end
-  end
 
-  class CollectionAttribute < StructuredAttribute
-    def definition
-      res = super
+    # UniformModelsCollection is a collection of objects of the same type
+    #
+    class UniformModelsCollection < Attribute
+      def initialize(klass, name, h = {})
+        super klass, name, h
 
-      if @embedded
-        res[:members_schema] = @model_class.constantize.schema
-      else
-        res[:members_schema] = {}
-        res[:members_schema][:type] = @model_class
+        @model_class = h[:model_class]
       end
 
-      res[:edit_on_creation] = true
-      res[:visible_on_creation] = true
+      def definition
+        res = super
 
-      res[:after_creation_perms] = {
-        :write => true,
-        :read => true,
-      }
+        res[:schema] = @model_class.constantize.schema
 
-      res
+        res[:edit_on_creation] = true
+        res[:visible_on_creation] = true
+
+        res[:after_creation_perms] = {
+          :write => true,
+          :read => true,
+        }
+
+        res
+      end
+    end
+
+    # UniformReferencesCollection is a collection of objects of the same type
+    #
+    class UniformReferencesCollection < Attribute
+      def initialize(klass, name, h = {})
+        super klass, name, h
+
+        @referenced_class_name = h[:referenced_class_name]
+      end
+
+      def definition
+        res = super
+        res[:referenced_class] = @referenced_class_name
+        res
+      end
+    end
+
+    # EmbeddedPolymorphicModel
+    #
+    class EmbeddedPolymorphicModel < Attribute
+    end
+
+    # PolymorphicReference
+    #
+    class PolymorphicReference < Attribute
+    end
+
+    # PolymorphicModelsCollection
+    #
+    class PolymorphicModelsCollection < Attribute
+    end
+
+    # PolymorphicReferencesCollection
+    #
+    class PolymorphicReferencesCollection < Attribute
+    end
+
+    # Virtual
+    #
+    class Virtual < Attribute
+      attr_reader :type
+
+      def initialize(klass, name, h = {})
+        super klass, name, h
+        @type = h[:type]
+        @value = h[:value]
+      end
+
+      def value(object)
+        @value.is_a?(Proc) ? object.instance_eval(&@value) : @value
+      end
     end
   end
 
   def self.included(base)
-    base.class_eval do
+    base.extend(ClassMethods)
 
+    base.instance_eval do
+      class_inheritable_accessor :attrs_defined_in_code
     end
 
-    base.extend(ClassMethods)
+    base.attrs_defined_in_code = {}
   end
 
   module ClassMethods
 
     def attribute(name, &block)
-      @attrs ||= {}
-      @attrs[name] ||= Attribute.new(self, name)
-      Attribute::DSL.new(self, @attrs, name).instance_eval(&block)
-      @attrs[name]
+      a = @attrs || attrs_defined_in_code
+
+      a[name] ||= Attribute.new(self, name)
+      Attribute::DSL.new(self, a, name).instance_eval(&block)
+      a[name]
     end
 
     def attrs
-      initialize_attrs if !@attrs_initialized
-      @attrs
+      @attrs || initialize_attrs
     end
 
     def initialize_attrs
-      @attrs ||= {}
+      @attrs = {}
 
       columns.each do |x|
         name = x.name.to_sym
         @attrs[name] =
-          SimpleAttribute.new(self, name,
-            :clone_from => @attrs[name],
+          Attribute::Simple.new(self, name,
             :source => x.name.to_sym,
             :type => map_column_type(x.type),
-            :primary => x.primary,
-            :null => x.null,
             :default => x.default,
             )
       end
@@ -227,39 +254,78 @@ module Model
         case reflection.macro
         when :composed_of
           @attrs[name] =
-            StructuredAttribute.new(self, name,
-              :clone_from => @attrs[name],
-              :source => nil,
+            Attribute::Structure.new(self, name,
               :type => reflection.macro,
-              )
-        when :belongs_to, :has_one
+             )
 
-          @attrs[name] =
-            StructuredAttribute.new(self, name,
-              :clone_from => @attrs[name],
-              :source => name.to_sym,
-              :type => reflection.macro,
-              :model_class => reflection.class_name,
-              :embedded => !!(reflection.options[:embedded])
-              )
+        when :belongs_to, :has_one
+          if reflection.options[:polymorphic]
+            if reflection.options[:embedded]
+              @attrs[name] = Attribute::EmbeddedPolymorphicModel.new(self, name)
+            else
+              @attrs[name] = Attribute::PolymorphicReference.new(self, name)
+            end
+          else
+            if reflection.options[:embedded]
+              @attrs[name] =
+                Attribute::EmbeddedModel.new(self, name,
+                  :relation_type => reflection.macro,
+                  :model_class => reflection.class_name
+                 )
+            else
+              @attrs[name] =
+                Attribute::Reference.new(self, name,
+                  :type => reflection.macro,
+                  :referenced_class_name => reflection.class_name,
+                 )
+            end
+          end
 
         when :has_many
-          @attrs[name] =
-            CollectionAttribute.new(self, name,
-              :clone_from => @attrs[name],
-              :source => name.to_sym,
-              :type => reflection.macro,
-              :model_class => reflection.class_name,
-              :embedded => !!(reflection.options[:embedded]),
-              )
+          if reflection.options[:as]
+            if reflection.options[:embedded]
+              @attrs[name] =
+                Attribute::PolymorphicModelsCollection.new(self, name,
+                  :type => reflection.macro,
+                  :model_class => reflection.class_name,
+                 )
+            else
+              @attrs[name] =
+                Attribute::PolymorphicReferencesCollection.new(self, name,
+                  :type => reflection.macro,
+                  :referenced_class_name => reflection.class_name,
+                 )
+            end
+          else
+            if reflection.options[:embedded]
+              @attrs[name] =
+                Attribute::UniformModelsCollection.new(self, name,
+                  :type => reflection.macro,
+                  :model_class => reflection.class_name,
+                 )
+            else
+              @attrs[name] =
+                Attribute::UniformReferencesCollection.new(self, name,
+                  :type => reflection.macro,
+                  :referenced_class_name => reflection.class_name,
+                 )
+            end
+          end
+
         else
           raise "Usupported reflection of type '#{reflection.macro}'"
         end
       end
 
-      @attrs_initialized = true
+      attrs_defined_in_code.each do |attrname, attr|
+        if @attrs[attrname]
+          @attrs[attrname].apply(attr)
+        else
+          @attrs[attrname] = attr
+        end
+      end
 
-      attrs
+      @attrs
     end
 
     def schema(options = {})
@@ -270,13 +336,6 @@ module Model
         defs[attrname] = attr.definition
       end
 
-      if options[:additional_attrs]
-        options[:additional_attrs].each do |attrname,attr|
-          defs[attrname] ||= {}
-          defs[attrname].deep_merge!(attr.definition)
-        end
-      end
-
       object_actions = {
         :read => {
         },
@@ -284,7 +343,7 @@ module Model
         },
         :delete => {
         }
-        # TODO add specific action
+        # TODO add specific actions
       }
 
       class_actions = {
@@ -297,7 +356,7 @@ module Model
 
       res = {
         :type => self.to_s,
-        :type_symbolized => self.to_s.underscore.gsub(/\//, '_'),
+        :type_symbolized => self.to_s.underscore.gsub(/\//, '_').to_sym,
         :attrs => defs,
         :object_actions => object_actions,
         :class_actions => class_actions,
@@ -318,74 +377,11 @@ module Model
   end
 
   def export_as_hash(opts = {})
-    values = {}
-    perms = {}
-
-    attrs.each do |attrname,attr|
-
-      attrname = attrname.to_sym
-
-      if attr.kind_of?(SimpleAttribute)
-        values[attrname] = attr.value(self)
-        values[attrname] = values[attrname].export_as_hash(opts) if values[attrname].respond_to?(:export_as_hash)
-      elsif attr.kind_of?(CollectionAttribute)
-        if attr.embedded
-          recur_into_subattr(attrname, opts) do |newopts|
-            values[attrname] = attr.value(self).map { |x| x.export_as_hash(newopts) }
-          end
-        end
-
-      elsif attr.kind_of?(StructuredAttribute)
-        if attr.embedded
-          recur_into_subattr(attrname, opts) do |newopts|
-            values[attrname] = attr.value(self) ? attr.value(self).export_as_hash(newopts) : nil
-          end
-        end
-
-      else
-        raise "Don't know how to handle attributes of type '#{attr.class}'"
-      end
-
-      perms[attrname] ||= {}
-      perms[attrname][:read] = true
-      perms[attrname][:write] = true
+    if opts[:view]
+      opts[:view].process(self, opts)
+    else
+      View.new(:default).process(self, opts)
     end
-
-    if opts[:additional_attrs]
-      opts[:additional_attrs].each do |attrname,attr|
-        if attr.source
-          recur_into_subattr(attrname, opts) do |newopts|
-            values[attrname] = attr.value(self)
-            values[attrname] = values[attrname].export_as_hash(opts) if values[attrname].respond_to?(:export_as_hash)
-          end
-
-          perms[attrname] ||= {}
-          perms[attrname][:read] = true
-          perms[attrname][:write] = true
-        end
-
-        if attr.respond_to?(:do_include) && attr.do_include
-          values[attrname] = self.send(attrname)
-        end
-      end
-    end
-
-    res = values
-
-    res[:_type] = self.class.to_s
-    res[:_type_symbolized] = self.class.to_s.underscore.gsub(/\//, '_').to_sym
-
-    if opts[:with_perms]
-      res[:_object_perms] = {
-          :read => true,
-          :write => true,
-          :delete => true
-        }
-
-      res[:_attr_perms] = perms
-    end
-
-    res
   end
 
   def export_as_yaml(opts = {})
@@ -394,24 +390,11 @@ module Model
 
   def as_json(opts = {})
     opts ||= {}
-    export_as_hash({ :with_perms => true }.merge!(opts))
+    export_as_hash(opts)
   end
 
   def attrs
     self.class.attrs
-  end
-
-  private
-
-  def recur_into_subattr(attrname, options)
-    newopts = {}
-    if options[:additional_attrs] &&
-       options[:additional_attrs][attrname] &&
-       options[:additional_attrs][attrname].respond_to?(:sub_attributes)
-      newopts = { :additional_attrs => options[:additional_attrs][attrname].sub_attributes }
-    end
-
-    yield newopts
   end
 
 end

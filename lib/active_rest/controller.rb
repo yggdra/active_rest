@@ -13,22 +13,84 @@
 require 'ostruct'
 
 module ActiveRest
+
+# ActiveRest::Controller is a mixin to be included in your controllers to make them RESTful.
+#
+# If the model can be deducted from controller name, it is automatically configured, otherwise it has to be specified
+# by calling {#rest_controller_for}
+#
+# Example:
+#
+# class User < ActiveRecord::Model
+#   include ActiveRest::Model
+# end
+#
+# class UsersController < ApplicationController
+#   include ActiveRest::Controller
+# end
+#
+# A RESTful controller provides several useful features:
+#
+# Standard REST verbs:
+#
+# GET /resources        => index
+# GET /resources/schems => schema
+# GET /resource/123     => show
+# POST /resources       => create
+# PUT /resources/123    => update
+#
+#
 module Controller
 
   include Filters
-  include Rest # default verbs and actions
-  include Validations # contains validation actions
+  include Rest
+  include Validations
 
   @config = OpenStruct.new(
     :cache_path => File.join(Rails.root, 'tmp', 'cache', 'active_rest'),
     :x_sendfile => false,
     :default_page_size => true,
-    :members_crud => false,
-    :route_expand_model_namespace => false
   )
 
   class << self
     attr_reader :config
+  end
+
+  module ClassMethods
+
+    def rest_controller_for(model, options = {})
+      self.model = model
+      self.rest_options = options
+    end
+
+    def rest_transaction_handler(method)
+      self.rest_xact_handler = method
+    end
+
+    def view(name, &block)
+      self.rest_views[name] ||= View.new(name)
+      self.rest_views[name].instance_eval(&block)
+      self.rest_views[name]
+    end
+
+    def filter(name, val)
+      self.rest_filters[name] = val
+    end
+
+    def read_only!
+      self.rest_read_only = true
+    end
+
+    private
+
+    def map_column_type(type)
+      case type
+      when :datetime
+        :timestamp
+      else
+        type
+      end
+    end
   end
 
   class ARException < StandardError
@@ -78,17 +140,21 @@ module Controller
   end
 
   def self.included(base)
+    base.extend(ClassMethods)
+
     base.class_eval do
       class_inheritable_accessor :model
-      class_inheritable_accessor :options
-      class_inheritable_accessor :ar_xact_handler
-      class_inheritable_accessor :attrs
+      class_inheritable_accessor :rest_options
+      class_inheritable_accessor :rest_xact_handler
+      class_inheritable_accessor :rest_views
+      class_inheritable_accessor :rest_filters
+      class_inheritable_accessor :rest_read_only
 
       attr_accessor :target, :targets
 
-      rescue_from ARException, :with => :arexception_rescue_action
+      rescue_from ARException, :with => :rest_ar_exception_rescue_action
 
-      self.ar_xact_handler = :rest_default_transaction_handler
+      self.rest_xact_handler = :rest_default_transaction_handler
 
       # are we just requiring validations ?
       prepend_before_filter(:only => [ :update, :create ]) do
@@ -113,7 +179,7 @@ module Controller
 
       prepend_before_filter do
         # prevent any action that can modify the record or change the table
-        raise MethodNotAllowed.new('Read only in effect') if options[:read_only] && request.method != 'GET'
+        raise MethodNotAllowed.new('Read only in effect') if self.class.rest_read_only && request.method != 'GET'
 
         # setup I18n if options has this information
         I18n.locale = params[:language].to_sym if params[:language]
@@ -136,95 +202,36 @@ module Controller
       base.append_after_filter :x_sendfile, :only => [ :index ]
     end
 
-    base.extend(ClassMethods)
+    base.rest_views = {}
+    base.rest_filters = {}
+
+    begin
+      base.rest_controller_for(base.controller_name.classify.constantize)
+    rescue NameError
+    end
   end
 
+  # Select the proper view based on URI parameters and action name.
+  #
+  # If no view is specified in URI parameter 'view' the action name is used.
+  #
+  # @return [View] the selected view
+  #
+  def rest_view
+    if params[:view]
+      self.class.rest_views[params[:view].to_sym]
+    else
+      self.class.rest_views[action_name.to_sym]
+    end
+  end
+
+  protected
+
+  # default transaction handler which simply starts an ActiveRecord transaction
+  #
   def rest_default_transaction_handler
     model.transaction do
       yield
-    end
-  end
-
-  class Attribute < Model::Attribute
-    attr_accessor :sub_attributes
-    attr_accessor :klass
-    attr_accessor :do_include
-
-    def initialize(*args)
-      super(*args)
-      @sub_attributes = {}
-    end
-
-    def virtual(type, &block)
-      raise 'Double defined attribute' if @type
-
-      @type = type
-      @source = block
-    end
-
-    def included
-      @do_include = true
-    end
-
-    def meta(val)
-      @meta ||= {}
-      @meta.merge!(val)
-    end
-
-    def attribute(name, &block)
-      # TODO Check that attribute is embedded/nested
-
-      @sub_attributes[name] ||= Attribute.new(self, name)
-      @sub_attributes[name].instance_eval(&block)
-      @sub_attributes[name]
-    end
-
-    def definition
-      res = super
-
-      if !sub_attributes.empty?
-        res[:members_schema] ||= {}
-        sub_attributes.each do |k,v|
-          res[:members_schema][:attrs] ||= {}
-          res[:members_schema][:attrs][k] = v.definition
-        end
-      end
-
-      res
-    end
-  end
-
-  module ClassMethods
-
-    def rest_transaction_handler(method)
-      self.ar_xact_handler = method
-    end
-
-    def rest_controller_for(model, options = {})
-      self.model = model
-      self.options = options
-      self.attrs = {}
-    end
-
-    def rest_controller(options = {})
-      rest_controller_for(self.controller_name.classify.constantize, options)
-    end
-
-    def attribute(name, &block)
-      self.attrs[name] ||= Attribute.new(self, name)
-      self.attrs[name].instance_eval(&block)
-      self.attrs[name]
-    end
-
-    private
-
-    def map_column_type(type)
-      case type
-      when :datetime
-        :timestamp
-      else
-        type
-      end
     end
   end
 
@@ -235,10 +242,9 @@ module Controller
     TRUE_VALUES.include?(val)
   end
 
+  # Rescue action for ARException kind of exceptions
   #
-  # generic rescue action. when html will handle a block
-  #
-  def arexception_rescue_action(e)
+  def rest_ar_exception_rescue_action(e)
 
     message = "\nRendered exception: #{e.class} (#{e.message}):\n"
     message << "  " << clean_backtrace(e, :silent).join("\n  ")
@@ -281,20 +287,16 @@ module Controller
     model.to_s.underscore.gsub(/\//, '_')
   end
 
+  # find a single resource
   #
-  # find a single resource; return object or, if action is not include
-  # into a object ruleset, return an hash
-  #
-  def find_target(options={})
-#    joins, select = build_joins
+  def find_target(opts={})
 
-    tid = options[:id] || params[:id]
-    options.delete(:id)
+    tid = opts[:id] || params[:id]
+    opts.delete(:id)
 
-    find_options = {}
-#    find_options[:select] = select unless select.blank?
-#    find_options[:joins] = joins unless joins.blank?
-    @target = model.find(tid, find_options)
+    find_opts = {}
+
+    @target = model.find(tid, find_opts)
   end
 
   def apply_sorting_to_relation(rel)
@@ -318,21 +320,19 @@ module Controller
     rel
   end
 
-  #
   # find all with conditions
   #
   def find_targets
     # prepare relations based on conditions
-    @targets_relation ||= model.scoped
 
-    @targets_relation = apply_json_filter_to_relation(@targets_relation)
-    @targets_relation = apply_simple_filter_to_relation(@targets_relation)
-    @targets_relation = apply_search_to_relation(@targets_relation)
-    @targets_relation = apply_sorting_to_relation(@targets_relation)
-    out_rel = apply_pagination_to_relation(@targets_relation)
+    rel = apply_json_filter_to_relation(model.scoped)
+    rel = apply_simple_filter_to_relation(rel)
+    rel = apply_search_to_relation(rel)
+    rel = apply_sorting_to_relation(rel)
+    out_rel = apply_pagination_to_relation(rel)
 
-    @targets = out_rel
-    @count = @targets_relation.count
+    @targets = out_rel.all
+    @count = rel.count
   end
 
   protected
