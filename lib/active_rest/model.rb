@@ -236,6 +236,24 @@ module Model
       @attrs || initialize_attrs
     end
 
+    def nested_attribute(attrname, rel = self.scoped, table = rel.table)
+
+      attr_split = attrname.split('.')
+
+      if attr_split.count == 1
+        attr = table[attr_split[0]]
+        raise UnknownField, "Unknown field '#{attrname}'" if !attr
+        return attr, rel
+      end
+
+      reflection = (reflection ? reflection : rel).reflections[attr_split[0].to_sym]
+      raise UnknownField, "Unknown relation #{attr_split[0]}" if !reflection
+
+      rel = rel.joins(attr_split[0].to_sym)
+
+      nested_attribute(attr_split[1..-1].join('.'), rel, reflection.klass.scoped.table)
+    end
+
     def initialize_attrs
       @attrs = {}
 
@@ -396,6 +414,9 @@ module Model
   def attrs
     self.class.attrs
   end
+
+  class UnknownField < StandardError; end
+
 
 end
 

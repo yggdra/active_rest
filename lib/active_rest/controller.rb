@@ -300,15 +300,20 @@ module Controller
   end
 
   def apply_sorting_to_relation(rel)
-    if params[:sort]
-      attr = rel.table[params[:sort].to_sym]
-      raise BadRequest.new("Unknown field #{params[:sort]}") if !attr
+    return rel if !params[:sort]
 
-      if params[:dir] && params[:dir].to_s.upcase == 'DESC'
-        attr = attr.desc
+    sorts = params[:sort].split(',')
+
+    sorts.each do |sort|
+      if sort =~ /^([-+]?)(.*)$/
+        desc = ($1 && $1 == '-')
+        attrname = $2
+
+        (attr, rel) = model.nested_attribute(attrname, rel)
+        attr = attr.desc if desc
+
+        rel = rel.order(attr)
       end
-
-      rel = rel.order(attr)
     end
 
     rel
@@ -323,16 +328,17 @@ module Controller
   # find all with conditions
   #
   def find_targets
-    # prepare relations based on conditions
+    @targets_relation ||= model.scoped
 
-    rel = apply_json_filter_to_relation(model.scoped)
-    rel = apply_simple_filter_to_relation(rel)
-    rel = apply_search_to_relation(rel)
-    rel = apply_sorting_to_relation(rel)
-    out_rel = apply_pagination_to_relation(rel)
+    @targets_relation = apply_builtin_filter_to_relation(@targets_relation)
+    @targets_relation = apply_json_filter_to_relation(@targets_relation)
+    @targets_relation = apply_simple_filter_to_relation(@targets_relation)
+    @targets_relation = apply_search_to_relation(@targets_relation)
+    @targets_relation = apply_sorting_to_relation(@targets_relation)
+    out_rel = apply_pagination_to_relation(@targets_relation)
 
-    @targets = out_rel.all
-    @count = rel.count
+    @targets = out_rel
+    @count = @targets_relation.count
   end
 
   protected

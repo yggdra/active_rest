@@ -148,26 +148,32 @@ module Controller
       end
     end
 
+    #
+    #
+    def apply_builtin_filter_to_relation(rel)
+
+      flt = (params[:flt] && self.class.rest_filters[params[:flt].to_sym]) || self.class.rest_filters[:default]
+      if flt
+        if flt.kind_of?(Proc)
+          rel = self.instance_exec(rel, &flt)
+        else
+          rel = flt
+        end
+      end
+
+      rel
+    end
     # For each parameter matching a column name add an equality condition to the relation
     #
     def apply_simple_filter_to_relation(rel)
 
       params.each do |k,v|
+        next if k[0] == '_'
 
-        if (attr = rel.table[k.to_sym])
+        begin
+          (attr, rel) = model.nested_attribute(k, rel)
           rel = rel.where(attr.eq(v))
-        elsif (attr_split = k.split('.')).count > 1
-
-          raise "Unsupported joins deeper than one level" if attr_split.count > 2
-
-          relation = rel.reflections[attr_split[0].to_sym]
-          raise UnknownField, "Unknown relation #{attr_split[0]}" if !relation
-
-          attr = attr_split[1..-1].join('.')
-
-          raise UnknownField, "Unknown field '#{attr}'" if !relation.klass.columns_hash[attr]
-
-          rel = rel.joins(attr_split[0].to_sym).where(relation.klass.scoped.table[attr].eq(v))
+        rescue Model::UnknownField
         end
       end
 
@@ -205,7 +211,8 @@ module Controller
           expr = nil
 
           search_in.each do |x|
-            e = rel.table[x].matches('%' + params[:search] + '%')
+            (attr, rel) = model.nested_attribute(x, rel)
+            e = attr.matches('%' + params[:search] + '%')
             expr = expr ? expr.or(e) : e
           end
 
