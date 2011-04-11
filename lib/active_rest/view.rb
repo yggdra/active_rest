@@ -35,7 +35,6 @@ class View
     perms = {}
 
     obj.attrs.each do |attrname,attr|
-
       next if !visible?(attrname)
 
       attrname = attrname.to_sym
@@ -132,7 +131,7 @@ class View
     if @empty
       @definition[attr].display == :show
     else
-      @definition[attr].nil? || @definition[attr].display == :default
+      @definition[attr].nil? || @definition[attr].display != :hide
     end
   end
 
