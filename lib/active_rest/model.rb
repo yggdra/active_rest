@@ -238,7 +238,7 @@ module Model
 
     def nested_attribute(attrname, rel = self.scoped, table = rel.table)
 
-      attr_split = attrname.split('.')
+      attr_split = attrname.to_s.split('.')
 
       if attr_split.count == 1
         attr = table[attr_split[0]]
