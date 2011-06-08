@@ -1,7 +1,0 @@
-TODO
--------------------------------------------------------------------------------
-
-RSpec
--- (dot79) test index_options[:preprocess] (preprocessor::preprocess(pagination_and_conditions, :params => params))
--- (dot79) test has many through from controller
--- (dot79) test parent_id from controller
