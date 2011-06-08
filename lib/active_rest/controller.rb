@@ -12,6 +12,10 @@
 
 require 'ostruct'
 
+require 'active_rest/controller/filters'
+require 'active_rest/controller/rest'
+require 'active_rest/controller/validations'
+
 module ActiveRest
 
 # ActiveRest::Controller is a mixin to be included in your controllers to make them RESTful.
@@ -47,9 +51,9 @@ module Controller
   include Validations
 
   @config = OpenStruct.new(
-    :cache_path => File.join(Rails.root, 'tmp', 'cache', 'active_rest'),
-    :x_sendfile => false,
-    :default_page_size => true,
+#    :cache_path => File.join(Rails.root, 'tmp', 'cache', 'active_rest'),
+#    :x_sendfile => false,
+    :default_page_size => 20,
   )
 
   class << self
@@ -199,7 +203,7 @@ module Controller
         true
       end
 
-      base.append_after_filter :x_sendfile, :only => [ :index ]
+#      base.append_after_filter :x_sendfile, :only => [ :index ]
     end
 
     base.rest_views = {}
@@ -237,7 +241,7 @@ module Controller
 
   private
 
-  TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE', 'y', 'yes', 'Y', 'YES', :true, :t].to_set
+  TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE', 'y', 'yes', 'Y', 'YES', :true, :t]
   def is_true?(val)
     TRUE_VALUES.include?(val)
   end

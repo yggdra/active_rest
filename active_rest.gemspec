@@ -16,7 +16,6 @@ Gem::Specification.new do |s|
     "README"
   ]
   s.files = [
-    "TODO.txt",
     "VERSION",
     "lib/active_rest/controller.rb",
     "lib/active_rest/controller/filters.rb",
@@ -24,8 +23,7 @@ Gem::Specification.new do |s|
     "lib/active_rest/controller/validations.rb",
     "lib/active_rest/model.rb",
     "lib/active_rest/routes.rb",
-    "lib/active_rest/view.rb",
-    "lib/tasks/active_rest_tasks.rake"
+    "lib/active_rest/view.rb"
   ]
   s.homepage = %q{http://www.yggdra.it/}
   s.require_paths = ["lib"]
