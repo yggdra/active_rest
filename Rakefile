@@ -11,7 +11,7 @@ begin
     gem.homepage = 'http://www.yggdra.it/'
     gem.authors = ['vihai']
     gem.files = FileList['[A-Z]*.*', '{lib,spec,config,workers}/**/*']
-    gem.test_files = FileList["specapp/**/*"]
+    gem.test_files = FileList['specapp/**/*', ].exclude('specapp/log/**').exclude('specapp/db/*.sqlite3')
 #    gem.add_development_dependency 'rspec', '>= 1.2.9'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
