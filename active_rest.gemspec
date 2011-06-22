@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{active_rest}
-  s.version = "2.0.2"
+  s.version = "2.0.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["vihai"]
@@ -16,13 +16,13 @@ Gem::Specification.new do |s|
     "README"
   ]
   s.files = [
-    "init.rb",
     "lib/active_rest.rb",
     "lib/active_rest/controller.rb",
     "lib/active_rest/controller/filters.rb",
     "lib/active_rest/controller/rest.rb",
     "lib/active_rest/controller/validations.rb",
     "lib/active_rest/model.rb",
+    "lib/active_rest/railtie.rb",
     "lib/active_rest/routes.rb",
     "lib/active_rest/view.rb"
   ]
