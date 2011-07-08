@@ -42,6 +42,9 @@ class View
       case attr
       when Model::Attribute::Simple
         values[attrname] = obj.send(attrname)
+        if values[attrname].respond_to?(:export_as_single_string)
+          values[attrname] = values[attrname].export_as_single_string
+        end
       when Model::Attribute::Structure
         val = obj.send(attrname)
         values[attrname] = (val.respond_to?(:export_as_hash) ? val.export_as_hash(opts) : nil) ||
