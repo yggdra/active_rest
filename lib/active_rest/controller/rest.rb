@@ -67,10 +67,16 @@ module Controller
     def index
       # Avoid responding with nil-classes when the array is empty
 
+      root_name = ''
+
+      if model
+        root_name = ActiveSupport::Inflector.pluralize(
+                      ActiveSupport::Inflector.underscore(model.name)).tr('/', '_')
+      end
+
       respond_with(@targets,
                    :total => @count,
-                   :root => ActiveSupport::Inflector.pluralize(
-                              ActiveSupport::Inflector.underscore(model.name)).tr('/', '_')) do |format|
+                   :root => root_name) do |format|
         yield(format) if block_given?
       end
     end

@@ -53,11 +53,15 @@ module Controller
         newobj = self.new
         newobj.rel = rel
 
-        begin
-          newobj.tree = ActiveSupport::JSON.decode(json)
-        rescue
-          raise InvalidJSON
+        if json.is_a?(String)
+          begin
+            json = ActiveSupport::JSON.decode(json)
+          rescue
+            raise InvalidJSON
+          end
         end
+
+        newobj.tree = json
 
         return newobj
       end
@@ -151,7 +155,6 @@ module Controller
     #
     #
     def apply_builtin_filter_to_relation(rel)
-
       flt = (params[:flt] && self.class.rest_filters[params[:flt].to_sym]) || self.class.rest_filters[:default]
       if flt
         if flt.kind_of?(Proc)
@@ -163,10 +166,10 @@ module Controller
 
       rel
     end
+
     # For each parameter matching a column name add an equality condition to the relation
     #
     def apply_simple_filter_to_relation(rel)
-
       params.each do |k,v|
         next if k[0] == '_'
 
@@ -206,18 +209,16 @@ module Controller
     end
 
     def apply_search_to_relation(rel, search_in = nil)
-      if search_in
-        if params[:search]
-          expr = nil
+      if params[:search] && search_in
+        expr = nil
 
-          search_in.each do |x|
-            (attr, rel) = model.nested_attribute(x, rel)
-            e = attr.matches('%' + params[:search] + '%')
-            expr = expr ? expr.or(e) : e
-          end
-
-          rel = rel.where(expr)
+        search_in.each do |x|
+          (attr, rel) = model.nested_attribute(x, rel)
+          e = attr.matches('%' + params[:search] + '%')
+          expr = expr ? expr.or(e) : e
         end
+
+        rel = rel.where(expr)
       end
 
       rel

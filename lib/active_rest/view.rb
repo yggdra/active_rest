@@ -26,11 +26,28 @@ class View
     @empty = false
     @with_type = true
     @with_perms = true
+    @per_class = {}
+
+    @extjs_polymorphic_workaround = false
 
     self.instance_eval(&block) if block_given?
   end
 
   def process(obj, opts = {})
+
+    if @per_class[obj.class.to_s]
+      if @extjs_polymorphic_workaround
+        clname = obj.class.to_s.underscore.gsub(/\//, '_')
+
+        return {
+          clname.to_sym => @per_class[obj.class.to_s].process(obj, opts),
+          (clname + '_id').to_sym => obj.id
+        }
+      else
+        return @per_class[obj.class.to_s].process(obj, opts)
+      end
+    end
+
     values = {}
     perms = {}
 
@@ -92,22 +109,6 @@ class View
       if attr.source
         values[attrname] = obj.instance_eval(&attr.source)
       end
-
-#        if attr.source
-#          recur_into_subattr(attrname, opts) do |newopts|
-#            values[attrname] = attr.value(self)
-#            values[attrname] = values[attrname].export_as_hash(opts) if values[attrname].respond_to?(:export_as_hash)
-#          end
-#
-#          perms[attrname] ||= {}
-#          perms[attrname][:read] = true
-#          perms[attrname][:write] = true
-#        end
-#
-#        if attr.respond_to?(:do_include) && attr.do_include
-#          values[attrname] = self.send(attrname)
-#        end
-#      end
     end
 
     res = values
@@ -154,17 +155,27 @@ class View
   end
 
   def with_type!
-    @with_perms = true
+    @with_type = true
   end
 
   def without_type!
-    @with_perms = false
+    @with_type = false
   end
 
   def attribute(name, &block)
     @definition[name] ||= Attribute.new(name)
     @definition[name].instance_eval(&block)
     @definition[name]
+  end
+
+  def per_class(name, &block)
+    @per_class[name] = View.new(@name)
+    @per_class[name].instance_eval(&block)
+    @per_class[name]
+  end
+
+  def extjs_polymorphic_workaround!
+    @extjs_polymorphic_workaround = true
   end
 
   class Attribute
@@ -210,23 +221,6 @@ class View
       @source = block
     end
   end
-
-
-#
-#    def definition
-#      res = super
-#
-#      if !sub_attributes.empty?
-#        res[:members_schema] ||= {}
-#        sub_attributes.each do |k,v|
-#          res[:members_schema][:attrs] ||= {}
-#          res[:members_schema][:attrs][k] = v.definition
-#        end
-#      end
-#
-#      res
-#    end
-
 end
 
 end
