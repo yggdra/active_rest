@@ -173,11 +173,10 @@ module Controller
       params.each do |k,v|
         next if k[0] == '_'
 
-        begin
-          (attr, rel) = model.nested_attribute(k, rel)
-          rel = rel.where(attr.eq(v))
-        rescue Model::UnknownField
-        end
+        next if !rel.klass.columns_hash[k]
+
+        (attr, rel) = model.nested_attribute(k, rel)
+        rel = rel.where(attr.eq(v))
       end
 
       rel
