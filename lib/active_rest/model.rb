@@ -22,6 +22,7 @@ module Model
     attr_accessor :name
     attr_accessor :human_name
     attr_accessor :default
+    attr_accessor :notnull
     attr_accessor :meta
 
     def initialize(binding, name, h = {})
@@ -31,12 +32,14 @@ module Model
       @human_name ||= h[:human_name]
       @meta = h[:meta] || {}
       @default = h[:default] || nil
+      @notnull = h[:notnull] || false
     end
 
     def definition
       res = { :type => type }
       res[:human_name] = @human_name if @human_name
       res[:default] = @default if @default
+      res[:notnull] = true if @notnull
       res
     end
 
