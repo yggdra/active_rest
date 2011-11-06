@@ -21,6 +21,7 @@ module Model
 
     attr_accessor :name
     attr_accessor :human_name
+    attr_accessor :default
     attr_accessor :meta
 
     def initialize(binding, name, h = {})
@@ -29,11 +30,13 @@ module Model
 
       @human_name ||= h[:human_name]
       @meta = h[:meta] || {}
+      @default = h[:default] || nil
     end
 
     def definition
       res = { :type => type }
       res[:human_name] = @human_name if @human_name
+      res[:default] = @default if @default
       res
     end
 
@@ -264,6 +267,7 @@ module Model
             :source => x.name.to_sym,
             :type => map_column_type(x.type),
             :default => x.default,
+            :notnull => !x.null,
             )
       end
 
