@@ -147,12 +147,12 @@ module Controller
     base.extend(ClassMethods)
 
     base.class_eval do
-      class_inheritable_accessor :model
-      class_inheritable_accessor :rest_options
-      class_inheritable_accessor :rest_xact_handler
-      class_inheritable_accessor :rest_views
-      class_inheritable_accessor :rest_filters
-      class_inheritable_accessor :rest_read_only
+      class_attribute :model
+      class_attribute :rest_options
+      class_attribute :rest_xact_handler
+      class_attribute :rest_views
+      class_attribute :rest_filters
+      class_attribute :rest_read_only
 
       attr_accessor :target, :targets
 
