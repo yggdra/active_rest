@@ -222,7 +222,7 @@ module Model
     base.extend(ClassMethods)
 
     base.instance_eval do
-      class_attribute :attrs_defined_in_code
+      class_inheritable_accessor :attrs_defined_in_code
     end
 
     base.attrs_defined_in_code = {}
