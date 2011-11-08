@@ -95,7 +95,7 @@ class View
       when Model::Attribute::Virtual
         values[attrname] = attr.value(obj)
       else
-        raise "Don't know how to handle attributes of type '#{attr.class}'"
+        raise "Don't know how to handle attribute '#{attrname}' of type '#{attr.class}'"
       end
 
       if @with_perms
