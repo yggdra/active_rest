@@ -103,9 +103,11 @@ module Controller
     def create
       begin
         send(rest_xact_handler) do
+          before_create if self.respond_to? :before_create
           @target = model.new
           @target.attributes = @request_resource
           @target.save!
+          after_create if self.respond_to? :after_create
         end
       rescue ActiveRecord::UnknownAttributeError => e
         # Ugly heuristic, but didn't find anything better
@@ -144,8 +146,10 @@ module Controller
     def update
       begin
         send(rest_xact_handler) do
+          before_update if self.respond_to? :before_update
           @target.attributes = @request_resource
           @target.save!
+          after_update if self.respond_to? :after_update
         end
       rescue ActiveRecord::UnknownAttributeError => e
         # Ugly heuristic, but didn't find anything better
@@ -174,7 +178,11 @@ module Controller
 
     # DELETE /target/1
     def destroy
-      @target.destroy
+      send(rest_xact_handler) do
+        before_destroy if self.respond_to? :before_destroy
+        @target.destroy
+        after_destroy if self.respond_to? :after_destroy
+      end
 
       respond_to do |format|
         yield(format) if block_given?
