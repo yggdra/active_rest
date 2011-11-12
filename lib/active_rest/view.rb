@@ -41,7 +41,8 @@ class View
 
         return {
           clname.to_sym => @per_class[obj.class.to_s].process(obj, opts),
-          (clname + '_id').to_sym => obj.id
+          (clname + '_id').to_sym => obj.id,
+          (clname + '_type').to_sym => obj.class.to_s,
         }
       else
         return @per_class[obj.class.to_s].process(obj, opts)
@@ -90,6 +91,9 @@ class View
         val = obj.send(attrname)
         values[attrname] = val ? subview.process(val, opts) : nil
       when Model::Attribute::PolymorphicReference
+        subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
+        val = obj.send(attrname)
+        values[attrname] = val ? subview.process(val, opts) : nil
       when Model::Attribute::PolymorphicModelsCollection
       when Model::Attribute::PolymorphicReferencesCollection
       when Model::Attribute::Virtual
@@ -170,7 +174,7 @@ class View
 
   def per_class(name, &block)
     @per_class[name] = View.new(@name)
-    @per_class[name].instance_eval(&block)
+    @per_class[name].instance_eval(&block) if block_given?
     @per_class[name]
   end
 
@@ -213,6 +217,18 @@ class View
     def empty!
       @subview ||= View.new(@name)
       @subview.empty!
+      @subview
+    end
+
+    def extjs_polymorphic_workaround!
+      @subview ||= View.new(@name)
+      @subview.extjs_polymorphic_workaround!
+      @subview
+    end
+
+    def per_class(name, &block)
+      @subview ||= View.new(@name)
+      @subview.per_class(name, &block)
       @subview
     end
 

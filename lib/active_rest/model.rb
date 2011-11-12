@@ -40,6 +40,7 @@ module Model
       res[:human_name] = @human_name if @human_name
       res[:default] = @default if @default
       res[:notnull] = true if @notnull
+      res[:meta] = @meta if !@meta.empty?
       res
     end
 
@@ -88,8 +89,6 @@ module Model
 
       def definition
         res = super
-
-        res[:default] = @default if @default
 
         res[:edit_on_creation] = true
         res[:visible_on_creation] = true
