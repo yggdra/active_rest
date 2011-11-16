@@ -306,34 +306,18 @@ module Model
           end
 
         when :has_many
-          if reflection.options[:as]
-            if reflection.options[:embedded]
-              @attrs[name] =
-                Attribute::PolymorphicModelsCollection.new(self, name,
-                  :type => reflection.macro,
-                  :model_class => reflection.class_name,
-                 )
-            else
-              @attrs[name] =
-                Attribute::PolymorphicReferencesCollection.new(self, name,
-                  :type => reflection.macro,
-                  :referenced_class_name => reflection.class_name,
-                 )
-            end
+          if reflection.options[:embedded]
+            @attrs[name] =
+              Attribute::UniformModelsCollection.new(self, name,
+                :type => reflection.macro,
+                :model_class => reflection.class_name,
+               )
           else
-            if reflection.options[:embedded]
-              @attrs[name] =
-                Attribute::UniformModelsCollection.new(self, name,
-                  :type => reflection.macro,
-                  :model_class => reflection.class_name,
-                 )
-            else
-              @attrs[name] =
-                Attribute::UniformReferencesCollection.new(self, name,
-                  :type => reflection.macro,
-                  :referenced_class_name => reflection.class_name,
-                 )
-            end
+            @attrs[name] =
+              Attribute::UniformReferencesCollection.new(self, name,
+                :type => reflection.macro,
+                :referenced_class_name => reflection.class_name,
+               )
           end
 
         else
