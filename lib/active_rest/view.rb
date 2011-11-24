@@ -91,9 +91,11 @@ class View
         val = obj.send(attrname)
         values[attrname] = val ? subview.process(val, opts) : nil
       when Model::Attribute::PolymorphicReference
-        subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
-        val = obj.send(attrname)
-        values[attrname] = val ? subview.process(val, opts) : nil
+        if @definition[attrname] && @definition[attrname].include
+          subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
+          val = obj.send(attrname)
+          values[attrname] = val ? subview.process(val, opts) : nil
+        end
       when Model::Attribute::PolymorphicModelsCollection
       when Model::Attribute::PolymorphicReferencesCollection
       when Model::Attribute::Virtual
