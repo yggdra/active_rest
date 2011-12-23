@@ -219,18 +219,13 @@ module Model
 
   def self.included(base)
     base.extend(ClassMethods)
-
-    base.instance_eval do
-      class_inheritable_accessor :attrs_defined_in_code
-    end
-
-    base.attrs_defined_in_code = {}
   end
 
   module ClassMethods
+    attr_accessor :attrs_defined_in_code
 
     def attribute(name, &block)
-      a = @attrs || attrs_defined_in_code
+      a = @attrs || attrs_defined_in_code || {}
 
       a[name] ||= Attribute.new(self, name)
       Attribute::DSL.new(self, a, name).instance_eval(&block)
@@ -340,6 +335,8 @@ module Model
           raise "Usupported reflection of type '#{reflection.macro}'"
         end
       end
+
+      attrs_defined_in_code ||= {}
 
       attrs_defined_in_code.each do |attrname, attr|
         if @attrs[attrname]

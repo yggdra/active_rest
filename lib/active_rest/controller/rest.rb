@@ -196,7 +196,7 @@ module Controller
     protected
 
     def generate_schema
-      model.schema
+      self.class.model.schema
     end
 
     def x_sendfile

@@ -62,9 +62,27 @@ module Controller
 
   module ClassMethods
 
+    attr_accessor :model
+    attr_accessor :rest_options
+    attr_accessor :rest_xact_handler
+    attr_accessor :rest_views
+    attr_accessor :rest_filters
+    attr_accessor :rest_read_only
+
+    def rest_controller_without_model
+      self.model = nil
+      self.rest_options = {}
+      self.rest_xact_handler = :rest_default_transaction_handler
+      self.rest_views = {}
+      self.rest_filters = {}
+    end
+
     def rest_controller_for(model, options = {})
       self.model = model
       self.rest_options = options
+      self.rest_xact_handler = :rest_default_transaction_handler
+      self.rest_views = {}
+      self.rest_filters = {}
     end
 
     def rest_transaction_handler(method)
@@ -147,18 +165,9 @@ module Controller
     base.extend(ClassMethods)
 
     base.class_eval do
-      class_inheritable_accessor :model
-      class_inheritable_accessor :rest_options
-      class_inheritable_accessor :rest_xact_handler
-      class_inheritable_accessor :rest_views
-      class_inheritable_accessor :rest_filters
-      class_inheritable_accessor :rest_read_only
-
       attr_accessor :target, :targets
 
       rescue_from ARException, :with => :rest_ar_exception_rescue_action
-
-      self.rest_xact_handler = :rest_default_transaction_handler
 
       # are we just requiring validations ?
       prepend_before_filter(:only => [ :update, :create ]) do
@@ -206,9 +215,6 @@ module Controller
 #      base.append_after_filter :x_sendfile, :only => [ :index ]
     end
 
-    base.rest_views = {}
-    base.rest_filters = {}
-
     begin
       base.rest_controller_for(base.controller_name.classify.constantize)
     rescue NameError
@@ -227,6 +233,14 @@ module Controller
     else
       self.class.rest_views[action_name.to_sym]
     end
+  end
+
+  def model
+    @model || @model = self.class.model
+  end
+
+  def rest_xact_handler
+    @rest_xact_handler || @rest_xact_handler = self.class.rest_xact_handler
   end
 
   protected
