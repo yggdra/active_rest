@@ -4,7 +4,7 @@
 #
 
 class CompanyProtected < ActiveRecord::Base
-  set_table_name 'active_rest_companies'
+  table_name = 'active_rest_companies'
 
   include ActiveRest::Model
 

@@ -11,7 +11,7 @@ describe CompaniesController do
   end
 
   it 'returns model\'s schema with GET /schema' do
-    get :schema, :format => :json
+    get 'schema', :format => :json
     response.should be_success
 
     b = ActiveSupport::JSON.decode(response.body)

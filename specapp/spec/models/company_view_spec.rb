@@ -77,7 +77,7 @@ describe View do
 end
 
 
-describe View, :empty! do
+describe View, 'empty!' do
 
   before(:each) do
     @c1 = Factory(:company_1)
@@ -96,7 +96,7 @@ describe View, :empty! do
 
 end
 
-describe View, :attribute do
+describe View, 'attribute' do
   before(:each) do
     @c1 = Factory(:company_1)
     @c = Factory(:company_complex)
@@ -257,7 +257,7 @@ describe View, :attribute do
      }
   end
 
-  describe View, :virtual do
+  describe View, 'virtual' do
 
     it 'adds a virtual attribute with static value' do
       v = ActiveRest::View.new(:show) do
@@ -379,7 +379,7 @@ describe View, :attribute do
   end
 end
 
-describe View, :with_perms! do
+describe View, 'with_perms!' do
   before(:each) do
     @c = Factory(:company_complex)
   end

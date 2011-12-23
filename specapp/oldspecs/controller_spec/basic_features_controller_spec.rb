@@ -20,7 +20,7 @@ describe BasicFeaturesController do
   end
 
   it 'should have introspection capabilities on target model  - schema' do
-    get :schema, :format => 'xml'
+    get 'schema', :format => 'xml'
     response.should be_success
 
     # schema

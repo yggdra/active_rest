@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'assert2/xhtml'
 
-describe InclattrCompaniesController, :get do
+describe InclattrCompaniesController, 'get' do
 
   before(:each) do
     @c1 = Factory(:company_complex)

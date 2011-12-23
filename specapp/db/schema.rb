@@ -1,3 +1,4 @@
+# encoding: UTF-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -13,8 +14,8 @@
 ActiveRecord::Schema.define(:version => 20100726160133) do
 
   create_table "companies", :force => true do |t|
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",        :null => false
+    t.datetime "updated_at",        :null => false
     t.string   "name",              :null => false
     t.string   "city"
     t.string   "street"
@@ -27,17 +28,21 @@ ActiveRecord::Schema.define(:version => 20100726160133) do
     t.string   "object_1_type"
     t.integer  "object_2_id"
     t.string   "object_2_type"
+    t.integer  "polyref_1_id"
+    t.string   "polyref_1_type"
+    t.integer  "polyref_2_id"
+    t.string   "polyref_2_type"
   end
 
   create_table "company_bars", :force => true do |t|
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
     t.string   "name"
   end
 
   create_table "company_foos", :force => true do |t|
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
     t.string   "name"
   end
 
@@ -53,8 +58,8 @@ ActiveRecord::Schema.define(:version => 20100726160133) do
   end
 
   create_table "contacts", :force => true do |t|
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
     t.integer  "owner_id"
     t.string   "owner_type"
     t.string   "field"
@@ -84,8 +89,8 @@ ActiveRecord::Schema.define(:version => 20100726160133) do
   end
 
   create_table "users", :force => true do |t|
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
     t.string   "name"
     t.integer  "company_id"
   end

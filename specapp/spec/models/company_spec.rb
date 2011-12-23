@@ -11,7 +11,7 @@ describe Company do
   end
 end
 
-describe Company, :schema do
+describe Company, 'schema' do
   before(:each) do
     @schema = Company.schema
   end
@@ -332,7 +332,7 @@ describe Company, :schema do
   end
 end
 
-describe Company, :export_as_hash do
+describe Company, 'export_as_hash' do
   before(:each) do
     @c1 = Factory(:company_1)
     @c = Factory(:company_complex)
@@ -501,14 +501,14 @@ describe Company, :export_as_hash do
   end
 end
 
-describe Company, :export_as_yaml do
+describe Company, 'export_as_yaml' do
 
   it 'produces a String as result' do
     Factory(:company_1).export_as_yaml.should be_kind_of(String)
   end
 end
 
-describe Company, :nested_attribute do
+describe Company, 'nested_attribute' do
   it 'finds not nested attribute' do
     pending
   end
