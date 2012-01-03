@@ -289,11 +289,13 @@ module Controller
         res[:framework_backtrace] = clean_backtrace(e, :noise)
       end
 
+      status_code = e.respond_to?(:http_status_code) ? e.http_status_code : 500
+
       respond_to do |format|
-        format.xml { render :xml => res, :status => e.http_status_code }
-        format.yaml { render :yaml => res, :status => e.http_status_code }
-        format.json { render :json => res, :status => e.http_status_code }
-        yield(format, res, e.http_status_code) if block_given?
+        format.xml { render :xml => res, :status => status_code }
+        format.yaml { render :yaml => res, :status => status_code }
+        format.json { render :json => res, :status => status_code }
+        yield(format, res, status_code) if block_given?
       end
     end
   end
