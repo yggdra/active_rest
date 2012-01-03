@@ -52,17 +52,13 @@ class View
     values = {}
     perms = {}
 
-    obj.attrs.each do |attrname,attr|
-      next if !visible?(attrname)
-
+    obj.attrs.select { |k,v| visible?(k) && !v.excluded }.each do |attrname,attr|
       attrname = attrname.to_sym
 
       case attr
       when Model::Attribute::Simple
         values[attrname] = obj.send(attrname)
-        if values[attrname].respond_to?(:export_as_single_string)
-          values[attrname] = values[attrname].export_as_single_string
-        end
+        values[attrname] = values[attrname].export_as_simple if values[attrname].respond_to?(:export_as_simple)
       when Model::Attribute::Structure
         val = obj.send(attrname)
         values[attrname] = (val.respond_to?(:export_as_hash) ? val.export_as_hash(opts) : nil) ||
@@ -121,7 +117,6 @@ class View
 
     if @with_type
       res[:_type] = obj.class.to_s
-      res[:_type_symbolized] = obj.class.to_s.underscore.gsub(/\//, '_').to_sym
     end
 
     if @with_perms

@@ -28,14 +28,6 @@ describe Company, 'schema' do
     @schema[:type].should == 'Company'
   end
 
-  it 'has a :type_symbolized key' do
-    @schema.should have_key(:type)
-  end
-
-  it 'has the proper :type_symbolized key' do
-    @schema[:type_symbolized].should == :company
-  end
-
   it 'has a :object_actions key' do
     @schema.should have_key(:object_actions)
   end
@@ -347,9 +339,6 @@ describe Company, 'export_as_hash' do
     @ch[:_type].should == 'Company'
   end
 
-  it 'has the proper :type_symbolized key' do
-    @ch[:_type_symbolized].should == :company
-  end
 # Add check to see if namespaced types are converted properly
 
   it ':id key is an integer' do

@@ -39,7 +39,6 @@ describe View do
       :object_2 => nil,
       :virtual => 'This is the virtual value',
       :_type => 'Company',
-      :_type_symbolized => :company,
       :_object_perms => { :read => true, :write => true, :delete => true},
       :_attr_perms =>
        {
@@ -157,7 +156,6 @@ describe View, 'attribute' do
         :id=>1,
         :name=>"MegaHolding",
         :_type=>"Group",
-        :_type_symbolized=>:group,
         :_object_perms=>{:read=>true, :write=>true, :delete=>true},
         :_attr_perms=>
          {:id=>{:read=>true, :write=>true},
@@ -179,7 +177,7 @@ describe View, 'attribute' do
       :group =>
        {
         :id => 1, :name => 'MegaHolding',
-        :_type=>"Group", :_type_symbolized=>:group,
+        :_type=>"Group"
         :_object_perms => { :read => true, :write => true, :delete => true },
         :_attr_perms => { :id => { :read => true, :write => true },
                           :name => { :read => true, :write => true },
@@ -399,6 +397,6 @@ describe View, 'with_perms!' do
   end
 end
 
-#p:_type => 'CompanyLocation', :_type_symbolized => :company_location 
+#p:_type => 'CompanyLocation'
 
 end

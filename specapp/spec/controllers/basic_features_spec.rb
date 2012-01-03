@@ -18,7 +18,6 @@ describe CompaniesController do
 
     b.should ==
      {'type' => 'Company',
-      'type_symbolized' => 'company',
       'attrs' =>
        {'id' =>
          {'type' => 'integer',
@@ -105,7 +104,6 @@ describe CompaniesController do
           'human_name' => 'Phone numbers',
           'schema' =>
            {'type' => 'Company::Phone',
-            'type_symbolized' => 'company_phone',
             'attrs' =>
              {'id' =>
                {'type' => 'integer',
@@ -133,7 +131,6 @@ describe CompaniesController do
          {'type' => 'embedded_model',
           'schema' =>
            {'type' => 'CompanyLocation',
-            'type_symbolized' => 'company_location',
             'attrs' =>
              {'id' =>
                {'type' => 'integer',

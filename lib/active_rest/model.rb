@@ -24,6 +24,7 @@ module Model
     attr_accessor :default
     attr_accessor :notnull
     attr_accessor :meta
+    attr_accessor :excluded
 
     def initialize(binding, name, h = {})
       @binding = binding
@@ -33,6 +34,7 @@ module Model
       @meta = h[:meta] || {}
       @default = h[:default] || nil
       @notnull = h[:notnull] || false
+      @excluded = h[:excluded] || false
     end
 
     def definition
@@ -51,6 +53,7 @@ module Model
     def apply(attr)
       @human_name = attr.human_name
       @meta.merge!(attr.meta)
+      @excluded = attr.excluded
     end
 
     class DSL
@@ -71,6 +74,10 @@ module Model
 
       def virtual(type, &block)
         @attrs[@name] = Attribute::Virtual.new(@model, @name, :clone => @attrs[@name], :type => type, :value => block)
+      end
+
+      def exclude!
+        @attrs[@name] = Attribute.new(@model, @name, :clone => @attrs[@name], :excluded => true)
       end
     end
 
@@ -219,13 +226,19 @@ module Model
 
   def self.included(base)
     base.extend(ClassMethods)
+    base.class_attribute :attrs_defined_in_code
+    base.attrs_defined_in_code = {}
   end
 
   module ClassMethods
-    attr_accessor :attrs_defined_in_code
+
+    def inherited(base)
+puts "INHERITED #{base} #{self}"
+      self.attrs_defined_in_code = self.attrs_defined_in_code.clone
+    end
 
     def attribute(name, &block)
-      a = @attrs || attrs_defined_in_code || {}
+      a = @attrs || attrs_defined_in_code
 
       a[name] ||= Attribute.new(self, name)
       Attribute::DSL.new(self, a, name).instance_eval(&block)
@@ -320,8 +333,6 @@ module Model
         end
       end
 
-      attrs_defined_in_code ||= {}
-
       attrs_defined_in_code.each do |attrname, attr|
         if @attrs[attrname]
           @attrs[attrname].apply(attr)
@@ -337,7 +348,7 @@ module Model
 
       defs = {}
 
-      attrs.each do |attrname,attr|
+      attrs.select { |k,v| !v.excluded }.each do |attrname,attr|
         defs[attrname] = attr.definition
       end
 
@@ -361,7 +372,6 @@ module Model
 
       res = {
         :type => self.to_s,
-        :type_symbolized => self.to_s.underscore.gsub(/\//, '_').to_sym,
         :attrs => defs,
         :object_actions => object_actions,
         :class_actions => class_actions,

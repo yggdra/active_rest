@@ -35,7 +35,6 @@ describe BasicFeaturesController do
 
     # model key
     response.should include_text('<type>Company</type>')
-    response.should include_text('<type_symbolized>company</type_symbolized>')
   end
 end
 
