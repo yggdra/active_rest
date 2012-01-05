@@ -1,14 +1,15 @@
 GIT
+  remote: http://github.com/vihai/rspec-deep-matchers.git
+  revision: f42315f747441145ba0224c81855e2847f6f3af0
+  specs:
+    rspec-deep-matchers (0.0.2)
+      rspec (>= 2.0.0)
+
+GIT
   remote: https://github.com/vihai/assert2.git
   revision: 940d4c7deed4212eb4b1fd3d967746c4875ebf60
   specs:
     vihai-assert2 (0.6.0)
-
-PATH
-  remote: /home/yggdra/rspec-deep-matchers
-  specs:
-    rspec-deep-matchers (0.0.2)
-      rspec (>= 2.0.0)
 
 GEM
   remote: http://rubygems.org/
