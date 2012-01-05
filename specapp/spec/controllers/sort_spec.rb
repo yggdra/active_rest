@@ -16,7 +16,11 @@ describe CompaniesController do
 
     b = ActiveSupport::JSON.decode(response.body)
 
-    b.should == {}
+    b.should deep_include([
+      { 'id' => 1 },
+      { 'id' => 2 },
+      { 'id' => 3 },
+    ])
   end
 
   it 'sorts ascending on a single field with +' do

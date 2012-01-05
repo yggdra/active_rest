@@ -4,7 +4,7 @@
 #
 
 class CompanyProtected < ActiveRecord::Base
-  table_name = 'active_rest_companies'
+  self.table_name = 'active_rest_companies'
 
   include ActiveRest::Model
 
@@ -14,5 +14,6 @@ class CompanyProtected < ActiveRecord::Base
   validates_presence_of :name
   validates_uniqueness_of :name
 
-  attr_protected :city
+  interface :rest do
+  end
 end

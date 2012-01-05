@@ -20,8 +20,10 @@ class View
   attr_accessor :with_type
   attr_accessor :with_perms
 
-  def initialize(name, &block)
+  def initialize(name, interface = :rest, &block)
     @name = name
+    @interface = interface
+
     @definition = {}
     @empty = false
     @with_type = true
@@ -52,52 +54,48 @@ class View
     values = {}
     perms = {}
 
-    obj.attrs.select { |k,v| visible?(k) && !v.excluded }.each do |attrname,attr|
+    obj.interfaces[@interface].attrs.select { |k,v| visible?(k) && !v.excluded }.each do |attrname,attr|
       attrname = attrname.to_sym
 
       case attr
-      when Model::Attribute::Simple
-        values[attrname] = obj.send(attrname)
-        values[attrname] = values[attrname].export_as_simple if values[attrname].respond_to?(:export_as_simple)
-      when Model::Attribute::Structure
+      when Model::Interface::Attribute::Structure
         val = obj.send(attrname)
         values[attrname] = (val.respond_to?(:export_as_hash) ? val.export_as_hash(opts) : nil) ||
                            (val.respond_to?(:to_hash) ? val.to_hash : nil) ||
                            (val.respond_to?(:to_s) ? val.to_s : nil)
-      when Model::Attribute::Reference
+      when Model::Interface::Attribute::Reference
         if @definition[attrname] && @definition[attrname].include
           subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
           val = obj.send(attrname)
           values[attrname] = val ? subview.process(val, opts) : nil
         end
-      when Model::Attribute::EmbeddedModel
+      when Model::Interface::Attribute::EmbeddedModel
         subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
         val = obj.send(attrname)
         values[attrname] = val ? subview.process(val, opts) : nil
-      when Model::Attribute::UniformModelsCollection
+      when Model::Interface::Attribute::UniformModelsCollection
         subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
         values[attrname] = obj.send(attrname).map { |x| subview.process(x, opts) }
-      when Model::Attribute::UniformReferencesCollection
+      when Model::Interface::Attribute::UniformReferencesCollection
         if @definition[attrname] && @definition[attrname].include
           subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
           values[attrname] = obj.send(attrname).map { |x| subview.process(x, opts) }
         end
-      when Model::Attribute::EmbeddedPolymorphicModel
+      when Model::Interface::Attribute::EmbeddedPolymorphicModel
         subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
         val = obj.send(attrname)
         values[attrname] = val ? subview.process(val, opts) : nil
-      when Model::Attribute::PolymorphicReference
+      when Model::Interface::Attribute::PolymorphicReference
         if @definition[attrname] && @definition[attrname].include
           subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
           val = obj.send(attrname)
           values[attrname] = val ? subview.process(val, opts) : nil
         end
-      when Model::Attribute::PolymorphicModelsCollection
-      when Model::Attribute::PolymorphicReferencesCollection
-      when Model::Attribute::Virtual
-        values[attrname] = attr.value(obj)
+      when Model::Interface::Attribute::PolymorphicModelsCollection
+      when Model::Interface::Attribute::PolymorphicReferencesCollection
       else
-        raise "Don't know how to handle attribute '#{attrname}' of type '#{attr.class}'"
+        values[attrname] = obj.send(attrname)
+        values[attrname] = values[attrname].export_as_simple if values[attrname].respond_to?(:export_as_simple)
       end
 
       if @with_perms
@@ -121,10 +119,10 @@ class View
 
     if @with_perms
       res[:_object_perms] = {
-          :read => true,
-          :write => true,
-          :delete => true
-        }
+        :read => true,
+        :write => true,
+        :delete => true
+      }
 
       res[:_attr_perms] = perms
     end

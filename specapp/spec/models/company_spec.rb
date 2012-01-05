@@ -13,7 +13,7 @@ end
 
 describe Company, 'schema' do
   before(:each) do
-    @schema = Company.schema
+    @schema = Company.interfaces[:rest].schema
   end
 
   it 'produces a Hash as result' do

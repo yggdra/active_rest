@@ -50,24 +50,10 @@ module Controller
   include Rest
   include Validations
 
-  @config = OpenStruct.new(
-#    :cache_path => File.join(Rails.root, 'tmp', 'cache', 'active_rest'),
-#    :x_sendfile => false,
-    :default_page_size => 20,
-  )
-
-  class << self
-    attr_reader :config
-  end
+  attr_accessor :target
+  attr_accessor :targets
 
   module ClassMethods
-
-    attr_accessor :model
-    attr_accessor :rest_options
-    attr_accessor :rest_xact_handler
-    attr_accessor :rest_views
-    attr_accessor :rest_filters
-    attr_accessor :rest_read_only
 
     def rest_controller_without_model
       self.model = nil
@@ -95,8 +81,8 @@ module Controller
       self.rest_views[name]
     end
 
-    def filter(name, val)
-      self.rest_filters[name] = val
+    def filter(name, val = nil, &block)
+      self.rest_filters[name] = val || block
     end
 
     def read_only!
@@ -115,59 +101,21 @@ module Controller
     end
   end
 
-  class ARException < StandardError
-    attr_accessor :http_status_code
-    attr_accessor :public_data
-    attr_accessor :private_data
-
-    def initialize(msg, status = :internal_server_error, public_data = {}, private_data = {})
-      @http_status_code = status
-      @public_data = public_data
-      @private_data = private_data
-      super msg
-
-      # Avoid autofilling of additional_info
-      @public_data[:additional_info] ||= ''
-    end
-  end
-
-  class MethodNotAllowed < ARException
-    def initialize(msg = '', public_data = {}, private_data = {})
-      super msg, :method_not_allowed, public_data, private_data
-    end
-  end
-
-  class BadRequest < ARException
-    def initialize(msg = '', public_data = {}, private_data = {})
-      super msg, :bad_request, public_data, private_data
-    end
-  end
-
-  class NotFound < ARException
-    def initialize(msg = '', public_data = {}, private_data = {})
-      super msg, :not_found, public_data, private_data
-    end
-  end
-
-  class NotAcceptable < ARException
-    def initialize(msg = '', public_data = {}, private_data = {})
-      super msg, :not_acceptable, public_data, private_data
-    end
-  end
-
-  class UnprocessableEntity < ARException
-    def initialize(msg = '', public_data = {}, private_data = {})
-      super msg, :unprocessable_entity, public_data, private_data
-    end
-  end
-
   def self.included(base)
     base.extend(ClassMethods)
 
-    base.class_eval do
-      attr_accessor :target, :targets
+    base.instance_eval do
+      class_attribute :model
+      class_attribute :rest_options
+      class_attribute :rest_xact_handler
+      class_attribute :rest_views
+      class_attribute :rest_filters
+      class_attribute :rest_read_only
+    end
 
-      rescue_from ARException, :with => :rest_ar_exception_rescue_action
+    base.class_eval do
+
+      rescue_from ActiveRest::Exception, :with => :rest_ar_exception_rescue_action
 
       # are we just requiring validations ?
       prepend_before_filter(:only => [ :update, :create ]) do
@@ -215,10 +163,10 @@ module Controller
 #      base.append_after_filter :x_sendfile, :only => [ :index ]
     end
 
-    begin
-      base.rest_controller_for(base.controller_name.classify.constantize)
-    rescue NameError
-    end
+#    begin
+#      base.rest_controller_for(base.controller_name.classify.constantize)
+#    rescue NameError
+#    end
   end
 
   # Select the proper view based on URI parameters and action name.
@@ -260,7 +208,7 @@ module Controller
     TRUE_VALUES.include?(val)
   end
 
-  # Rescue action for ARException kind of exceptions
+  # Rescue action for ActiveRest::Exception kind of exceptions
   #
   def rest_ar_exception_rescue_action(e)
 
@@ -350,7 +298,6 @@ module Controller
   def find_targets
     @targets_relation ||= model.scoped
 
-    @targets_relation = apply_builtin_filter_to_relation(@targets_relation)
     @targets_relation = apply_json_filter_to_relation(@targets_relation)
     @targets_relation = apply_simple_filter_to_relation(@targets_relation)
     @targets_relation = apply_search_to_relation(@targets_relation)

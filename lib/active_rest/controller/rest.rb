@@ -54,7 +54,7 @@ module Controller
     #A
 
     def schema
-      @schema = generate_schema
+      @schema = model.interfaces[:rest].schema
 
       respond_to do |format|
         format.xml { render :xml => @schema.to_xml(:dasherize => false) }
@@ -105,22 +105,26 @@ module Controller
         send(rest_xact_handler) do
           before_create if self.respond_to? :before_create
           @target = model.new
-          @target.attributes = @request_resource
+
+          model.interfaces[:rest].apply_creation_attributes(@target, @request_resource)
+
           @target.save!
           after_create if self.respond_to? :after_create
         end
-      rescue ActiveRecord::UnknownAttributeError => e
-        # Ugly heuristic, but didn't find anything better
-        field_name = $1 if e.message =~ /unknown attribute: (.*)/
-        raise BadRequest.new(e.message,
-                :per_field_msgs => { field_name => 'Is not defined' },
+      rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
+        raise ActiveRest::Exception::BadRequest.new(e.message,
+                :per_field_msgs => { e.attribute_name => 'Is not writeable' },
+                :retry_possible => false)
+      rescue ActiveRest::Model::Interface::AttributeNotFound => e
+        raise ActiveRest::Exception::BadRequest.new(e.message,
+                :per_field_msgs => { e.attribute_name => 'not found' },
                 :retry_possible => false)
       rescue ActiveRecord::RecordInvalid => e
-        raise UnprocessableEntity.new(e.message,
+        raise ActiveRest::Exception::UnprocessableEntity.new(e.message,
                 :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
                 :retry_possible => false)
       rescue ActiveRecord::RecordNotSaved => e
-        raise UnprocessableEntity.new(e.message,
+        raise ActiveRest::Exception::UnprocessableEntity.new(e.message,
                 :retry_possible => false)
       end
 
@@ -147,22 +151,26 @@ module Controller
       begin
         send(rest_xact_handler) do
           before_update if self.respond_to? :before_update
-          @target.attributes = @request_resource
+
+          model.interfaces[:rest].apply_update_attributes(@target, @request_resource)
           @target.save!
+
           after_update if self.respond_to? :after_update
         end
-      rescue ActiveRecord::UnknownAttributeError => e
-        # Ugly heuristic, but didn't find anything better
-        field_name = $1 if e.message =~ /unknown attribute: (.*)/
-        raise BadRequest.new(e.message,
-                :per_field_msgs => { field_name => 'Is not defined' },
+      rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
+        raise ActiveRest::Exception::BadRequest.new(e.message,
+                :per_field_msgs => { e.attribute_name => 'Is not writeable' },
+                :retry_possible => false)
+      rescue ActiveRest::Model::Interface::AttributeNotFound => e
+        raise ActiveRest::Exception::BadRequest.new(e.message,
+                :per_field_msgs => { e.attribute_name => 'not found' },
                 :retry_possible => false)
       rescue ActiveRecord::RecordInvalid => e
-        raise UnprocessableEntity.new(e.message,
+        raise ActiveRest::Exception::UnprocessableEntity.new(e.message,
                 :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
                 :retry_possible => false)
       rescue ActiveRecord::RecordNotSaved => e
-        raise UnprocessableEntity.new(e.message,
+        raise ActiveRest::Exception::UnprocessableEntity.new(e.message,
                 :retry_possible => false)
       end
 
@@ -195,28 +203,24 @@ module Controller
 
     protected
 
-    def generate_schema
-      self.class.model.schema
-    end
-
-    def x_sendfile
-      return if !ActiveRest::Controller.config.x_sendfile ||
-                @targets.length < ActiveRest::Controller.config.default_page_size
-
-      # DEFAULT
-      cache_file_name =  UUID.random_create.to_s
-      #cache_file_name = Digest::MD5.hexdigest(request.env['REMOTE_ADDR']+'_'+request.env['REQUEST_URI'])
-      #cache_file_name += '.'+params[:format] if params[:format]
-      cache_full_path_file_name = File.join(ActiveRest::Controller.config.cache_path, cache_file_name)
-
-      #unless File.exists?(cache_full_path_file_name)
-      f = File.new(cache_full_path_file_name,  'w+')
-      f << response.body
-      f.close
-
-      send_file cache_full_path_file_name,
-                :x_sendfile => true
-    end
+#    def x_sendfile
+#      return if !ActiveRest::Controller.config.x_sendfile ||
+#                @targets.length < 20
+#
+#      # DEFAULT
+#      cache_file_name =  UUID.random_create.to_s
+#      #cache_file_name = Digest::MD5.hexdigest(request.env['REMOTE_ADDR']+'_'+request.env['REQUEST_URI'])
+#      #cache_file_name += '.'+params[:format] if params[:format]
+#      cache_full_path_file_name = File.join(ActiveRest::Controller.config.cache_path, cache_file_name)
+#
+#      #unless File.exists?(cache_full_path_file_name)
+#      f = File.new(cache_full_path_file_name,  'w+')
+#      f << response.body
+#      f.close
+#
+#      send_file cache_full_path_file_name,
+#                :x_sendfile => true
+#    end
   end
 
 end

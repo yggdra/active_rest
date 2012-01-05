@@ -21,14 +21,23 @@ class Company < ActiveRecord::Base
   class Phone < ActiveRecord::Base
     include ActiveRest::Model
     belongs_to :company
+
+    interface :rest do
+    end
   end
 
   class Foo < ActiveRecord::Base
     include ActiveRest::Model
+
+    interface :rest do
+    end
   end
 
   class Bar < ActiveRecord::Base
     include ActiveRest::Model
+
+    interface :rest do
+    end
   end
 
 
@@ -37,7 +46,7 @@ class Company < ActiveRecord::Base
   include ActiveRest::Model
 
   has_many :users
-  has_many :contacts,:as => :owner
+  has_many :contacts, :as => :owner
 
   belongs_to :group,
              :class_name => 'Group'
@@ -69,18 +78,22 @@ class Company < ActiveRecord::Base
   validates_presence_of :name
   validates_uniqueness_of :name
 
-  attribute :name do
-    human_name 'Nome'
-  end
-
-  attribute :phones do
-    human_name 'Phone numbers'
-  end
-
-  attribute :virtual do
-    human_name 'Virtual Attribute'
-    virtual :string do
-      'This is the virtual value'
+  interface :rest do
+    attribute :name do
+      human_name 'Nome'
     end
+
+    attribute :phones do
+      human_name 'Phone numbers'
+    end
+
+    attribute :virtual do
+      human_name 'Virtual Attribute'
+      type :string
+    end
+  end
+
+  def virtual
+    'This is the virtual value'
   end
 end

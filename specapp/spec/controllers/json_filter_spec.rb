@@ -233,7 +233,7 @@ describe CompaniesController, 'json filter' do
         without! { company { name_ 'big_corp' } }
         without! { company { name_ 'compuglobal' } }
         without! { company { name_ 'newerOS' } }
-        company { name_ 'BigCorp' }
+        company { name_ 'Huge Corp Corp.' }
       }
     }
   end
@@ -277,7 +277,7 @@ describe CompaniesController, 'json filter' do
         without! { company { name_ 'big_corp' } }
         company { name_ 'compuglobal' }
         company { name_ 'newerOS' }
-        company { name_ 'BigCorp' }
+        company { name_ 'Huge Corp Corp.' }
       }
     }
   end

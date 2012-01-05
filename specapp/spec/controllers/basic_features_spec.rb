@@ -16,160 +16,73 @@ describe CompaniesController do
 
     b = ActiveSupport::JSON.decode(response.body)
 
-    b.should ==
-     {'type' => 'Company',
-      'attrs' =>
-       {'id' =>
-         {'type' => 'integer',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'created_at' =>
-         {'type' => 'timestamp',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'updated_at' =>
-         {'type' => 'timestamp',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'name' =>
-         {'type' => 'string',
-          'human_name' => 'Nome',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'city' =>
-         {'type' => 'string',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'street' =>
-         {'type' => 'string',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'zip' =>
-         {'type' => 'string',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'is_active' =>
-         {'type' => 'boolean',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'registration_date' =>
-         {'type' => 'timestamp',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'location_id' =>
-         {'type' => 'integer',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'group_id' =>
-         {'type' => 'integer',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'object_1_id' =>
-         {'type' => 'integer',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'object_1_type' =>
-         {'type' => 'string',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'object_2_id' =>
-         {'type' => 'integer',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'object_2_type' =>
-         {'type' => 'string',
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'users' =>
-         {'type' => 'uniform_references_collection', 'referenced_class' => 'User'},
-        'contacts' => {'type' => 'polymorphic_references_collection'},
-        'group' => {'type' => 'reference', 'referenced_class' => 'Group'},
-        'phones' =>
-         {'type' => 'uniform_models_collection',
+    b.should deep_include({
+      'type' => 'Company',
+      'attrs' => {
+        'id' => { 'type' => 'integer' },
+        'created_at' => { 'type' => 'timestamp' },
+        'updated_at' => { 'type' => 'timestamp' },
+        'name' => { 'type' => 'string', 'human_name' => 'Nome' },
+        'city' => { 'type' => 'string' },
+        'street' => {'type' => 'string' },
+        'zip' => {'type' => 'string' },
+        'is_active' => {'type' => 'boolean' },
+        'registration_date' => {'type' => 'timestamp' },
+        'group_id' => { 'type' => 'integer' },
+        'object_1_id' => { 'type' => 'integer' },
+        'object_1_type' => { 'type' => 'string' },
+        'object_2_id' => { 'type' => 'integer' },
+        'object_2_type' => { 'type' => 'string' },
+        'users' => { 'type' => 'uniform_references_collection', 'referenced_class' => 'User' },
+        'contacts' => { 'type' => 'polymorphic_references_collection' },
+        'group' => { 'type' => 'reference', 'referenced_class' => 'Group' },
+        'phones' => {
+          'type' => 'uniform_models_collection',
           'human_name' => 'Phone numbers',
-          'schema' =>
-           {'type' => 'Company::Phone',
-            'attrs' =>
-             {'id' =>
-               {'type' => 'integer',
-                'edit_on_creation' => true,
-                'visible_on_creation' => true,
-                'after_creation_perms' => {'write' => true, 'read' => true}},
-              'company_id' =>
-               {'type' => 'integer',
-                'edit_on_creation' => true,
-                'visible_on_creation' => true,
-                'after_creation_perms' => {'write' => true, 'read' => true}},
-              'number' =>
-               {'type' => 'string',
-                'edit_on_creation' => true,
-                'visible_on_creation' => true,
-                'after_creation_perms' => {'write' => true, 'read' => true}},
-              'company' => {'type' => 'reference', 'referenced_class' => 'Company'}},
-            'object_actions' => {'read' => {}, 'write' => {}, 'delete' => {}},
-            'class_actions' => {'create' => {}},
-            'class_perms' => {'create' => true}},
-          'edit_on_creation' => true,
-          'visible_on_creation' => true,
-          'after_creation_perms' => {'write' => true, 'read' => true}},
-        'location' =>
-         {'type' => 'embedded_model',
-          'schema' =>
-           {'type' => 'CompanyLocation',
-            'attrs' =>
-             {'id' =>
-               {'type' => 'integer',
-                'edit_on_creation' => true,
-                'visible_on_creation' => true,
-                'after_creation_perms' => {'write' => true, 'read' => true}},
-              'lat' =>
-               {'type' => 'float',
-                'edit_on_creation' => true,
-                'visible_on_creation' => true,
-                'after_creation_perms' => {'write' => true, 'read' => true}},
-              'lon' =>
-               {'type' => 'float',
-                'edit_on_creation' => true,
-                'visible_on_creation' => true,
-                'after_creation_perms' => {'write' => true, 'read' => true}},
-              'raw_name' =>
-               {'type' => 'string',
-                'edit_on_creation' => true,
-                'visible_on_creation' => true,
-                'after_creation_perms' => {'write' => true, 'read' => true}},
-              'companies' =>
-               {'type' => 'uniform_references_collection',
-                'referenced_class' => 'Company'}},
-            'object_actions' => {'read' => {}, 'write' => {}, 'delete' => {}},
-            'class_actions' => {'create' => {}},
-            'class_perms' => {'create' => true}}},
-        'full_address' => {'type' => 'structure'},
-        'object_1' => {'type' => 'embedded_polymorphic_model'},
-        'object_2' => {'type' => 'embedded_polymorphic_model'},
-        'polyref_1' => {'type' => 'polymorphic_reference'},
-        'polyref_2' => {'type' => 'polymorphic_reference'},
-        'owned_objects' => {'type' => 'polymorphic_references_collection'},
-        'virtual' => {'type' => 'string'}},
-      'object_actions' => {'read' => {}, 'write' => {}, 'delete' => {}},
-      'class_actions' => {'create' => {}},
-      'class_perms' => {'create' => true}
-     }
-
+          'schema' => {
+            'type' => 'Company::Phone',
+            'attrs' => {
+               'id' => { 'type' => 'integer' },
+               'company_id' => { 'type' => 'integer' },
+               'number' => { 'type' => 'string' },
+              'company' => { 'type' => 'reference', 'referenced_class' => 'Company'}
+            },
+            'object_actions' => { 'read' => {}, 'write' => {}, 'delete' => {} },
+            'class_actions' => { 'create' => {} },
+            'class_perms' => { 'create' => true }
+          },
+        },
+        'location' => {
+          'type' => 'embedded_model',
+          'schema' => {
+            'type' => 'CompanyLocation',
+            'attrs' => {
+              'id' => { 'type' => 'integer' },
+              'lat' => { 'type' => 'float' },
+              'lon' => { 'type' => 'float' },
+              'raw_name' => { 'type' => 'string' },
+              'companies' => {
+                'type' => 'uniform_references_collection',
+                'referenced_class' => 'Company'
+              }
+            },
+            'object_actions' => { 'read' => {}, 'write' => {}, 'delete' => {} },
+            'class_actions' => { 'create' => {} },
+            'class_perms' => { 'create' => true}
+          }
+        },
+        'full_address' => { 'type' => 'structure' },
+        'object_1' => { 'type' => 'embedded_polymorphic_model' },
+        'object_2' => { 'type' => 'embedded_polymorphic_model' },
+        'polyref_1' => { 'type' => 'polymorphic_reference' },
+        'polyref_2' => { 'type' => 'polymorphic_reference' },
+        'owned_objects' => { 'type' => 'polymorphic_references_collection' },
+        'virtual' => { 'type' => 'string' }
+      },
+      'object_actions' => { 'read' => {}, 'write' => {}, 'delete' => {} },
+      'class_actions' => { 'create' => {} },
+      'class_perms' => { 'create' => true }
+     })
   end
 
   it 'responds to index' do
@@ -179,10 +92,29 @@ describe CompaniesController do
 
     b = ActiveSupport::JSON.decode(response.body)
 
-    b.should == {}
+    b.should deep_include([
+      { 'id' => 1 },
+      { 'id' => 2 },
+      { 'id' => 3 },
+    ])
   end
 
   it 'retrieves a record by its ID' do
+    get :show, :id => @c2.id,  :format => 'json'
+    response.should be_success
+
+    b = ActiveSupport::JSON.decode(response.body)
+
+    b.should deep_include({
+      'city' => 'Springfield',
+      'id' => 2,
+      'name' => 'compuglobal',
+      'street' => 'Bart\'s road',
+      'zip' => '513',
+    })
+  end
+
+  it 'retrieves a record by its ID in XML' do
     get :show, :id => @c2.id,  :format => 'xml'
     response.should be_success
 
@@ -220,7 +152,7 @@ describe CompaniesController do
            :zip => '00000'
          }.to_json
 
-    post :create, :format => 'xml'
+    post :create, :format => 'json'
 
     response.status.should == 201
   end
@@ -229,7 +161,7 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :unknown_field => 'oh oh' }.to_json
 
-    post :create, :format => 'xml'
+    post :create, :format => 'json'
 
     response.status.should == 400
   end
@@ -238,7 +170,7 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :city => 'no where' }.to_json
 
-    post :create, :format => 'xml'
+    post :create, :format => 'json'
 
     response.status.should == 422
 #    response.should match("<company[name]>can't be blank</company[name]>")
@@ -248,7 +180,7 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :name => @c2.name }.to_json
 
-    post :create, :format => 'xml'
+    post :create, :format => 'json'
 
     response.status.should == 422
 #    response.should match(" <company[name]>has already been taken</company[name]>")
@@ -258,16 +190,17 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :name => 'New Compuglobal TM' }.to_json
 
-    put :update, :id => @c2.id, :format => 'xml'
+    put :update, :id => @c2.id, :format => 'json'
 
-    response.status.should == 200
+    # Both are valid however Rails limits to 204
+    [ 200, 204 ].should include(response.status)
   end
 
   it 'rejects updates to a record with unknown field in data' do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :unknown_field => 'oh oh' }.to_json
 
-    put :update, :id => @c2.id, :format => 'xml'
+    put :update, :id => @c2.id, :format => 'json'
 
     response.status.should == 400
   end
@@ -279,7 +212,7 @@ describe CompaniesController do
           :city => 'new location'
         }.to_json
 
-    put :update, :id => @c2.id, :format => 'xml'
+    put :update, :id => @c2.id, :format => 'json'
 
     response.status.should == 422
 #    response.should match("<company[name]>can't be blank</company[name]>")
@@ -287,12 +220,12 @@ describe CompaniesController do
 
   it 'deletes a record' do
     id = @c2.id
-    delete :destroy, :id => id, :format => 'xml'
+    delete :destroy, :id => id, :format => 'json'
     response.should be_success
 
 # Workaound for Rails/RSpec bug?!?
     lambda {
-      get :show, :id => id, :format => 'xml'
+      get :show, :id => id, :format => 'json'
     }.should raise_error(ActiveRecord::RecordNotFound)
 
 #    response.should_not be_success
@@ -303,7 +236,7 @@ describe CompaniesController do
 
 # Workaound for Rails/RSpec bug?!?
     lambda {
-      delete :destroy, :id => 100, :format => 'xml'
+      delete :destroy, :id => 100, :format => 'json'
     }.should raise_error(ActiveRecord::RecordNotFound)
 
 #    response.should_not be_success
@@ -337,7 +270,7 @@ describe CompaniesController do
     response.status.should == 200
 
     # check the full list
-    get :index,  :format => 'xml'
+    get :index,  :format => 'json'
 #    response.should_not match('<name>Brand new PRO company</name>')
   end
 
@@ -346,12 +279,12 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :name => 'Renamed to Compuglobal TM' }.to_json
 
-    put :update, :id => @c2.id, :format => 'xml'
+    put :update, :id => @c2.id, :format => 'json'
 
     response.status.should == 200
 
     # try to read - the value must be the previous
-    get :show, :id => @c2.id, :format => 'xml'
+    get :show, :id => @c2.id, :format => 'json'
 #    response.should match('<name>' + @c2.name + '</name>')
   end
 end

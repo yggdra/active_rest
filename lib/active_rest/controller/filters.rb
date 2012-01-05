@@ -152,21 +152,6 @@ module Controller
       end
     end
 
-    #
-    #
-    def apply_builtin_filter_to_relation(rel)
-      flt = (params[:flt] && self.class.rest_filters[params[:flt].to_sym]) || self.class.rest_filters[:default]
-      if flt
-        if flt.kind_of?(Proc)
-          rel = self.instance_exec(rel, &flt)
-        else
-          rel = flt
-        end
-      end
-
-      rel
-    end
-
     # For each parameter matching a column name add an equality condition to the relation
     #
     def apply_simple_filter_to_relation(rel)
@@ -200,7 +185,7 @@ module Controller
             rel = rel.includes(join.to_sym)
           end
         rescue Expression::SyntaxError => e
-          raise BadRequest.new(e.message)
+          raise ActiveRest::Exception::BadRequest.new(e.message)
         end
       end
 

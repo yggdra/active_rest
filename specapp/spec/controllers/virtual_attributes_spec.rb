@@ -28,7 +28,7 @@ describe VirtattrCompaniesController, 'get' do
   it 'responds to GET with virtual attributes' do
     b = ActiveSupport::JSON.decode(response.body)
 
-    b.should include('upcase_name' => 'BIGCORP')
+    b.should include('upcase_name' => 'HUGE CORP CORP.')
     b['location'].should include('elevation' => 100)
     b['phones'][0].should include('dashed_number' => '9-9-9-9-9-9-9-9')
   end
