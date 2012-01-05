@@ -88,20 +88,12 @@ class Interface
         end
 
       when :has_many
-        if reflection.options[:as]
-          if reflection.options[:embedded]
-            @attrs[name] = Attribute::PolymorphicModelsCollection.new(name, self)
-          else
-            @attrs[name] = Attribute::PolymorphicReferencesCollection.new(name, self)
-          end
+        if reflection.options[:embedded]
+          @attrs[name] =
+            Attribute::UniformModelsCollection.new(name, self, :model_class => reflection.class_name)
         else
-          if reflection.options[:embedded]
-            @attrs[name] =
-              Attribute::UniformModelsCollection.new(name, self, :model_class => reflection.class_name)
-          else
-            @attrs[name] =
-              Attribute::UniformReferencesCollection.new(name, self, :referenced_class_name => reflection.class_name)
-          end
+          @attrs[name] =
+            Attribute::UniformReferencesCollection.new(name, self, :referenced_class_name => reflection.class_name)
         end
 
       else
@@ -201,32 +193,22 @@ class Interface
 
       when Attribute::UniformModelsCollection
 
-puts "======================== #{valuename} ============================================"
-
-puts "VALUE #{value}"
         association = obj.send(valuename)
-puts "ASSOCIATION #{association}"
 
         existing_records = if association.loaded?
           association.target
         else
           ids = value.map {|a| a['id'] || a[:id] }.compact
           ids.empty? ? [] : association.scoped.where(association.klass.primary_key => attribute_ids)
-puts "ASSOCIATION IDS #{ids}"
         end
-
-puts "EXISTING_RECORDS #{existing_records}"
-
 
         value.each do |attributes|
           attributes = attributes.with_indifferent_access
 
           if attributes['id'].blank? || attributes['id'] == 0
+            # CREATE
             newrecord = association.build
             newrecord.interfaces[@name].apply_creation_attributes(newrecord, attributes);
-puts "NEW #{newrecord}"
-            # CREATE
-
           elsif existing_record = existing_records.detect { |record| record.id.to_s == attributes['id'].to_s }
             unless association.loaded?
               # Make sure we are operating on the actual object which is in the association's
@@ -243,19 +225,15 @@ puts "NEW #{newrecord}"
 
             if attributes['_destroy']
               # DESTROY
-puts "DESTROY #{existing_record}"
               existing_record.destroy
             else
               # UPDATE
-puts "UPDATE #{existing_record}"
               existing_record.interfaces[@name].apply_update_attributes(existing_record, attributes)
             end
           else
             raise AssociatedRecordNotFound.new
           end
         end
-
-puts "======================== #{valuename} ============================================"
 
       when Attribute::UniformReferencesCollection
       when Attribute::EmbeddedPolymorphicModel
