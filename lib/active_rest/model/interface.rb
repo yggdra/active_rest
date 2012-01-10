@@ -168,7 +168,7 @@ class Interface
       attr = attrs[valuename]
 
       if valuename == :_type
-        raise ClassDoesNotMatch.new(obj.class, value.constantize) if value.constantize != obj.class
+        raise ClassDoesNotMatch.new(obj.class, value.constantize) if value && value.constantize != obj.class
         next
       end
 
@@ -195,7 +195,7 @@ class Interface
           # We have to do this since it is embedded
           record.destroy if record
 
-          if @allow_polymorphic_creation && value.has_key('_type')
+          if @allow_polymorphic_creation && value.has_key('_type') && value['_type']
             newrecord = value['_type'].constantize.new
           else
             newrecord = obj.send("build_#{valuename}")
