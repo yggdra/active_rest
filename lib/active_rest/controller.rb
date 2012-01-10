@@ -213,7 +213,7 @@ module Controller
   def rest_ar_exception_rescue_action(e)
 
     message = "\nRendered exception: #{e.class} (#{e.message}):\n"
-    message << "  " << clean_backtrace(e, :silent).join("\n  ")
+    message << "  " << e.backtrace.join("\n  ")
     logger.warn("#{message}\n\n")
 
     if is_true?(params[:_suppress_response])
@@ -233,8 +233,7 @@ module Controller
         res.merge!(e.private_data) if e.respond_to?(:private_data)
 
         res[:annotated_source_code] = e.annoted_source_code.to_s if e.respond_to?(:annoted_source_code)
-        res[:application_backtrace] = clean_backtrace(e, :silent)
-        res[:framework_backtrace] = clean_backtrace(e, :noise)
+        res[:backtrace] = e.backtrace
       end
 
       status_code = e.respond_to?(:http_status_code) ? e.http_status_code : 500
@@ -306,14 +305,6 @@ module Controller
 
     @targets = out_rel
     @count = @targets_relation.count
-  end
-
-  protected
-
-  def clean_backtrace(exception, *args)
-    defined?(Rails) && Rails.respond_to?(:backtrace_cleaner) ?
-      Rails.backtrace_cleaner.clean(exception.backtrace, *args) :
-      exception.backtrace
   end
 end
 
