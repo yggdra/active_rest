@@ -34,7 +34,7 @@ describe CompaniesController do
         'object_2_id' => { 'type' => 'integer' },
         'object_2_type' => { 'type' => 'string' },
         'users' => { 'type' => 'uniform_references_collection', 'referenced_class' => 'User' },
-        'contacts' => { 'type' => 'polymorphic_references_collection' },
+        'contacts' => { 'type' => 'uniform_references_collection' },
         'group' => { 'type' => 'reference', 'referenced_class' => 'Group' },
         'phones' => {
           'type' => 'uniform_models_collection',
@@ -76,7 +76,6 @@ describe CompaniesController do
         'object_2' => { 'type' => 'embedded_polymorphic_model' },
         'polyref_1' => { 'type' => 'polymorphic_reference' },
         'polyref_2' => { 'type' => 'polymorphic_reference' },
-        'owned_objects' => { 'type' => 'polymorphic_references_collection' },
         'virtual' => { 'type' => 'string' }
       },
       'object_actions' => { 'read' => {}, 'write' => {}, 'delete' => {} },

@@ -434,13 +434,6 @@ describe Company, 'export_as_hash' do
     end
   end
 
-  # :owned_objects ###############
-  describe ':owned_objects' do
-    it 'does not include embedded polymorphic reference collection' do
-      @ch.should_not have_key(:owned_objects)
-    end
-  end
-
   # :full_address ###############
   describe ':full_address key' do
     it 'exists' do

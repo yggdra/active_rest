@@ -71,7 +71,6 @@ describe View do
         :object_2 => {:read => true, :write => true},
         :polyref_1 => {:read => true, :write => true},
         :polyref_2 => {:read => true, :write => true},
-        :owned_objects => {:read => true, :write => true},
         :virtual => {:read => true, :write => true}
        }
      }

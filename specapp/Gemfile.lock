@@ -11,6 +11,11 @@ GIT
   specs:
     vihai-assert2 (0.6.0)
 
+PATH
+  remote: ..
+  specs:
+    active_rest (3.0.2)
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -118,6 +123,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  active_rest (>= 3.0.1)!
   factory_girl_rails (>= 1.1.beta1)
   nokogiri
   rails (>= 3.2.0.rc1)

@@ -73,8 +73,6 @@ class Company < ActiveRecord::Base
   belongs_to :polyref_1, :polymorphic => true
   belongs_to :polyref_2, :polymorphic => true
 
-  has_many :owned_objects, :as => :ownable
-
   validates_presence_of :name
   validates_uniqueness_of :name
 
