@@ -7,6 +7,7 @@ class Interface
   attr_accessor :name
   attr_reader :model
   attr_reader :attrs_defined_in_code
+  attr_accessor :allow_polymorphic_creation
 
   def initialize(name, model, opts = {})
     @name = name
@@ -14,6 +15,8 @@ class Interface
     @opts = opts
     @attrs = nil
     @attrs_defined_in_code = {}
+
+    @allow_polymorphic_creation = false
   end
 
   def model=(model)
@@ -164,11 +167,16 @@ class Interface
       valuename = valuename.to_sym
       attr = attrs[valuename]
 
+      if valuename == :_type
+        raise ClassDoesNotMatch.new(obj.class, value.constantize) if value.constantize != obj.class
+        next
+      end
+
       next if valuename == :id
 
-      raise AttributeNotFound.new(valuename) if !attr
+      raise AttributeNotFound.new(obj, valuename) if !attr
       next if attr.ignored
-      raise AttributeNotWriteable.new(valuename) if !attr.writeable
+      raise AttributeNotWriteable.new(obj, valuename) if !attr.writeable
 
       case attr
       when Attribute::Reference
@@ -187,7 +195,12 @@ class Interface
           # We have to do this since it is embedded
           record.destroy if record
 
-          newrecord = obj.send("build_#{valuename}")
+          if @allow_polymorphic_creation && value.has_key('_type')
+            newrecord = value['_type'].constantize.new
+          else
+            newrecord = obj.send("build_#{valuename}")
+          end
+
           newrecord.interfaces[@name].apply_creation_attributes(newrecord, value);
         end
 
@@ -199,7 +212,7 @@ class Interface
           association.target
         else
           ids = value.map {|a| a['id'] || a[:id] }.compact
-          ids.empty? ? [] : association.scoped.where(association.klass.primary_key => attribute_ids)
+          ids.empty? ? [] : association.scoped.where(association.klass.primary_key => ids)
         end
 
         value.each do |attributes|
@@ -207,22 +220,17 @@ class Interface
 
           if attributes['id'].blank? || attributes['id'] == 0
             # CREATE
-            newrecord = association.build
-            newrecord.interfaces[@name].apply_creation_attributes(newrecord, attributes);
-          elsif existing_record = existing_records.detect { |record| record.id.to_s == attributes['id'].to_s }
-            unless association.loaded?
-              # Make sure we are operating on the actual object which is in the association's
-              # proxy_target array (either by finding it, or adding it if not found)
-              target_record = association.target.detect { |record| record == existing_record }
 
-              if target_record
-                existing_record = target_record
-              else
-                association.add_to_target(existing_record)
-              end
-
+            if attributes['_type'] && attr.model_class.constantize.interfaces[@name].allow_polymorphic_creation
+              newrecord = attributes[:_type].constantize.new
+              association << newrecord
+            else
+              newrecord = association.build
             end
 
+            newrecord.interfaces[@name].apply_creation_attributes(newrecord, attributes);
+
+          elsif existing_record = existing_records.detect { |record| record.id.to_s == attributes['id'].to_s }
             if attributes['_destroy']
               # DESTROY
               existing_record.destroy
@@ -267,28 +275,47 @@ class Interface
       a[name] ||= Attribute.new(name, @interface)
       Attribute::DSL.new(@interface, a, name).instance_eval(&block)
     end
+
+    def allow_polymorphic_creation
+      @interface.allow_polymorphic_creation = true
+    end
   end
 
   class AssociatedRecordNotFound < StandardError
   end
 
   class AttributeError < StandardError
+    attr_accessor :model_class
     attr_accessor :attribute_name
 
-    def initialize(attribute_name)
+    def initialize(model_class, attribute_name)
       @attribute_name = attribute_name
     end
   end
 
   class AttributeNotWriteable < AttributeError
     def to_s
-      "Attribute #{@attribute_name} is not writeable"
+      "Attribute #{@attribute_name} in class #{@model_class} is not writeable"
     end
   end
 
   class AttributeNotFound < AttributeError
     def to_s
-      "Attribute #{@attribute_name} not found"
+      "Attribute #{@attribute_name} in class #{@model_class} not found"
+    end
+  end
+
+  class ClassDoesNotMatch < StandardError
+    attr_accessor :model_class
+    attr_accessor :type
+
+    def initialize(model_class, type)
+      @model_class = model_class
+      @model_type = type
+    end
+
+    def to_s
+      "Type #{@type} does not match with class #{@model_class}"
     end
   end
 

@@ -120,6 +120,8 @@ class Interface
     # Reference to another linked but not embedded model. It may come from a has_one or belongs_to
     #
     class Reference < Attribute
+      attr_accessor :referenced_class_name
+
       def initialize(name, interface, h = {})
         super
 
@@ -157,6 +159,8 @@ class Interface
     # UniformModelsCollection is a collection of objects of the same type
     #
     class UniformModelsCollection < Attribute
+      attr_accessor :model_class
+
       def initialize(name, interface, h = {})
         super
 
@@ -187,6 +191,8 @@ class Interface
     # UniformReferencesCollection is a collection of objects of the same type
     #
     class UniformReferencesCollection < Attribute
+      attr_accessor :referenced_class_name
+
       def initialize(name, interface, h = {})
         super
 
