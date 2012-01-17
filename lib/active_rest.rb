@@ -1,5 +1,5 @@
+require "yggdra_plugins/version"
 
-require 'active_rest/railtie'
 require 'active_rest/routes'
 require 'active_rest/model'
 require 'active_rest/view'
@@ -8,14 +8,12 @@ require 'active_rest/exceptions'
 
 require 'active_record'
 
-# Rails 3.0
-#module ActiveRecord::Associations::ClassMethods
-#  @@valid_keys_for_has_many_association << :embedded
-#  @@valid_keys_for_has_one_association << :embedded << :embedded_in
-#  @@valid_keys_for_belongs_to_association << :embedded << :embedded_in
-#end
+module ActiveRest
+class Engine < Rails::Engine
+end
+end
 
-# Rails 3.1
+# Rails 3.1 - 3.2
 module ActiveRecord::Associations::Builder
   class HasMany
     self.valid_options += [ :embedded ]
