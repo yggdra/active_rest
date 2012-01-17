@@ -161,7 +161,6 @@ class Interface
   end
 
   def apply_model_attributes(obj, values)
-
     values.each do |valuename, value|
 
       valuename = valuename.to_sym
@@ -171,7 +170,6 @@ class Interface
         raise ClassDoesNotMatch.new(obj.class, value.constantize) if value && value.constantize != obj.class
         next
       end
-
       next if valuename == :id
 
       raise AttributeNotFound.new(obj, valuename) if !attr
@@ -193,7 +191,7 @@ class Interface
           # CREATE
 
           # We have to do this since it is embedded
-          record.destroy if record
+          record.mark_for_destruction if record
 
           if @allow_polymorphic_creation && value.has_key('_type') && value['_type']
             newrecord = value['_type'].constantize.new
@@ -206,7 +204,7 @@ class Interface
 
       when Attribute::UniformModelsCollection
 
-        association = obj.send(valuename)
+        association = obj.association(valuename)
 
         existing_records = if association.loaded?
           association.target
@@ -231,9 +229,20 @@ class Interface
             newrecord.interfaces[@name].apply_creation_attributes(newrecord, attributes);
 
           elsif existing_record = existing_records.detect { |record| record.id.to_s == attributes['id'].to_s }
+
+            unless association.loaded?
+              target_record = association.target.detect { |record| record == existing_record }
+
+              if target_record
+                existing_record = target_record
+              else
+                association.add_to_target(existing_record)
+              end
+            end
+
             if attributes['_destroy']
               # DESTROY
-              existing_record.destroy
+              existing_record.mark_for_destruction
             else
               # UPDATE
               existing_record.interfaces[@name].apply_update_attributes(existing_record, attributes)
@@ -251,6 +260,7 @@ class Interface
       when Attribute::Structure, Attribute
         obj.send("#{valuename}=", value)
       end
+
     end
   end
 
