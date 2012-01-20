@@ -56,6 +56,8 @@ class View
 
     obj.interfaces[@interface].attrs.select { |k,v| visible?(k) && !v.excluded }.each do |attrname,attr|
       attrname = attrname.to_sym
+      viewdef = @definition[attrname]
+      viewinc = viewdef ? viewdef.include : false
 
       case attr
       when Model::Interface::Attribute::Structure
@@ -64,38 +66,55 @@ class View
                            (val.respond_to?(:to_hash) ? val.to_hash : nil) ||
                            (val.respond_to?(:to_s) ? val.to_s : nil)
       when Model::Interface::Attribute::Reference
-        if @definition[attrname] && @definition[attrname].include
-          subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
+        if viewinc
+          subview = viewdef.subview || View.new(:default)
           val = obj.send(attrname)
           values[attrname] = val ? subview.process(val, opts) : nil
         end
       when Model::Interface::Attribute::EmbeddedModel
-        subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
+        subview = viewdef && viewdef.subview || View.new(:default)
         val = obj.send(attrname)
         values[attrname] = val ? subview.process(val, opts) : nil
       when Model::Interface::Attribute::UniformModelsCollection
-        subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
+        subview = (viewdef && viewdef.subview) || View.new(:default)
         values[attrname] = obj.send(attrname).map { |x| subview.process(x, opts) }
       when Model::Interface::Attribute::UniformReferencesCollection
-        if @definition[attrname] && @definition[attrname].include
-          subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
+        if viewinc
+          subview = viewdef.subview || View.new(:default)
           values[attrname] = obj.send(attrname).map { |x| subview.process(x, opts) }
         end
       when Model::Interface::Attribute::EmbeddedPolymorphicModel
-        subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
+        subview = (viewdef && viewdef.subview) || View.new(:default)
         val = obj.send(attrname)
         values[attrname] = val ? subview.process(val, opts) : nil
       when Model::Interface::Attribute::PolymorphicReference
-        if @definition[attrname] && @definition[attrname].include
-          subview = (definition[attrname] && definition[attrname].subview) || View.new(:default)
+        if viewinc
+          subview = viewdef.subview || View.new(:default)
           val = obj.send(attrname)
           values[attrname] = val ? subview.process(val, opts) : nil
+        else
+          ref = obj.association(attrname).reflection
+          values[attrname] = { :id => obj.send(ref.foreign_key), :_type => obj.send(ref.foreign_type) }
         end
       when Model::Interface::Attribute::PolymorphicModelsCollection
       when Model::Interface::Attribute::PolymorphicReferencesCollection
       else
         values[attrname] = obj.send(attrname)
-        values[attrname] = values[attrname].export_as_simple if values[attrname].respond_to?(:export_as_simple)
+
+        if !values[attrname].nil?
+          case attr.type
+          when :string
+            values[attrname] = values[attrname].to_s if values[attrname].respond_to?(:to_s)
+          when :integer
+            values[attrname] = values[attrname].to_i if values[attrname].respond_to?(:to_i)
+          when :array
+            values[attrname] = values[attrname].to_a if values[attrname].respond_to?(:to_a)
+          when :hash
+            values[attrname] = values[attrname].to_h if values[attrname].respond_to?(:to_h)
+          end
+
+          values[attrname] = values[attrname].export_as_simple if values[attrname].respond_to?(:export_as_simple)
+        end
       end
 
       if @with_perms
