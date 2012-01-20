@@ -1,4 +1,4 @@
-require "yggdra_plugins/version"
+require "active_rest/version"
 
 require 'active_rest/routes'
 require 'active_rest/model'
