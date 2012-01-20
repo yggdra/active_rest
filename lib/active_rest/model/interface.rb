@@ -251,12 +251,12 @@ class Interface
             raise AssociatedRecordNotFound.new
           end
         end
-
       when Attribute::UniformReferencesCollection
       when Attribute::EmbeddedPolymorphicModel
       when Attribute::PolymorphicReference
       when Attribute::PolymorphicModelsCollection
       when Attribute::PolymorphicReferencesCollection
+
       when Attribute::Structure, Attribute
         obj.send("#{valuename}=", value)
       end
