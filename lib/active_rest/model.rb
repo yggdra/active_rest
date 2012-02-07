@@ -27,11 +27,19 @@ module Model
     base.extend(ClassMethods)
     base.class_attribute :interfaces
     base.interfaces = {}
+
+    base.class_eval do
+      class << self
+        alias_method_chain :inherited, :ar
+      end
+    end
   end
 
   module ClassMethods
 
-    def inherited(child)
+    def inherited_with_ar(child)
+      inherited_without_ar(child)
+
       child.interfaces = child.interfaces.clone
       child.interfaces.each { |k,v| (child.interfaces[k] = v.clone).model = child }
     end
