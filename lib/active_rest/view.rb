@@ -117,7 +117,7 @@ class View
         end
       end
 
-      if @with_perms
+      if (@with_perms || opts[:with_perms] == true) && !opts[:with_perms] == false
         perms[attrname] ||= {}
         perms[attrname][:read] = true
         perms[attrname][:write] = true
@@ -136,7 +136,7 @@ class View
       res[:_type] = obj.class.to_s
     end
 
-    if @with_perms
+    if (@with_perms || opts[:with_perms] == true) && !opts[:with_perms] == false
       res[:_object_perms] = {
         :read => true,
         :write => true,
