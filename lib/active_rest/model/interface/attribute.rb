@@ -18,7 +18,7 @@ class Interface
     attr_accessor :excluded
     attr_accessor :ignored
     attr_accessor :readable
-    attr_accessor :writeable
+    attr_accessor :writable
 
     def initialize(name, interface, h = {})
       @name = name
@@ -37,7 +37,7 @@ class Interface
       @excluded = h[:excluded] || false
       @ignored = h[:ignored] || false
       @readable = h[:readable] || true
-      @writeable = h[:writeable] || true
+      @writable = h[:writable] || true
     end
 
     def initialize_copy(source)
@@ -51,7 +51,7 @@ class Interface
       res[:default] = @default if @default
       res[:notnull] = true if @notnull
       res[:meta] = @meta if !@meta.empty?
-      res[:writeable] = false if !@writeable
+      res[:writable] = false if !@writable
       res[:readable] = false if !@readable
 
       res[:edit_on_creation] = true
@@ -73,7 +73,7 @@ class Interface
       @excluded = attr.excluded
       @ignored = attr.ignored
       @readable = attr.readable
-      @writeable = attr.writeable
+      @writable = attr.writable
     end
 
     class DSL
@@ -105,7 +105,7 @@ class Interface
       end
 
       def read_only!
-        @attrs[@name].writeable = false
+        @attrs[@name].writable = false
       end
 
       def write_only!

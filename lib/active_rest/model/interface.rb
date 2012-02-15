@@ -174,7 +174,7 @@ class Interface
 
       raise AttributeNotFound.new(obj, valuename) if !attr
       next if attr.ignored
-      raise AttributeNotWriteable.new(obj, valuename) if !attr.writeable
+      raise AttributeNotWriteable.new(obj, valuename) if !attr.writable
 
       case attr
       when Attribute::Reference
@@ -305,7 +305,7 @@ class Interface
 
   class AttributeNotWriteable < AttributeError
     def to_s
-      "Attribute #{@attribute_name} in class #{@model_class} is not writeable"
+      "Attribute #{@attribute_name} in class #{@model_class} is not writable"
     end
   end
 

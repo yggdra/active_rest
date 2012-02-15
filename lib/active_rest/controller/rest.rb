@@ -113,7 +113,7 @@ module Controller
         end
       rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
-                :per_field_msgs => { e.attribute_name => 'Is not writeable' },
+                :per_field_msgs => { e.attribute_name => 'Is not writable' },
                 :retry_possible => false)
       rescue ActiveRest::Model::Interface::AttributeNotFound => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
@@ -159,7 +159,7 @@ module Controller
         end
       rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
-                :per_field_msgs => { e.attribute_name => 'Is not writeable' },
+                :per_field_msgs => { e.attribute_name => 'Is not writable' },
                 :retry_possible => false)
       rescue ActiveRest::Model::Interface::AttributeNotFound => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
