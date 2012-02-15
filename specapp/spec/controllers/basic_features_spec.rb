@@ -286,4 +286,12 @@ describe CompaniesController do
     get :show, :id => @c2.id, :format => 'json'
 #    response.should match('<name>' + @c2.name + '</name>')
   end
+
+  it 'hides non-readable attributes' do
+    pending
+  end
+
+  it 'prevents updating non writable attributes' do
+    pending
+  end
 end

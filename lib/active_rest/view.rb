@@ -54,7 +54,7 @@ class View
     values = {}
     perms = {}
 
-    obj.interfaces[@interface].attrs.select { |k,v| visible?(k) && !v.excluded }.each do |attrname,attr|
+    obj.interfaces[@interface].attrs.select { |k,v| visible?(k) && !v.excluded && v.readable }.each do |attrname,attr|
       attrname = attrname.to_sym
       viewdef = @definition[attrname]
       viewinc = viewdef ? viewdef.include : false
