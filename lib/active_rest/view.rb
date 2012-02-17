@@ -77,11 +77,17 @@ class View
         values[attrname] = val ? subview.process(val, opts) : nil
       when Model::Interface::Attribute::UniformModelsCollection
         subview = (viewdef && viewdef.subview) || View.new(:default)
-        values[attrname] = obj.send(attrname).map { |x| subview.process(x, opts) }
+        vals = obj.send(attrname)
+        vals = vals.limit(viewdef.limit) if viewdef.limit
+        vals = vals.order(viewdef.order) if viewdef.order
+        values[attrname] = vals.map { |x| subview.process(x, opts) }
       when Model::Interface::Attribute::UniformReferencesCollection
         if viewinc
           subview = viewdef.subview || View.new(:default)
-          values[attrname] = obj.send(attrname).map { |x| subview.process(x, opts) }
+          vals = obj.send(attrname)
+          vals = vals.limit(viewdef.limit) if viewdef.limit
+          vals = vals.order(viewdef.order) if viewdef.order
+          values[attrname] = vals.map { |x| subview.process(x, opts) }
         end
       when Model::Interface::Attribute::EmbeddedPolymorphicModel
         subview = (viewdef && viewdef.subview) || View.new(:default)
@@ -99,21 +105,22 @@ class View
       when Model::Interface::Attribute::PolymorphicModelsCollection
       when Model::Interface::Attribute::PolymorphicReferencesCollection
       else
-        values[attrname] = obj.send(attrname)
+        val = obj.send(attrname)
 
-        if !values[attrname].nil?
+        if !val.nil?
           case attr.type
           when :string
-            values[attrname] = values[attrname].to_s if values[attrname].respond_to?(:to_s)
+            val = val.to_s if val.respond_to?(:to_s)
           when :integer
-            values[attrname] = values[attrname].to_i if values[attrname].respond_to?(:to_i)
+            val = val.to_i if val.respond_to?(:to_i)
           when :array
-            values[attrname] = values[attrname].to_a if values[attrname].respond_to?(:to_a)
+            val = val.to_a if val.respond_to?(:to_a)
           when :hash
-            values[attrname] = values[attrname].to_h if values[attrname].respond_to?(:to_h)
+            val = val.to_h if val.respond_to?(:to_h)
           end
 
-          values[attrname] = values[attrname].export_as_simple if values[attrname].respond_to?(:export_as_simple)
+          val = val.export_as_simple if val.respond_to?(:export_as_simple)
+          values[attrname] = val
         end
       end
 
@@ -203,6 +210,10 @@ class View
     attr_accessor :source
 
     attr_accessor :subview
+
+    # These should actually be in collections but we don't yet know the type
+    attr_accessor :limit
+    attr_accessor :order
 
     def initialize(name)
       @name = name
