@@ -51,6 +51,8 @@ class View
       end
     end
 
+    with_perms = (@with_perms || opts[:with_perms] == true) && opts[:with_perms] != false
+
     values = {}
     perms = {}
 
@@ -78,15 +80,19 @@ class View
       when Model::Interface::Attribute::UniformModelsCollection
         subview = (viewdef && viewdef.subview) || View.new(:default)
         vals = obj.send(attrname)
-        vals = vals.limit(viewdef.limit) if viewdef.limit
-        vals = vals.order(viewdef.order) if viewdef.order
+        if viewdef
+          vals = vals.limit(viewdef.limit) if viewdef.limit
+          vals = vals.order(viewdef.order) if viewdef.order
+        end
         values[attrname] = vals.map { |x| subview.process(x, opts) }
       when Model::Interface::Attribute::UniformReferencesCollection
         if viewinc
           subview = viewdef.subview || View.new(:default)
           vals = obj.send(attrname)
-          vals = vals.limit(viewdef.limit) if viewdef.limit
-          vals = vals.order(viewdef.order) if viewdef.order
+          if viewdef
+            vals = vals.limit(viewdef.limit) if viewdef.limit
+            vals = vals.order(viewdef.order) if viewdef.order
+          end
           values[attrname] = vals.map { |x| subview.process(x, opts) }
         end
       when Model::Interface::Attribute::EmbeddedPolymorphicModel
@@ -120,11 +126,12 @@ class View
           end
 
           val = val.export_as_simple if val.respond_to?(:export_as_simple)
-          values[attrname] = val
         end
+
+        values[attrname] = val
       end
 
-      if (@with_perms || opts[:with_perms] == true) && !opts[:with_perms] == false
+      if with_perms
         perms[attrname] ||= {}
         perms[attrname][:read] = true
         perms[attrname][:write] = true
@@ -143,7 +150,7 @@ class View
       res[:_type] = obj.class.to_s
     end
 
-    if (@with_perms || opts[:with_perms] == true) && !opts[:with_perms] == false
+    if with_perms
       res[:_object_perms] = {
         :read => true,
         :write => true,
