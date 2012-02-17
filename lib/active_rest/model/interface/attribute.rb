@@ -24,10 +24,6 @@ class Interface
       @name = name
       @interface = interface
 
-      if self.class != Attribute
-        @type = self.class.name.split('::').last.underscore.to_sym
-      end
-
       @human_name = ''
       @meta = {}
       @default = nil
@@ -38,6 +34,10 @@ class Interface
       @writable = true
 
       h.each { |k,v| send("#{k}=", v) }
+
+      if self.class != Attribute
+        @type = self.class.name.split('::').last.underscore.to_sym
+      end
     end
 
     def initialize_copy(source)
