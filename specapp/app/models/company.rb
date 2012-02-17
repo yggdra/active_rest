@@ -41,8 +41,6 @@ class Company < ActiveRecord::Base
   end
 
 
-
-
   include ActiveRest::Model
 
   has_many :users

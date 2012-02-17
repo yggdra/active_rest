@@ -44,6 +44,16 @@ class Interface
     @attrs
   end
 
+
+  def mark_attr_to_be_excluded(name)
+    if @attrs[name]
+      @attrs[name].excluded = true
+    else
+      @attrs_defined_in_code[name] ||= Attribute.new(name, @interface)
+      @attrs_defined_in_code[name].excluded = true
+    end
+  end
+
   def initialize_attrs
     @attrs = {}
 
@@ -71,19 +81,16 @@ class Interface
           else
             @attrs[name] = Attribute::PolymorphicReference.new(name, self)
           end
+
+          mark_attr_to_be_excluded(reflection.foreign_key.to_sym)
+          mark_attr_to_be_excluded(reflection.foreign_type.to_sym)
         else
           if reflection.options[:embedded]
             @attrs[name] =
               Attribute::EmbeddedModel.new(name, self, :model_class => reflection.class_name)
 
             # Hide embedded foreign key column
-            fkn = reflection.foreign_key.to_sym
-            if @attrs[fkn]
-              @attrs[fkn].excluded = true
-            else
-              @attrs_defined_in_code[fkn] ||= Attribute.new(fkn, @interface)
-              @attrs_defined_in_code[fkn].excluded = true
-            end
+            mark_attr_to_be_excluded(reflection.foreign_key.to_sym)
           else
             @attrs[name] =
               Attribute::Reference.new(name, self, :referenced_class_name => reflection.class_name)
