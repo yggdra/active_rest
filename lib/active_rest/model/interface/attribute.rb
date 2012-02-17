@@ -26,18 +26,18 @@ class Interface
 
       if self.class != Attribute
         @type = self.class.name.split('::').last.underscore.to_sym
-      else
-        @type = h[:type]
       end
 
-      @human_name ||= h[:human_name]
-      @meta = h[:meta] || {}
-      @default = h[:default] || nil
-      @notnull = h[:notnull] || false
-      @excluded = h[:excluded] || false
-      @ignored = h[:ignored] || false
-      @readable = h[:readable] || true
-      @writable = h[:writable] || true
+      @human_name = ''
+      @meta = {}
+      @default = nil
+      @notnull = false
+      @excluded = false
+      @ignored = false
+      @readable = true
+      @writable = true
+
+      h.each { |k,v| send("#{k}=", v) }
     end
 
     def initialize_copy(source)
@@ -122,12 +122,6 @@ class Interface
     class Reference < Attribute
       attr_accessor :referenced_class_name
 
-      def initialize(name, interface, h = {})
-        super
-
-        @referenced_class_name = h[:referenced_class_name]
-      end
-
       def definition
         res = super
         res[:referenced_class] = @referenced_class_name
@@ -138,11 +132,7 @@ class Interface
     # EmbeddedModel describes an attribute containing an embedded model
     #
     class EmbeddedModel < Attribute
-      def initialize(name, interface, h = {})
-        super
-
-        @model_class = h[:model_class]
-      end
+      attr_accessor :model_class
 
       def definition
         res = super
@@ -160,12 +150,6 @@ class Interface
     #
     class UniformModelsCollection < Attribute
       attr_accessor :model_class
-
-      def initialize(name, interface, h = {})
-        super
-
-        @model_class = h[:model_class]
-      end
 
       def definition
         res = super
@@ -192,12 +176,6 @@ class Interface
     #
     class UniformReferencesCollection < Attribute
       attr_accessor :referenced_class_name
-
-      def initialize(name, interface, h = {})
-        super
-
-        @referenced_class_name = h[:referenced_class_name]
-      end
 
       def definition
         res = super
