@@ -104,9 +104,11 @@ module Controller
       begin
         send(rest_xact_handler) do
           before_create if self.respond_to? :before_create
-          @target = model.new
+          @target ||= model.new
 
           model.interfaces[:rest].apply_creation_attributes(@target, @request_resource)
+
+          before_save if self.respond_to? :before_save
 
           @target.save!
           after_create if self.respond_to? :after_create
@@ -153,6 +155,9 @@ module Controller
           before_update if self.respond_to? :before_update
 
           model.interfaces[:rest].apply_update_attributes(@target, @request_resource)
+
+          before_save if self.respond_to? :before_save
+
           @target.save!
 
           after_update if self.respond_to? :after_update
