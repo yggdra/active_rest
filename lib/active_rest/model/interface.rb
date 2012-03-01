@@ -78,12 +78,12 @@ class Interface
         if reflection.options[:polymorphic]
           if reflection.options[:embedded]
             @attrs[name] = Attribute::EmbeddedPolymorphicModel.new(name, self)
+
+            mark_attr_to_be_excluded(reflection.foreign_key.to_sym)
+            mark_attr_to_be_excluded(reflection.foreign_type.to_sym)
           else
             @attrs[name] = Attribute::PolymorphicReference.new(name, self)
           end
-
-          mark_attr_to_be_excluded(reflection.foreign_key.to_sym)
-          mark_attr_to_be_excluded(reflection.foreign_type.to_sym)
         else
           if reflection.options[:embedded]
             @attrs[name] =
