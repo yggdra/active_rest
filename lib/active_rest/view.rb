@@ -27,7 +27,7 @@ class View
     @definition = {}
     @empty = false
     @with_type = true
-    @with_perms = true
+    @with_perms = false
     @per_class = {}
 
     @extjs_polymorphic_workaround = false
