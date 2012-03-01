@@ -92,8 +92,16 @@ class Interface
         @attrs[@name].meta.merge!(meta)
       end
 
-      def type(type)
-        @attrs[@name].type = type
+      def type(val)
+        @attrs[@name].type = val
+      end
+
+      def notnull(val)
+        @attrs[@name].notnull = val
+      end
+
+      def default(val)
+        @attrs[@name].default = val
       end
 
       def exclude!
