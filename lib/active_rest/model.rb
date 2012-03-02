@@ -68,21 +68,14 @@ module Model
     end
   end
 
-  def export_as_hash(opts = {})
-    if opts[:view]
-      opts[:view].process(self, opts)
-    else
-      View.new(:default).process(self, opts)
-    end
+  def output(interface_name, opts = {})
+    opts[:view] ||= ActiveRest::View.new(:default)
+    opts[:format] ||= :json
+    interfaces[interface_name].output(self, opts)
   end
 
-  def export_as_yaml(opts = {})
-    export_as_hash.to_yaml(opts)
-  end
-
-  def as_json(opts = {})
-    opts ||= {}
-    export_as_hash(opts)
+  def ar_serializable_hash(interface_name, opts = {})
+    interfaces[interface_name].ar_serializable_hash(self, opts)
   end
 
 end

@@ -74,7 +74,7 @@ module Controller
                       ActiveSupport::Inflector.underscore(model.name)).tr('/', '_')
       end
 
-      respond_with(@targets,
+      respond_with(@targets.all,
                    :total => @count,
                    :root => root_name) do |format|
         yield(format) if block_given?

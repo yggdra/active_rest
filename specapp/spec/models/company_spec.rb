@@ -137,6 +137,51 @@ describe Company, 'schema' do
       end
     end
 
+    # :excluded_attribute ###############
+    describe ':excluded_attribute key' do
+      it 'is not present since it is excluded' do
+        @attrs.should_not have_key(:excluded_attribute)
+      end
+    end
+
+    # :not_readable_attribute ###############
+    describe ':not_readable_attribute key' do
+      it 'is present' do
+        @attrs.should have_key(:not_readable_attribute)
+      end
+
+      it 'has a :type of integer' do
+        @attrs[:not_readable_attribute][:type].should == :integer
+      end
+
+      it 'is not readable' do
+        @attrs[:not_readable_attribute][:readable].should be_false
+      end
+
+      it 'is writable' do
+        @attrs[:not_readable_attribute][:writable].should be_true
+      end
+    end
+
+    # :not_writable_attribute ###############
+    describe ':not_writable_attribute key' do
+      it 'is present' do
+        @attrs.should have_key(:not_writable_attribute)
+      end
+
+      it 'has a :type of integer' do
+        @attrs[:not_writable_attribute][:type].should == :integer
+      end
+
+      it 'is readable' do
+        @attrs[:not_writable_attribute][:readable].should be_true
+      end
+
+      it 'is not writable' do
+        @attrs[:not_writable_attribute][:writable].should be_false
+      end
+    end
+
     # :created_at ###############
     describe ':created_at key' do
       it 'exists' do
@@ -324,11 +369,11 @@ describe Company, 'schema' do
   end
 end
 
-describe Company, 'export_as_hash' do
+describe Company, 'ar_serializable_hash' do
   before(:each) do
     @c1 = Factory(:company_1)
     @c = Factory(:company_complex)
-    @ch = @c.export_as_hash
+    @ch = @c.ar_serializable_hash(:rest)
   end
 
   it 'produces a Hash as result' do
@@ -382,7 +427,7 @@ describe Company, 'export_as_hash' do
     end
 
     it ':location is nil if not present' do
-      @c1.export_as_hash[:location].should be_nil
+      @c1.ar_serializable_hash(:rest)[:location].should be_nil
     end
   end
 
@@ -475,20 +520,20 @@ describe Company, 'export_as_hash' do
   end
 
   it 'outputs object permissions when :with_perms option is present' do
-    @c.export_as_hash(:with_perms => true).should have_key(:_object_perms)
+    @c.ar_serializable_hash(:rest, :with_perms => true).should have_key(:_object_perms)
   end
 
   it 'outputs attribute permissions when :with_perms option is present' do
-   @c.export_as_hash(:with_perms => true).should have_key(:_attr_perms)
+    @c.ar_serializable_hash(:rest, :with_perms => true).should have_key(:_attr_perms)
   end
 end
 
-describe Company, 'export_as_yaml' do
-
-  it 'produces a String as result' do
-    Factory(:company_1).export_as_yaml.should be_kind_of(String)
-  end
-end
+#describe Company, '' do
+#
+#  it 'produces a String as result' do
+#    Factory(:company_1).export_as_yaml.should be_kind_of(String)
+#  end
+#end
 
 describe Company, 'nested_attribute' do
   it 'finds not nested attribute' do

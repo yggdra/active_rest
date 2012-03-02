@@ -15,7 +15,6 @@ class Interface
     attr_accessor :default
     attr_accessor :notnull
     attr_accessor :meta
-    attr_accessor :excluded
     attr_accessor :ignored
     attr_accessor :readable
     attr_accessor :writable
@@ -28,7 +27,6 @@ class Interface
       @meta = {}
       @default = nil
       @notnull = false
-      @excluded = false
       @ignored = false
       @readable = true
       @writable = true
@@ -51,8 +49,8 @@ class Interface
       res[:default] = @default if @default
       res[:notnull] = true if @notnull
       res[:meta] = @meta if !@meta.empty?
-      res[:writable] = false if !@writable
-      res[:readable] = false if !@readable
+      res[:writable] = @writable
+      res[:readable] = @readable
 
       res[:edit_on_creation] = true
       res[:visible_on_creation] = true
@@ -70,10 +68,15 @@ class Interface
 
       @human_name = attr.human_name
       @meta.merge!(attr.meta)
-      @excluded = attr.excluded
       @ignored = attr.ignored
       @readable = attr.readable
       @writable = attr.writable
+    end
+
+    def exclude!
+      @ignored = true
+      @readable = false
+      @writable = false
     end
 
     class DSL
@@ -105,18 +108,18 @@ class Interface
       end
 
       def exclude!
-        @attrs[@name].excluded = true
+        @attrs[@name].exclude!
       end
 
       def ignore!
         @attrs[@name].ignored = true
       end
 
-      def read_only!
+      def not_writable!
         @attrs[@name].writable = false
       end
 
-      def write_only!
+      def not_readable!
         @attrs[@name].readable = false
       end
     end

@@ -14,9 +14,9 @@
 ActiveRecord::Schema.define(:version => 20100726160133) do
 
   create_table "companies", :force => true do |t|
-    t.datetime "created_at",        :null => false
-    t.datetime "updated_at",        :null => false
-    t.string   "name",              :null => false
+    t.datetime "created_at",             :null => false
+    t.datetime "updated_at",             :null => false
+    t.string   "name",                   :null => false
     t.string   "city"
     t.string   "street"
     t.string   "zip"
@@ -32,6 +32,9 @@ ActiveRecord::Schema.define(:version => 20100726160133) do
     t.string   "polyref_1_type"
     t.integer  "polyref_2_id"
     t.string   "polyref_2_type"
+    t.integer  "excluded_attribute"
+    t.integer  "not_readable_attribute"
+    t.integer  "not_writable_attribute"
   end
 
   create_table "company_bars", :force => true do |t|

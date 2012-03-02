@@ -10,8 +10,6 @@
 # License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
-require 'ostruct'
-
 require 'active_rest/controller/filters'
 require 'active_rest/controller/rest'
 require 'active_rest/controller/validations'
@@ -140,7 +138,9 @@ module Controller
 
       prepend_before_filter do
         # prevent any action that can modify the record or change the table
-        raise MethodNotAllowed.new('Read only in effect') if self.class.rest_read_only && request.method != 'GET'
+        if self.class.rest_read_only && request.method != 'GET'
+          raise ActiveRest::Exception::MethodNotAllowed.new('Read only in effect')
+        end
 
         # setup I18n if options has this information
         I18n.locale = params[:language].to_sym if params[:language]
@@ -176,11 +176,11 @@ module Controller
   # @return [View] the selected view
   #
   def rest_view
-    if params[:view]
-      self.class.rest_views[params[:view].to_sym]
-    else
-      self.class.rest_views[action_name.to_sym]
-    end
+    view = nil
+    view = self.class.rest_views[params[:view].to_sym] if params[:view]
+    view = self.class.rest_views[action_name.to_sym] if !view
+    view = View.new(:default) if !view
+    view
   end
 
   def model

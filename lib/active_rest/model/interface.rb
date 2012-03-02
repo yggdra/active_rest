@@ -1,5 +1,20 @@
 require 'active_rest/model/interface/attribute'
 
+class Array
+  def ar_serializable_hash(ifname, opts = {})
+    map do |x|
+      x.respond_to?(:ar_serializable_hash) ? x.ar_serializable_hash(ifname, opts) : x
+    end
+  end
+end
+
+class Hash
+  def ar_serializable_hash(ifname, opts = {})
+    nh = self.clone
+    each { |k,v| nh[k] = v.respond_to?(:ar_serializable_hash) ? v.ar_serializable_hash(ifname, opts) : v }
+  end
+end
+
 module ActiveRest
 module Model
 
@@ -47,10 +62,10 @@ class Interface
 
   def mark_attr_to_be_excluded(name)
     if @attrs[name]
-      @attrs[name].excluded = true
+      @attrs[name].exclude!
     else
       @attrs_defined_in_code[name] ||= Attribute.new(name, @interface)
-      @attrs_defined_in_code[name].excluded = true
+      @attrs_defined_in_code[name].exclude!
     end
   end
 
@@ -126,7 +141,7 @@ class Interface
 
     defs = {}
 
-    attrs.select { |k,v| !v.excluded }.each do |attrname,attr|
+    attrs.select { |k,v| v.readable || v.writable }.each do |attrname,attr|
       defs[attrname] = attr.definition
     end
 
@@ -155,6 +170,144 @@ class Interface
       :class_actions => class_actions,
       :class_perms => class_perms,
     }
+
+    res
+  end
+
+  def output(object, opts = {})
+    opts[:format] ||= :json
+
+    case opts[:format]
+    when :json
+      ActiveSupport::JSON.encode(ar_serializable_hash(object, opts))
+    when :yaml
+      YAML.dump(ar_serializable_hash(object, opts))
+#    when :xml
+#      (view.process(object, opts))
+    else
+      raise "Unsupported format #{format}"
+    end
+  end
+
+  def ar_serializable_hash(obj, opts = {})
+
+    view = opts[:view] || View.new(:default)
+    with_perms = (view.with_perms || opts[:with_perms] == true) && opts[:with_perms] != false
+
+    if view.per_class[obj.class.to_s]
+      if view.extjs_polymorphic_workaround
+        clname = obj.class.to_s.underscore.gsub(/\//, '_')
+
+        return {
+          clname.to_sym => ar_serializable_hash(obj, opts.merge(:view => view.per_class[obj.class.to_s])),
+          (clname + '_id').to_sym => obj.id,
+          (clname + '_type').to_sym => obj.class.to_s,
+        }
+      else
+        return ar_serializable_hash(obj, opts.merge(:view => view.per_class[obj.class.to_s]))
+      end
+    end
+
+    values = {}
+    perms = {}
+    attrs.select { |k,v| view.attr_visible?(k) && v.readable }.each do |attrname,attr|
+      attrname = attrname.to_sym
+      viewdef = view.definition[attrname]
+      viewinc = viewdef ? viewdef.include : false
+      subview = viewdef ? viewdef.subview : nil
+
+      case attr
+      when Model::Interface::Attribute::Structure
+        val = obj.send(attrname)
+        values[attrname] = (val.respond_to?(:ar_serializable_hash) ? val.ar_serializable_hash(@name, opts) : nil) ||
+                           (val.respond_to?(:to_hash) ? val.to_hash : nil) ||
+                           (val.respond_to?(:to_s) ? val.to_s : nil)
+      when Model::Interface::Attribute::Reference
+        if viewinc
+          val = obj.send(attrname)
+          values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
+        end
+      when Model::Interface::Attribute::EmbeddedModel
+        val = obj.send(attrname)
+        values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
+      when Model::Interface::Attribute::UniformModelsCollection
+        vals = obj.send(attrname)
+        if viewdef
+          vals = vals.limit(viewdef.limit) if viewdef.limit
+          vals = vals.order(viewdef.order) if viewdef.order
+        end
+        values[attrname] = vals.map { |x| x.ar_serializable_hash(@name, opts.merge(:view => subview)) }
+      when Model::Interface::Attribute::UniformReferencesCollection
+        if viewinc
+          vals = obj.send(attrname)
+          if viewdef
+            vals = vals.limit(viewdef.limit) if viewdef.limit
+            vals = vals.order(viewdef.order) if viewdef.order
+          end
+          values[attrname] = vals.map { |x| x.ar_serializable_hash(@name, opts.merge(:view => subview)) }
+        end
+      when Model::Interface::Attribute::EmbeddedPolymorphicModel
+        val = obj.send(attrname)
+        values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
+      when Model::Interface::Attribute::PolymorphicReference
+        if viewinc
+          val = obj.send(attrname)
+          values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
+        else
+          ref = obj.association(attrname).reflection
+          values[attrname] = { :id => obj.send(ref.foreign_key), :_type => obj.send(ref.foreign_type) }
+        end
+      when Model::Interface::Attribute::PolymorphicModelsCollection
+      when Model::Interface::Attribute::PolymorphicReferencesCollection
+      else
+        val = obj.send(attrname)
+
+        if !val.nil?
+          case attr.type
+          when :string
+            val = val.to_s if val.respond_to?(:to_s)
+          when :integer
+            val = val.to_i if val.respond_to?(:to_i)
+          when :array
+            val = val.to_a if val.respond_to?(:to_a)
+          when :hash
+            val = val.to_h if val.respond_to?(:to_h)
+          end
+
+#          val = val.to_ar if val.respond_to?(:to_ar)
+        end
+
+        values[attrname] = val
+      end
+
+      if with_perms
+        perms[attrname] ||= {}
+        perms[attrname][:read] = true
+        perms[attrname][:write] = true
+      end
+    end
+
+    view.definition.each do |attrname,attr|
+      if attr.source
+        values[attrname] = obj.instance_exec(&attr.source)
+      end
+    end
+
+    res = values
+
+    if view.with_type
+      res[:_type] = obj.class.to_s
+    end
+
+    if with_perms
+      res[:_object_perms] = {
+        :read => true,
+        :write => true,
+        :delete => true
+      }
+
+      res[:_attr_perms] = perms
+    end
 
     res
   end

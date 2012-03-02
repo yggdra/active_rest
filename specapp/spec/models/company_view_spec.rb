@@ -13,12 +13,13 @@ describe View do
     v = ActiveRest::View.new(:show) do
     end
 
-    v.process(@c1).should ==
+    @c1.ar_serializable_hash(:rest, :view => v).should ==
      {
       :id => 1,
       :created_at => @c1.created_at,
       :updated_at => @c1.updated_at,
       :name => 'big_corp',
+      :not_writable_attribute => 34567,
       :city => 'NY',
       :street => 'Fifth Avenue',
       :zip => '28021',
@@ -26,7 +27,11 @@ describe View do
       :registration_date => @c1.registration_date,
       :group_id => nil,
       :polyref_1 => { :id => nil, :_type => nil },
+      :polyref_1_id => nil,
+      :polyref_1_type => nil,
       :polyref_2 => { :id => nil, :_type => nil },
+      :polyref_2_id => nil,
+      :polyref_2_type => nil,
       :phones => [],
       :location => nil,
       :full_address => { :address => nil, :city => 'NY', :zip => 'NY' },
@@ -34,35 +39,33 @@ describe View do
       :object_2 => nil,
       :virtual => 'This is the virtual value',
       :_type => 'Company',
-      :_object_perms => { :read => true, :write => true, :delete => true },
-      :_attr_perms =>
-       {
-        :id => {:read => true, :write => true},
-        :created_at => {:read => true, :write => true},
-        :updated_at => {:read => true, :write => true},
-        :name => {:read => true, :write => true},
-        :city => {:read => true, :write => true},
-        :street => {:read => true, :write => true},
-        :zip => {:read => true, :write => true},
-        :is_active => {:read => true, :write => true},
-        :registration_date => {:read => true, :write => true},
-        :group_id => {:read => true, :write => true},
-        :object_1 => {:read => true, :write => true},
-        :object_2 => {:read => true, :write => true},
-        :polyref_1 => {:read => true, :write => true},
-        :polyref_2 => {:read => true, :write => true},
-        :users => {:read => true, :write => true},
-        :contacts => {:read => true, :write => true},
-        :group => {:read => true, :write => true},
-        :phones => {:read => true, :write => true},
-        :location => {:read => true, :write => true},
-        :full_address => {:read => true, :write => true},
-        :object_1 => {:read => true, :write => true},
-        :object_2 => {:read => true, :write => true},
-        :polyref_1 => {:read => true, :write => true},
-        :polyref_2 => {:read => true, :write => true},
-        :virtual => {:read => true, :write => true}
-       }
+#      :_object_perms => { :read => true, :write => true, :delete => true },
+#      :_attr_perms =>
+#       {
+#        :id => {:read => true, :write => true},
+#        :created_at => {:read => true, :write => true},
+#        :updated_at => {:read => true, :write => true},
+#        :name => {:read => true, :write => true},
+#        :city => {:read => true, :write => true},
+#        :street => {:read => true, :write => true},
+#        :zip => {:read => true, :write => true},
+#        :is_active => {:read => true, :write => true},
+#        :registration_date => {:read => true, :write => true},
+#        :group_id => {:read => true, :write => true},
+#        :object_1 => {:read => true, :write => true},
+#        :object_2 => {:read => true, :write => true},
+#        :polyref_1 => {:read => true, :write => true},
+#        :polyref_2 => {:read => true, :write => true},
+#        :users => {:read => true, :write => true},
+#        :contacts => {:read => true, :write => true},
+#        :group => {:read => true, :write => true},
+#        :phones => {:read => true, :write => true},
+#        :location => {:read => true, :write => true},
+#        :full_address => {:read => true, :write => true},
+#        :object_1 => {:read => true, :write => true},
+#        :object_2 => {:read => true, :write => true},
+#        :virtual => {:read => true, :write => true}
+#       }
      }
   end
 
@@ -81,7 +84,7 @@ describe View, 'empty!' do
       empty!
     end
 
-    v.process(@c1).should ==
+    @c1.ar_serializable_hash(:rest, :view => v).should ==
      {
      }
   end
@@ -100,7 +103,7 @@ describe View, 'attribute' do
       attribute(:name) { show! }
     end
 
-    v.process(@c1).should ==
+    @c1.ar_serializable_hash(:rest, :view => v).should ==
      {
       :name => 'big_corp',
      }
@@ -115,7 +118,7 @@ describe View, 'attribute' do
       end
     end
 
-    v.process(@c).should ==
+    @c.ar_serializable_hash(:rest, :view => v).should ==
      {
       :location => { },
      }
@@ -130,7 +133,7 @@ describe View, 'attribute' do
       end
     end
 
-    v.process(@c).should ==
+    @c.ar_serializable_hash(:rest, :view => v).should ==
      {
       :phones => [{  },
                   {  }],
@@ -142,19 +145,19 @@ describe View, 'attribute' do
       attribute(:group) { include! }
     end
 
-    v.process(@c).should include(
+    @c.ar_serializable_hash(:rest, :view => v).should include(
      {
       :group =>
        {
         :id=>1,
         :name=>"MegaHolding",
         :_type=>"Group",
-        :_object_perms=>{:read=>true, :write=>true, :delete=>true},
-        :_attr_perms=>
-         {:id=>{:read=>true, :write=>true},
-          :name=>{:read=>true, :write=>true},
-          :companies=>{:read=>true, :write=>true}}
-
+#        :_object_perms=>{:read=>true, :write=>true, :delete=>true},
+#        :_attr_perms=> {
+#          :id=>{:read=>true, :write=>true},
+#          :name=>{:read=>true, :write=>true},
+#          :companies=>{:read=>true, :write=>true}
+#        }
        }
      })
   end
@@ -165,16 +168,16 @@ describe View, 'attribute' do
       attribute(:group) { include! }
     end
 
-    v.process(@c).should ==
+    @c.ar_serializable_hash(:rest, :view => v).should ==
      {
       :group =>
        {
         :id => 1, :name => 'MegaHolding',
         :_type=> 'Group',
-        :_object_perms => { :read => true, :write => true, :delete => true },
-        :_attr_perms => { :id => { :read => true, :write => true },
-                          :name => { :read => true, :write => true },
-                          :companies => { :read => true, :write => true }}
+#        :_object_perms => { :read => true, :write => true, :delete => true },
+#        :_attr_perms => { :id => { :read => true, :write => true },
+#                          :name => { :read => true, :write => true },
+#                          :companies => { :read => true, :write => true }}
        }
      }
   end
@@ -188,7 +191,7 @@ describe View, 'attribute' do
       end
     end
 
-    v.process(@c).should ==
+    @c.ar_serializable_hash(:rest, :view => v).should ==
      {
       :group => {  },
      }
@@ -207,7 +210,7 @@ describe View, 'attribute' do
       end
     end
 
-    v.process(@c).should ==
+    @c.ar_serializable_hash(:rest, :view => v).should ==
      {
       :group => { :id => 1 },
      }
@@ -222,7 +225,7 @@ describe View, 'attribute' do
       end
     end
 
-    v.process(@c).should ==
+    @c.ar_serializable_hash(:rest, :view => v).should ==
      {
       :users => [{  }, {  }],
      }
@@ -241,7 +244,7 @@ describe View, 'attribute' do
       end
     end
 
-    v.process(@c).should ==
+    @c.ar_serializable_hash(:rest, :view => v).should ==
      {
       :users => [{ :id => 1 },
                  { :id => 2 }],
@@ -260,7 +263,7 @@ describe View, 'attribute' do
         end
       end
 
-      v.process(@c1).should ==
+      @c1.ar_serializable_hash(:rest, :view => v).should ==
        {
         :virtual_attribute => 'virtual_value'
        }
@@ -276,7 +279,7 @@ describe View, 'attribute' do
         end
       end
 
-      v.process(@c1).should ==
+      @c1.ar_serializable_hash(:rest, :view => v).should ==
        {
         :virtual_attribute => 'BIG_CORP'
        }
@@ -297,7 +300,7 @@ describe View, 'attribute' do
         end
       end
 
-      v.process(@c).should ==
+      @c.ar_serializable_hash(:rest, :view => v).should ==
        {
         :location => { :virtual_attribute => 'virtual_value' },
        }
@@ -318,7 +321,7 @@ describe View, 'attribute' do
         end
       end
 
-      v.process(@c).should ==
+      @c.ar_serializable_hash(:rest, :view => v).should ==
        {
         :group => { :virtual_attribute => 'virtual_value' },
        }
@@ -339,7 +342,7 @@ describe View, 'attribute' do
         end
       end
 
-      v.process(@c).should ==
+      @c.ar_serializable_hash(:rest, :view => v).should ==
        {
         :phones => [{ :virtual_attribute => 'virtual_value' },
                     { :virtual_attribute => 'virtual_value' }],
@@ -361,7 +364,7 @@ describe View, 'attribute' do
         end
       end
 
-      v.process(@c).should ==
+      @c.ar_serializable_hash(:rest, :view => v).should ==
        {
         :users => [{ :virtual_attribute => 'virtual_value' },
                    { :virtual_attribute => 'virtual_value' }],
@@ -382,7 +385,7 @@ describe View, 'with_perms!' do
       with_perms!
     end
 
-    v.process(@c).should ==
+    @c.ar_serializable_hash(:rest, :view => v).should ==
      {
       :_object_perms => { :read => true, :write => true, :delete => true},
       :_attr_perms => {}

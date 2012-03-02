@@ -77,7 +77,33 @@ describe CompaniesController do
       'object_actions' => { 'read' => {}, 'write' => {}, 'delete' => {} },
       'class_actions' => { 'create' => {} },
       'class_perms' => { 'create' => true }
-     })
+    })
+  end
+
+  it 'hides excluded attributes' do
+    get 'schema', :format => :json
+    response.should be_success
+
+    b = ActiveSupport::JSON.decode(response.body)
+
+    b.should deep_include({
+      'type' => 'Company',
+      'attrs' => {
+        'id' => { 'type' => 'integer' },
+        'created_at' => { 'type' => 'timestamp' },
+      }
+    })
+  end
+
+  it 'prevents updating non writable attributes' do
+    request.env['CONTENT_TYPE'] = 'application/json'
+    request.env['RAW_POST_DATA'] = {
+           :not_writable_attribute => 0,
+         }.to_json
+
+    put :update, :id => @c2.id, :format => :json
+
+    response.status.should == 400
   end
 
   it 'responds to index' do
@@ -95,7 +121,7 @@ describe CompaniesController do
   end
 
   it 'retrieves a record by its ID' do
-    get :show, :id => @c2.id,  :format => 'json'
+    get :show, :id => @c2.id,  :format => :json
     response.should be_success
 
     b = ActiveSupport::JSON.decode(response.body)
@@ -147,7 +173,7 @@ describe CompaniesController do
            :zip => '00000'
          }.to_json
 
-    post :create, :format => 'json'
+    post :create, :format => :json
 
     response.status.should == 201
   end
@@ -156,7 +182,7 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :unknown_field => 'oh oh' }.to_json
 
-    post :create, :format => 'json'
+    post :create, :format => :json
 
     response.status.should == 400
   end
@@ -165,7 +191,7 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :city => 'no where' }.to_json
 
-    post :create, :format => 'json'
+    post :create, :format => :json
 
     response.status.should == 422
 #    response.should match("<company[name]>can't be blank</company[name]>")
@@ -175,7 +201,7 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :name => @c2.name }.to_json
 
-    post :create, :format => 'json'
+    post :create, :format => :json
 
     response.status.should == 422
 #    response.should match(" <company[name]>has already been taken</company[name]>")
@@ -185,7 +211,7 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :name => 'New Compuglobal TM' }.to_json
 
-    put :update, :id => @c2.id, :format => 'json'
+    put :update, :id => @c2.id, :format => :json
 
     # Both are valid however Rails limits to 204
     [ 200, 204 ].should include(response.status)
@@ -195,7 +221,7 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :unknown_field => 'oh oh' }.to_json
 
-    put :update, :id => @c2.id, :format => 'json'
+    put :update, :id => @c2.id, :format => :json
 
     response.status.should == 400
   end
@@ -207,7 +233,7 @@ describe CompaniesController do
           :city => 'new location'
         }.to_json
 
-    put :update, :id => @c2.id, :format => 'json'
+    put :update, :id => @c2.id, :format => :json
 
     response.status.should == 422
 #    response.should match("<company[name]>can't be blank</company[name]>")
@@ -215,12 +241,12 @@ describe CompaniesController do
 
   it 'deletes a record' do
     id = @c2.id
-    delete :destroy, :id => id, :format => 'json'
+    delete :destroy, :id => id, :format => :json
     response.should be_success
 
 # Workaound for Rails/RSpec bug?!?
     lambda {
-      get :show, :id => id, :format => 'json'
+      get :show, :id => id, :format => :json
     }.should raise_error(ActiveRecord::RecordNotFound)
 
 #    response.should_not be_success
@@ -231,7 +257,7 @@ describe CompaniesController do
 
 # Workaound for Rails/RSpec bug?!?
     lambda {
-      delete :destroy, :id => 100, :format => 'json'
+      delete :destroy, :id => 100, :format => :json
     }.should raise_error(ActiveRecord::RecordNotFound)
 
 #    response.should_not be_success
@@ -265,7 +291,7 @@ describe CompaniesController do
     response.status.should == 200
 
     # check the full list
-    get :index,  :format => 'json'
+    get :index,  :format => :json
 #    response.should_not match('<name>Brand new PRO company</name>')
   end
 
@@ -274,20 +300,12 @@ describe CompaniesController do
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :name => 'Renamed to Compuglobal TM' }.to_json
 
-    put :update, :id => @c2.id, :format => 'json'
+    put :update, :id => @c2.id, :format => :json
 
     response.status.should == 200
 
     # try to read - the value must be the previous
-    get :show, :id => @c2.id, :format => 'json'
+    get :show, :id => @c2.id, :format => :json
 #    response.should match('<name>' + @c2.name + '</name>')
-  end
-
-  it 'hides non-readable attributes' do
-    pending
-  end
-
-  it 'prevents updating non writable attributes' do
-    pending
   end
 end

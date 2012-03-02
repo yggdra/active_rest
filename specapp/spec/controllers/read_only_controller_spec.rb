@@ -14,61 +14,59 @@ describe ReadOnlyCompaniesController do
   end
 
   it 'allows GET / verb' do
-    pending
-    get :index, :format => 'xml'
+    get :index, :format => :json
     response.should be_success
 
-    response.body.should be_xml_with {
-      companies(:type => :array) {
-        company {
-          id_ 1, :type => :integer
-          name_ 'big_corp'
-        }
-        company {
-          id_ 2, :type => :integer
-          name_ 'compuglobal'
-        }
-        company {
-          id_ 3, :type => :integer
-          name_ 'newerOS'
-        }
-      }
-    }
+    ActiveSupport::JSON.decode(response.body).should deep_include([
+      { 'id' => 1, 'name' => 'big_corp' },
+      { 'id' => 2, 'name' => 'compuglobal' },
+      { 'id' => 3, 'name' => 'newerOS' },
+    ])
   end
 
   it 'allows GET verb with an ID' do
-    pending
-    get :show, :id => @c2.id,  :format => 'xml'
+    get :show, :id => @c2.id,  :format => :json
     response.should be_success
 
-    response.body.should be_xml_with {
-      company {
-        city 'Springfield'
-        id_ 2, :type => :integer
-        name_ 'compuglobal'
-        street 'Bart\'s road'
-        zip '513'
-      }
-    }
+    ActiveSupport::JSON.decode(response.body).should deep_include({
+      'city' => 'Springfield',
+      'id' => 2,
+      'name' => 'compuglobal',
+      'street' => 'Bart\'s road',
+      'zip' => '513',
+    })
   end
 
   it 'disallows POST verb' do
-    pending
-    post :create, :format => 'xml',
-         :company => { :name => 'Zorro' }
+    request.env['CONTENT_TYPE'] = 'application/json'
+    request.env['RAW_POST_DATA'] = {
+           :name => 'New Company',
+           :city => 'no where',
+           :street => 'Crazy Avenue, 0',
+           :zip => '00000'
+         }.to_json
+
+    post :create, :format => :json
+
     response.status.should == 405
   end
 
   it 'disallows PUT verb' do
-    pending
-    post :update, :id => @c2.id, :format => 'xml',
-         :company => { :name => 'Microsort' }
+    request.env['CONTENT_TYPE'] = 'application/json'
+    request.env['RAW_POST_DATA'] = {
+           :name => 'New Company',
+           :city => 'no where',
+           :street => 'Crazy Avenue, 0',
+           :zip => '00000'
+         }.to_json
+
+    put :update, :id => @c2.id, :format => :json
+
     response.status.should == 405
   end
 
   it 'disallows DELETE verb' do
-    pending
-    delete :destroy, :id => @c2.id, :format => 'xml'
+    delete :destroy, :id => @c2.id, :format => :json
     response.status.should == 405
   end
 end

@@ -9,6 +9,9 @@ FactoryGirl.define do
     zip '28021'
     is_active true
     registration_date '2001-01-01'
+    excluded_attribute 12345
+    not_readable_attribute 87654
+    not_writable_attribute 34567
   end
 
   factory :company_2, :class => 'Company' do
@@ -19,6 +22,9 @@ FactoryGirl.define do
     zip '513'
     is_active false
     registration_date '2012-12-13'
+    excluded_attribute 23456
+    not_readable_attribute 98765
+    not_writable_attribute 45678
   end
 
   factory :company_3, :class => 'Company' do
@@ -29,6 +35,9 @@ FactoryGirl.define do
     zip '01001'
     is_active true
     registration_date '1900-01-01'
+    excluded_attribute 33333
+    not_readable_attribute 44444
+    not_writable_attribute 55555
   end
 
   factory :group, :class => 'Group' do
@@ -67,6 +76,9 @@ FactoryGirl.define do
     street 'Via Mezzera 29/A'
     zip '20030'
     is_active true
+    excluded_attribute 121212
+    not_readable_attribute 232323
+    not_writable_attribute 343434
 
     users { [association(:user, :name => 'Paolino Paperino'),
              association(:user, :name => 'Zio Paperone')] }

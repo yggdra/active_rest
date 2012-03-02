@@ -9,7 +9,7 @@ class Company < ActiveRecord::Base
       @zip = zip
     end
 
-    def export_as_hash(opts = {})
+    def ar_serializable_hash(ifname, opts = {})
       { :address => @address, :city => @city, :zip => @zip }
     end
 
@@ -86,6 +86,18 @@ class Company < ActiveRecord::Base
     attribute :virtual do
       human_name 'Virtual Attribute'
       type :string
+    end
+
+    attribute :excluded_attribute do
+      exclude!
+    end
+
+    attribute :not_readable_attribute do
+      not_readable!
+    end
+
+    attribute :not_writable_attribute do
+      not_writable!
     end
   end
 

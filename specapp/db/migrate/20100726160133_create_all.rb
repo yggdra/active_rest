@@ -14,6 +14,9 @@ class CreateAll < ActiveRecord::Migration
       t.references :object_2, :polymorphic => true
       t.references :polyref_1, :polymorphic => true
       t.references :polyref_2, :polymorphic => true
+      t.integer :excluded_attribute
+      t.integer :not_readable_attribute
+      t.integer :not_writable_attribute
     end
 
     create_table :company_bars, :force => true do |t|
