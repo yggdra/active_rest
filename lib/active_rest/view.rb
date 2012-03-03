@@ -22,7 +22,7 @@ class View
   attr_accessor :per_class
   attr_accessor :extjs_polymorphic_workaround
 
-  def initialize(name, &block)
+  def initialize(name = :anonymous, &block)
     @name = name
 
     @definition = {}
@@ -87,7 +87,7 @@ class View
     attr_accessor :name
     attr_accessor :display
     attr_accessor :include
-    attr_accessor :source
+    attr_accessor :virtual_src
 
     attr_accessor :subview
 
@@ -139,7 +139,7 @@ class View
 
     def virtual(type, &block)
       @display = :show
-      @source = block
+      @virtual_src = block
     end
   end
 end

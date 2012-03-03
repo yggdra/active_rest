@@ -365,7 +365,9 @@ describe Company, 'schema' do
       end
     end
 
-
+    describe 'excercise virtual relations' do
+      pending
+    end
   end
 end
 

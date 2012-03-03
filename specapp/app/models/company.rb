@@ -76,16 +76,18 @@ class Company < ActiveRecord::Base
 
   interface :rest do
     attribute :name do
-      human_name 'Nome'
+      self.human_name = 'Nome'
     end
+
+    # Make a test to see if a virtual attribute can be create without block
+    attribute :city
 
     attribute :phones do
-      human_name 'Phone numbers'
+      self.human_name = 'Phone numbers'
     end
 
-    attribute :virtual do
-      human_name 'Virtual Attribute'
-      type :string
+    attribute :virtual, 'String' do
+      self.human_name = 'Virtual Attribute'
     end
 
     attribute :excluded_attribute do

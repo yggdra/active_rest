@@ -288,8 +288,9 @@ class Interface
     end
 
     view.definition.each do |attrname,attr|
-      if attr.source
-        values[attrname] = obj.instance_exec(&attr.source)
+      if attr.virtual_src
+        values[attrname] = obj.instance_exec(&attr.virtual_src)
+        values[attrname] = values[attrname].ar_serializable_hash(self.name) if values[attrname].respond_to? :ar_serializable_hash
       end
     end
 
@@ -439,11 +440,20 @@ class Interface
       @interface = interface
     end
 
-    def attribute(name, &block)
+    def attribute(name, type = nil, &block)
       a = @interface.attrs_if_defined || @interface.attrs_defined_in_code
 
-      a[name] ||= Attribute.new(name, @interface)
-      Attribute::DSL.new(@interface, a, name).instance_eval(&block)
+      if type
+        begin
+          a[name] ||= "ActiveRest::Model::Interface::Attribute::#{type}".constantize.new(name, @interface)
+        rescue NameError
+          a[name] ||= Attribute.new(name, @interface, :type => type.split('::').last.underscore.to_sym)
+        end
+      else
+        a[name] ||= Attribute.new(name, @interface)
+      end
+
+      a[name].instance_exec(&block) if block
     end
 
     def allow_polymorphic_creation

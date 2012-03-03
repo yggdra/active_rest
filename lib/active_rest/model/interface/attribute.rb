@@ -79,49 +79,16 @@ class Interface
       @writable = false
     end
 
-    class DSL
-      def initialize(interface, attrs, name)
-        @interface = interface
-        @attrs = attrs
-        @name = name
-      end
+    def ignore!
+      @ignored = true
+    end
 
-      def human_name(name)
-        @attrs[@name].human_name = name
-      end
+    def not_writable!
+      @writable = false
+    end
 
-      def meta(meta)
-        @attrs[@name].meta ||= {}
-        @attrs[@name].meta.merge!(meta)
-      end
-
-      def type(val)
-        @attrs[@name].type = val
-      end
-
-      def notnull(val)
-        @attrs[@name].notnull = val
-      end
-
-      def default(val)
-        @attrs[@name].default = val
-      end
-
-      def exclude!
-        @attrs[@name].exclude!
-      end
-
-      def ignore!
-        @attrs[@name].ignored = true
-      end
-
-      def not_writable!
-        @attrs[@name].writable = false
-      end
-
-      def not_readable!
-        @attrs[@name].readable = false
-      end
+    def not_readable!
+      @readable = false
     end
 
     #
