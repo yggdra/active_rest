@@ -23,6 +23,7 @@ class Interface
   attr_reader :model
   attr_reader :attrs_defined_in_code
   attr_accessor :allow_polymorphic_creation
+  attr_reader :views
 
   def initialize(name, model, opts = {})
     @name = name

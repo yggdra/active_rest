@@ -51,54 +51,6 @@ module Controller
   attr_accessor :target
   attr_accessor :targets
 
-  module ClassMethods
-
-    def rest_controller_without_model
-      self.model = nil
-      self.rest_options = {}
-      self.rest_xact_handler = :rest_default_transaction_handler
-      self.rest_views = {}
-      self.rest_filters = {}
-    end
-
-    def rest_controller_for(model, options = {})
-      self.model = model
-      self.rest_options = options
-      self.rest_xact_handler = :rest_default_transaction_handler
-      self.rest_views = {}
-      self.rest_filters = {}
-    end
-
-    def rest_transaction_handler(method)
-      self.rest_xact_handler = method
-    end
-
-    def view(name, &block)
-      self.rest_views[name] ||= View.new(name)
-      self.rest_views[name].instance_exec(&block)
-      self.rest_views[name]
-    end
-
-    def filter(name, val = nil, &block)
-      self.rest_filters[name] = val || block
-    end
-
-    def read_only!
-      self.rest_read_only = true
-    end
-
-    private
-
-    def map_column_type(type)
-      case type
-      when :datetime
-        :timestamp
-      else
-        type
-      end
-    end
-  end
-
   def self.included(base)
     base.extend(ClassMethods)
 
@@ -111,7 +63,15 @@ module Controller
       class_attribute :rest_read_only
     end
 
+    base.rest_views = {}
+    base.model = nil
+    base.rest_options = {}
+    base.rest_filters = {}
+
     base.class_eval do
+      class << self
+        alias_method_chain :inherited, :ar
+      end
 
       rescue_from ActiveRest::Exception, :with => :rest_ar_exception_rescue_action
 
@@ -169,6 +129,55 @@ module Controller
 #    end
   end
 
+  module ClassMethods
+
+    def inherited_with_ar(child)
+      inherited_without_ar(child)
+
+      child.rest_views = {}
+      child.rest_filters = {}
+    end
+
+    def rest_controller_without_model
+      self.rest_xact_handler = :rest_default_transaction_handler
+    end
+
+    def rest_controller_for(model, options = {})
+      self.model = model
+      self.rest_options = options
+      self.rest_xact_handler = :rest_default_transaction_handler
+    end
+
+    def rest_transaction_handler(method)
+      self.rest_xact_handler = method
+    end
+
+    def view(name, &block)
+      self.rest_views[name] ||= View.new(name)
+      self.rest_views[name].instance_exec(&block)
+      self.rest_views[name]
+    end
+
+    def filter(name, val = nil, &block)
+      self.rest_filters[name] = val || block
+    end
+
+    def read_only!
+      self.rest_read_only = true
+    end
+
+    private
+
+    def map_column_type(type)
+      case type
+      when :datetime
+        :timestamp
+      else
+        type
+      end
+    end
+  end
+
   # Select the proper view based on URI parameters and action name.
   #
   # If no view is specified in URI parameter 'view' the action name is used.
@@ -177,9 +186,15 @@ module Controller
   #
   def rest_view
     view = nil
-    view = self.class.rest_views[params[:view].to_sym] if params[:view]
-    view = self.class.rest_views[action_name.to_sym] if !view
-    view = View.new(:default) if !view
+
+    if params[:view]
+      view = self.class.rest_views[params[:view].to_sym] ||
+             self.class.model.interfaces[:rest].views[params[:view].to_sym]
+    end
+
+    view ||= self.class.rest_views[action_name.to_sym] ||
+             self.class.model.interfaces[:rest].views[action_name.to_sym] ||
+             View.new(:anonymous)
     view
   end
 
