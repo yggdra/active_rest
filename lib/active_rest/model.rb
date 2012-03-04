@@ -46,7 +46,7 @@ module Model
 
     def interface(name, &block)
       self.interfaces[name] ||= Interface.new(name, self)
-      Interface::DSL.new(self.interfaces[name]).instance_eval(&block)
+      self.interfaces[name].instance_exec(&block)
     end
 
     def nested_attribute(attrname, rel = self.scoped, table = rel.table)

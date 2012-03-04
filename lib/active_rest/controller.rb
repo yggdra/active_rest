@@ -75,7 +75,7 @@ module Controller
 
     def view(name, &block)
       self.rest_views[name] ||= View.new(name)
-      self.rest_views[name].instance_eval(&block)
+      self.rest_views[name].instance_exec(&block)
       self.rest_views[name]
     end
 

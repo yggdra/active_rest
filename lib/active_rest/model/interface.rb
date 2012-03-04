@@ -30,6 +30,7 @@ class Interface
     @opts = opts
     @attrs = nil
     @attrs_defined_in_code = {}
+    @views = {}
 
     @allow_polymorphic_creation = false
   end
@@ -59,6 +60,27 @@ class Interface
     @attrs
   end
 
+  def attribute(name, type = nil, &block)
+    a = attrs_if_defined || attrs_defined_in_code
+
+    if type
+      begin
+        a[name] ||= "ActiveRest::Model::Interface::Attribute::#{type}".constantize.new(name, self)
+      rescue NameError
+        a[name] ||= Attribute.new(name, self, :type => type.split('::').last.underscore.to_sym)
+      end
+    else
+      a[name] ||= Attribute.new(name, self)
+    end
+
+    a[name].instance_exec(&block) if block
+  end
+
+  def view(name, &block)
+    @views[name] ||= View.new(name)
+    @views[name].instance_exec(&block)
+    @views[name]
+  end
 
   def mark_attr_to_be_excluded(name)
     if @attrs[name]
@@ -191,7 +213,15 @@ class Interface
 
   def ar_serializable_hash(obj, opts = {})
 
-    view = opts[:view] || View.new(:default)
+    view = opts[:view]
+
+    if view.is_a?(Symbol)
+      view = @views[view]
+      raise ViewNotFound, "View #{opts[:view]} not found" if !view
+    end
+
+    view ||= View.new(:anonymous)
+
     with_perms = (view.with_perms || opts[:with_perms] == true) && opts[:with_perms] != false
 
     if view.per_class[obj.class.to_s]
@@ -431,33 +461,6 @@ class Interface
       :timestamp
     else
       type
-    end
-  end
-
-
-  class DSL
-    def initialize(interface)
-      @interface = interface
-    end
-
-    def attribute(name, type = nil, &block)
-      a = @interface.attrs_if_defined || @interface.attrs_defined_in_code
-
-      if type
-        begin
-          a[name] ||= "ActiveRest::Model::Interface::Attribute::#{type}".constantize.new(name, @interface)
-        rescue NameError
-          a[name] ||= Attribute.new(name, @interface, :type => type.split('::').last.underscore.to_sym)
-        end
-      else
-        a[name] ||= Attribute.new(name, @interface)
-      end
-
-      a[name].instance_exec(&block) if block
-    end
-
-    def allow_polymorphic_creation
-      @interface.allow_polymorphic_creation = true
     end
   end
 
