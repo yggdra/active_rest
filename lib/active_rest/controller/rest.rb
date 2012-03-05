@@ -74,7 +74,7 @@ module Controller
                       ActiveSupport::Inflector.underscore(model.name)).tr('/', '_')
       end
 
-      respond_with(@targets.all,
+      respond_with(@targets.kind_of?(ActiveRecord::Relation) ? @targets.all : @targets,
                    :total => @count,
                    :root => root_name) do |format|
         yield(format) if block_given?
