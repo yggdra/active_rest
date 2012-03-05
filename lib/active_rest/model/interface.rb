@@ -212,6 +212,8 @@ class Interface
     end
   end
 
+  class ViewNotFound < StandardError ; end
+
   def ar_serializable_hash(obj, opts = {})
 
     view = opts[:view]
