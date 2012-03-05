@@ -3,7 +3,8 @@ class TransactionCompaniesController < ApplicationController
 
   layout false
   rest_controller_for Company
-  rest_transaction_handler :xact_handler
+
+  self.rest_transaction_handler = :xact_handler
 
   def xact_handler
     model.transaction do

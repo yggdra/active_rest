@@ -57,16 +57,17 @@ module Controller
     base.instance_eval do
       class_attribute :model
       class_attribute :rest_options
-      class_attribute :rest_xact_handler
       class_attribute :rest_views
       class_attribute :rest_filters
       class_attribute :rest_read_only
+      class_attribute :rest_transaction_handler
     end
 
     base.rest_views = {}
     base.model = nil
     base.rest_options = {}
     base.rest_filters = {}
+    base.rest_transaction_handler = :rest_default_transaction_handler
 
     base.class_eval do
       class << self
@@ -139,17 +140,11 @@ module Controller
     end
 
     def rest_controller_without_model
-      self.rest_xact_handler = :rest_default_transaction_handler
     end
 
     def rest_controller_for(model, options = {})
       self.model = model
       self.rest_options = options
-      self.rest_xact_handler = :rest_default_transaction_handler
-    end
-
-    def rest_transaction_handler(method)
-      self.rest_xact_handler = method
     end
 
     def view(name, &block)
@@ -200,10 +195,6 @@ module Controller
 
   def model
     @model || @model = self.class.model
-  end
-
-  def rest_xact_handler
-    @rest_xact_handler || @rest_xact_handler = self.class.rest_xact_handler
   end
 
   protected

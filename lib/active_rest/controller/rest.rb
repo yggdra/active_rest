@@ -102,7 +102,7 @@ module Controller
   # if parameter '_only_validation' is present only validation actions will be ran
     def create
       begin
-        send(rest_xact_handler) do
+        send(rest_transaction_handler) do
           before_create if self.respond_to? :before_create
           @target ||= model.new
 
@@ -151,7 +151,7 @@ module Controller
     # if parameter '_only_validation' is present only validation actions will be ran
     def update
       begin
-        send(rest_xact_handler) do
+        send(rest_transaction_handler) do
           before_update if self.respond_to? :before_update
 
           model.interfaces[:rest].apply_update_attributes(@target, @request_resource)
@@ -191,7 +191,7 @@ module Controller
 
     # DELETE /target/1
     def destroy
-      send(rest_xact_handler) do
+      send(rest_transaction_handler) do
         before_destroy if self.respond_to? :before_destroy
         @target.destroy
         after_destroy if self.respond_to? :after_destroy
