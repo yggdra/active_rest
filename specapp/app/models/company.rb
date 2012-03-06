@@ -1,16 +1,20 @@
 class Company < ActiveRecord::Base
 
   class FullAddress
+    include ActiveRest::Model
+
     attr_reader :address, :city, :zip
+
+    interface :rest do
+      attribute(:address)
+      attribute(:city)
+      attribute(:zip)
+    end
 
     def initialize(address, city, zip)
       @address = address
       @city = city
       @zip = zip
-    end
-
-    def ar_serializable_hash(ifname, opts = {})
-      { :address => @address, :city => @city, :zip => @zip }
     end
 
     def to_s

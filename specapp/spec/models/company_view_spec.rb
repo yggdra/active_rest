@@ -34,7 +34,12 @@ describe View do
       :polyref_2_type => nil,
       :phones => [],
       :location => nil,
-      :full_address => { :address => nil, :city => 'NY', :zip => 'NY' },
+      :full_address => {
+        :address => nil,
+        :city => 'NY',
+        :zip => 'NY',
+        :_type=> 'Company::FullAddress'
+      },
       :object_1 => nil,
       :object_2 => nil,
       :virtual => 'This is the virtual value',

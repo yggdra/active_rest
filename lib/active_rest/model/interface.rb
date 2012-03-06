@@ -21,24 +21,34 @@ module Model
 class Interface
   attr_accessor :name
   attr_reader :model
-  attr_reader :attrs_defined_in_code
   attr_accessor :allow_polymorphic_creation
   attr_reader :views
+  attr_accessor :activerecord_autoinit
+
+  attr_reader :delayed_attrs
 
   def initialize(name, model, opts = {})
     @name = name
-    @model = model
     @opts = opts
-    @attrs = nil
-    @attrs_defined_in_code = {}
+    @delayed_attrs = {}
     @views = {}
+    @activerecord_autoinit = false
 
     @allow_polymorphic_creation = false
+
+    self.model = model
   end
 
   def model=(model)
     @model = model
-    @attrs = nil
+
+    if model <= ActiveRecord::Base
+      @activerecord_autoinit = true
+      @attrs = nil
+    else
+      @activerecord_autoinit = false
+      @attrs = {}
+    end
   end
 
   def initialize_copy(source)
@@ -47,22 +57,18 @@ class Interface
       @attrs.each { |k,v| (@attrs[k] = v.clone).interface = self }
     end
 
-    @attrs_defined_in_code = @attrs_defined_in_code.clone
-    @attrs_defined_in_code.each { |k,v| (@attrs_defined_in_code[k] = v.clone).interface = self }
+    @delayed_attrs = @delayed_attrs.clone
+    @delayed_attrs.each { |k,v| (@delayed_attrs[k] = v.clone).interface = self }
 
     super
   end
 
   def attrs
-    @attrs || initialize_attrs
-  end
-
-  def attrs_if_defined
-    @attrs
+    @attrs || autoinitialize_attrs_from_ar_model
   end
 
   def attribute(name, type = nil, &block)
-    a = attrs_if_defined || attrs_defined_in_code
+    a = @attrs || @delayed_attrs
 
     if type
       begin
@@ -87,12 +93,12 @@ class Interface
     if @attrs[name]
       @attrs[name].exclude!
     else
-      @attrs_defined_in_code[name] ||= Attribute.new(name, @interface)
-      @attrs_defined_in_code[name].exclude!
+      @delayed_attrs[name] ||= Attribute.new(name, @interface)
+      @delayed_attrs[name].exclude!
     end
   end
 
-  def initialize_attrs
+  def autoinitialize_attrs_from_ar_model
     @attrs = {}
 
     @model.columns.each do |column|
@@ -110,7 +116,10 @@ class Interface
       case reflection.macro
       when :composed_of
         @attrs[name] =
-          Attribute::Structure.new(name, self, :type => reflection.macro)
+          Attribute::Structure.new(name, self, :type => reflection.macro, :model_class => reflection.options[:class_name])
+
+        # Hide attributes composing the structure
+        reflection.options[:mapping].each { |x| mark_attr_to_be_excluded(x[0].to_sym) }
 
       when :belongs_to, :has_one
         if reflection.options[:polymorphic]
@@ -149,7 +158,7 @@ class Interface
       end
     end
 
-    @attrs_defined_in_code.each do |attrname, attr|
+    @delayed_attrs.each do |attrname, attr|
       if @attrs[attrname]
         @attrs[attrname].apply(attr)
       else
@@ -252,9 +261,7 @@ class Interface
       case attr
       when Model::Interface::Attribute::Structure
         val = obj.send(attrname)
-        values[attrname] = (val.respond_to?(:ar_serializable_hash) ? val.ar_serializable_hash(@name, opts) : nil) ||
-                           (val.respond_to?(:to_hash) ? val.to_hash : nil) ||
-                           (val.respond_to?(:to_s) ? val.to_s : nil)
+        values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
       when Model::Interface::Attribute::Reference
         if viewinc
           val = obj.send(attrname)

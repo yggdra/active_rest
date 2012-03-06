@@ -93,6 +93,18 @@ class Interface
 
     #
     class Structure < Attribute
+      attr_accessor :model_class
+
+      def definition
+        res = super
+
+        if !@model_class.constantize.interfaces[@interface.name]
+          raise "Missing interface #{@interface.name} from model #{@model_class}"
+        end
+
+        res[:schema] = @model_class.constantize.interfaces[@interface.name].schema
+        res
+      end
     end
 
     # Reference to another linked but not embedded model. It may come from a has_one or belongs_to
