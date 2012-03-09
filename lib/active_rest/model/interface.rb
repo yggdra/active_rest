@@ -85,7 +85,7 @@ class Interface
 
   def view(name, &block)
     @views[name] ||= View.new(name)
-    @views[name].instance_exec(&block)
+    @views[name].instance_exec(&block) if block
     @views[name]
   end
 
