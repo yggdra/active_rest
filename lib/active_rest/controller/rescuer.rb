@@ -15,6 +15,11 @@ module Controller
 
 module Rescuer
 
+  TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE', 'y', 'yes', 'Y', 'YES', :true, :t]
+  def is_true?(val)
+    TRUE_VALUES.include?(val)
+  end
+
   # Rescue action for ActiveRest::Exception kind of exceptions
   #
   def rest_ar_exception_rescue_action(e)
