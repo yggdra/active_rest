@@ -130,6 +130,8 @@ module Controller
                 :retry_possible => false)
       end
 
+      after_create_commit if self.respond_to? :after_create_commit
+
       if is_true?(params[:_suppress_response])
         render :nothing => true, :status => :created
       else
@@ -179,6 +181,8 @@ module Controller
                 :retry_possible => false)
       end
 
+      after_update_commit if self.respond_to? :after_update_commit
+
       if is_true?(params[:_suppress_response])
         render :nothing => true
       else
@@ -196,6 +200,8 @@ module Controller
         @target.destroy
         after_destroy if self.respond_to? :after_destroy
       end
+
+      after_destroy_commit if self.respond_to? :after_destroy_commit
 
       respond_to do |format|
         yield(format) if block_given?
