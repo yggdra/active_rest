@@ -5,7 +5,7 @@ require 'assert2/xhtml'
 describe InclattrCompaniesController, 'get' do
 
   before(:each) do
-    @c1 = Factory(:company_complex)
+    @c1 = FactoryGirl.create(:company_complex)
     get :show, :id => @c1.id,  :format => 'json'
   end
 

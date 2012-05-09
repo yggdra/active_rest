@@ -5,9 +5,9 @@ require 'assert2/xhtml'
 describe CompaniesController, 'pagination' do
 
   before(:each) do
-    @c1 = Factory(:company_1)
-    @c2 = Factory(:company_2)
-    @c3 = Factory(:company_3)
+    @c1 = FactoryGirl.create(:company_1)
+    @c2 = FactoryGirl.create(:company_2)
+    @c3 = FactoryGirl.create(:company_3)
   end
 
   it 'returns all record with start=0' do

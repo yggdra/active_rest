@@ -8,9 +8,9 @@ require 'assert2/xhtml'
 describe ReadOnlyCompaniesController do
 
   before(:each) do
-    @c1 = Factory.create(:company_1)
-    @c2 = Factory.create(:company_2)
-    @c3 = Factory.create(:company_3)
+    @c1 = FactoryGirl.create(:company_1)
+    @c2 = FactoryGirl.create(:company_2)
+    @c3 = FactoryGirl.create(:company_3)
   end
 
   it 'allows GET / verb' do

@@ -373,8 +373,8 @@ end
 
 describe Company, 'ar_serializable_hash' do
   before(:each) do
-    @c1 = Factory(:company_1)
-    @c = Factory(:company_complex)
+    @c1 = FactoryGirl.create(:company_1)
+    @c = FactoryGirl.create(:company_complex)
     @ch = @c.ar_serializable_hash(:rest)
   end
 
@@ -533,7 +533,7 @@ end
 #describe Company, '' do
 #
 #  it 'produces a String as result' do
-#    Factory(:company_1).export_as_yaml.should be_kind_of(String)
+#    FactoryGirl.create(:company_1).export_as_yaml.should be_kind_of(String)
 #  end
 #end
 

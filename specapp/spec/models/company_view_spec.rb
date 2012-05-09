@@ -5,7 +5,7 @@ module ActiveRest
 describe View do
 
   before(:each) do
-    @c1 = Factory(:company_1)
+    @c1 = FactoryGirl.create(:company_1)
   end
 
   it 'by default outputs the whole object' do
@@ -80,7 +80,7 @@ end
 describe View, 'empty!' do
 
   before(:each) do
-    @c1 = Factory(:company_1)
+    @c1 = FactoryGirl.create(:company_1)
   end
 
   it 'removes all attributes' do
@@ -98,8 +98,8 @@ end
 
 describe View, 'attribute' do
   before(:each) do
-    @c1 = Factory(:company_1)
-    @c = Factory(:company_complex)
+    @c1 = FactoryGirl.create(:company_1)
+    @c = FactoryGirl.create(:company_complex)
   end
 
   it 'allows showing of hidden attributes' do
@@ -380,7 +380,7 @@ end
 
 describe View, 'with_perms!' do
   before(:each) do
-    @c = Factory(:company_complex)
+    @c = FactoryGirl.create(:company_complex)
   end
 
   it 'adds permissions to an empty resource' do
