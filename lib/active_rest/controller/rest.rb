@@ -97,21 +97,35 @@ module Controller
       end
     end
 
+    # Empty callbacks
+    def before_save ; end
+
+    def before_create ; end
+    def after_create ; end
+    def after_create_commit ; end
+
+    def before_update ; end
+    def after_update ; end
+    def after_update_commit ; end
+
+    def before_destroy ; end
+    def after_destroy ; end
+    def after_destroy_commit ; end
 
     # POST /targets
   # if parameter '_only_validation' is present only validation actions will be ran
     def create
       begin
         send(rest_transaction_handler) do
-          before_create if self.respond_to? :before_create
+          before_create
           @target ||= model.new
 
           model.interfaces[:rest].apply_creation_attributes(@target, @request_resource)
 
-          before_save if self.respond_to? :before_save
+          before_save
 
           @target.save!
-          after_create if self.respond_to? :after_create
+          after_create
         end
       rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
@@ -130,7 +144,7 @@ module Controller
                 :retry_possible => false)
       end
 
-      after_create_commit if self.respond_to? :after_create_commit
+      after_create_commit
 
       if is_true?(params[:_suppress_response])
         render :nothing => true, :status => :created
@@ -154,15 +168,15 @@ module Controller
     def update
       begin
         send(rest_transaction_handler) do
-          before_update if self.respond_to? :before_update
+          before_update
 
           model.interfaces[:rest].apply_update_attributes(@target, @request_resource)
 
-          before_save if self.respond_to? :before_save
+          before_save
 
           @target.save!
 
-          after_update if self.respond_to? :after_update
+          after_update
         end
       rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
@@ -181,7 +195,7 @@ module Controller
                 :retry_possible => false)
       end
 
-      after_update_commit if self.respond_to? :after_update_commit
+      after_update_commit
 
       if is_true?(params[:_suppress_response])
         render :nothing => true
@@ -196,12 +210,12 @@ module Controller
     # DELETE /target/1
     def destroy
       send(rest_transaction_handler) do
-        before_destroy if self.respond_to? :before_destroy
+        before_destroy
         @target.destroy
-        after_destroy if self.respond_to? :after_destroy
+        after_destroy
       end
 
-      after_destroy_commit if self.respond_to? :after_destroy_commit
+      after_destroy_commit
 
       respond_to do |format|
         yield(format) if block_given?
