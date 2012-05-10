@@ -368,8 +368,11 @@ class Interface
       attr = attrs[valuename]
 
       if valuename == :_type
-        raise ClassDoesNotMatch.new(obj.class, value.constantize) if value && !(value.constantize <= obj.class)
-        next
+        next if !value
+        next if @allow_polymorphic_creation && value.constantize <= obj.class
+        next if value.constantize == obj.class
+
+        raise ClassDoesNotMatch.new(obj.class, value.constantize)
       end
       next if valuename == :id
 
@@ -400,7 +403,7 @@ class Interface
             newrecord = obj.send("build_#{valuename}")
           end
 
-          newrecord.interfaces[@name].apply_creation_attributes(newrecord, value);
+          newrecord.interfaces[@name].apply_creation_attributes(newrecord, value)
         end
 
       when Attribute::UniformModelsCollection
@@ -422,12 +425,12 @@ class Interface
 
             if attributes['_type'] && attr.model_class.constantize.interfaces[@name].allow_polymorphic_creation
               newrecord = attributes[:_type].constantize.new
-              association << newrecord
+              newrecord.interfaces[@name].apply_creation_attributes(newrecord, attributes)
+              association.concat(newrecord)
             else
               newrecord = association.build
+              newrecord.interfaces[@name].apply_creation_attributes(newrecord, attributes)
             end
-
-            newrecord.interfaces[@name].apply_creation_attributes(newrecord, attributes);
 
           elsif existing_record = existing_records.detect { |record| record.id.to_s == attributes['id'].to_s }
 
