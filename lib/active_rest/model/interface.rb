@@ -368,7 +368,7 @@ class Interface
       attr = attrs[valuename]
 
       if valuename == :_type
-        raise ClassDoesNotMatch.new(obj.class, value.constantize) if value && value.constantize != obj.class
+        raise ClassDoesNotMatch.new(obj.class, value.constantize) if value && !value.constantize.kind_of?(obj.class)
         next
       end
       next if valuename == :id
