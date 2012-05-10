@@ -508,7 +508,7 @@ class Interface
     end
 
     def to_s
-      "Type #{@type} does not match with class #{@model_class}"
+      "Type #{@model_type} does not match with class #{@model_class}"
     end
   end
 
