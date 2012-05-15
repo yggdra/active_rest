@@ -113,6 +113,7 @@ module Controller
 
       # member requests
       before_filter :only => [ :show, :edit, :update, :destroy, :validate_update ] do
+        @target_relation = model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => rest_view))
         find_target
         true
       end
@@ -219,16 +220,30 @@ module Controller
 
   # find a single resource
   #
-  def find_target(opts={})
+  def find_target(opts = {})
+    @target_relation ||= model.scoped
 
     tid = opts[:id] || params[:id]
     opts.delete(:id)
 
     find_opts = {}
 
-    @target = model.find(tid, find_opts)
+    @target = @target_relation.find(tid, find_opts)
   end
 
+  # Add conditions to a relation to implement sorting. Conditions are obtained from controller's parameters
+  #
+  # If parameter :sort is specified then an .order statement is applied to the relation for each column
+  # whose name is specified in a comma-separated list.
+  #
+  # column name may be prepended by '-' or '+' to indicate descending or ascending order. By default ascending order is used.
+  #
+  # E,g.:
+  #
+  # sort=+name,-prodiry,id
+  #
+  # @return [ActiveRecord::Relation] the new relation
+  #
   def apply_sorting_to_relation(rel)
     return rel if !params[:sort]
 
@@ -249,6 +264,13 @@ module Controller
     rel
   end
 
+  # Add conditions to a relation to implement pagination. Conditions are obtained from controller's parameters
+  #
+  # If parameter :start is specified then an .offset statement is applied to the relation
+  # If parameter :limit is specified then a .limit statement is applied to the relation
+  #
+  # @return [ActiveRecord::Relation] the new relation
+  #
   def apply_pagination_to_relation(rel)
     rel = rel.offset(params[:start].to_i) if params[:start]
     rel = rel.limit(params[:limit].to_i) if params[:limit]
@@ -263,7 +285,6 @@ module Controller
     # Filters
     @targets_relation = apply_json_filter_to_relation(@targets_relation)
     @targets_relation = apply_simple_filter_to_relation(@targets_relation)
-    @targets_relation = apply_search_to_relation(@targets_relation)
     @targets_relation = apply_sorting_to_relation(@targets_relation)
 
     # Display filters

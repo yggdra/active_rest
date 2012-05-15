@@ -13,24 +13,6 @@
 module ActiveRest
 module Controller
 
-  #
-  # Filters module implements index action filtering through a filter= URI parameter
-  #
-  # The filter parameter should contain a JSON serialized tree structure representing the expression
-  # Each node can be a String, a Numeric, an Array and a Hash.
-  #
-  # - Strings, Numeric and Arrays are quoted and inserted into the SQL expression.
-  #
-  # - Hashes may:
-  #   - Contain just one key "field". The value is inserted into the SQL as a field name.
-  #   - Contain "o" and "a" and/or "b" keys. In this case the Hash represent an expression, "a" and "b" are the
-  #     two terms, "o" is an operator. "a" or "b" may be missing in case of unary operators.
-  #
-  # Supported operators:
-  #
-  # Binary: >, >=, <, <=, =, <>, LIKE, NOT LIKE, IN, NOT IN, AND, OR
-  # Unary: IS NULL, IS NOT NULL, NOT
-  #
   module Filters
 
     def self.included(base)
@@ -39,6 +21,21 @@ module Controller
 
     protected
 
+    # The filter parameter should contain a JSON serialized tree structure representing the expression
+    # Each node can be a String, a Numeric, an Array and a Hash.
+    #
+    # - Strings, Numeric and Arrays are quoted and inserted into the SQL expression.
+    #
+    # - Hashes may:
+    #   - Contain just one key "field". The value is inserted into the SQL as a field name.
+    #   - Contain "o" and "a" and/or "b" keys. In this case the Hash represent an expression, "a" and "b" are the
+    #     two terms, "o" is an operator. "a" or "b" may be missing in case of unary operators.
+    #
+    # Supported operators:
+    #
+    # Binary: >, >=, <, <=, =, <>, LIKE, NOT LIKE, IN, NOT IN, AND, OR
+    # Unary: IS NULL, IS NOT NULL, NOT
+    #
     class Expression
       class SyntaxError < Exception; end
       class InvalidJSON < SyntaxError; end
@@ -167,8 +164,14 @@ module Controller
       rel
     end
 
+    # Add conditions to a relation specified as a json object
+    # Conditions are obtained from controller's :filter parameter
     #
-    # given a relation applies filtering from controller's parameters
+    # See Expression for details on expression format.
+    #
+    # @param rel [ActiveRecord::Relation] relation on which to operate
+    #
+    # @return [ActiveRecord::Relation] the new relation
     #
     def apply_json_filter_to_relation(rel)
 
@@ -192,6 +195,14 @@ module Controller
       rel
     end
 
+    # Add conditions to a relation to implement simple search.
+    # Conditions are obtained from controller's parameters
+    #
+    # @param rel [ActiveRecord::Relation] relation on which to operate
+    # @param search_in [Array]            list of column names in which to search
+    #
+    # @return [ActiveRecord::Relation] the new relation
+    #
     def apply_search_to_relation(rel, search_in = nil)
       if params[:search] && search_in
         expr = nil
