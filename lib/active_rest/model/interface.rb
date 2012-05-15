@@ -269,6 +269,8 @@ class Interface
       end
     end
 
+    incs += view.eager_loading_hints
+
     incs
   end
 

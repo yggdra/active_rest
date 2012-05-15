@@ -21,6 +21,7 @@ class View
   attr_accessor :with_perms
   attr_accessor :per_class
   attr_accessor :extjs_polymorphic_workaround
+  attr_accessor :eager_loading_hints
 
   def initialize(name = :anonymous, &block)
     @name = name
@@ -32,6 +33,8 @@ class View
     @per_class = {}
 
     @extjs_polymorphic_workaround = false
+
+    @eager_loading_hints = []
 
     self.instance_eval(&block) if block_given?
   end
@@ -81,6 +84,10 @@ class View
 
   def extjs_polymorphic_workaround!
     @extjs_polymorphic_workaround = true
+  end
+
+  def eager_load(*args)
+    @eager_loading_hints = args
   end
 
   class Attribute
