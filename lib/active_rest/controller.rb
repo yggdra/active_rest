@@ -111,12 +111,6 @@ module Controller
         true
       end
 
-      # collection requests
-      before_filter :only => [ :index ] do
-        find_targets
-        true
-      end
-
       # member requests
       before_filter :only => [ :show, :edit, :update, :destroy, :validate_update ] do
         find_target
@@ -266,13 +260,16 @@ module Controller
   def find_targets
     @targets_relation ||= model.scoped
 
+    # Filters
     @targets_relation = apply_json_filter_to_relation(@targets_relation)
     @targets_relation = apply_simple_filter_to_relation(@targets_relation)
     @targets_relation = apply_search_to_relation(@targets_relation)
     @targets_relation = apply_sorting_to_relation(@targets_relation)
-    out_rel = apply_pagination_to_relation(@targets_relation)
 
-    @targets = out_rel
+    # Display filters
+    @paginated_targets_relation = apply_pagination_to_relation(@targets_relation)
+
+    @targets = @paginated_targets_relation
     @count = @targets_relation.count
   end
 end

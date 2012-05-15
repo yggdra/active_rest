@@ -223,6 +223,55 @@ class Interface
 
   class ViewNotFound < StandardError ; end
 
+  def eager_loading_hints(opts = {})
+
+    view = opts[:view]
+
+    if view.is_a?(Symbol)
+      view = @views[view]
+      raise ViewNotFound, "View #{opts[:view]} not found" if !view
+    end
+
+    view ||= View.new(:anonymous)
+
+    incs = []
+    attrs.select { |k,v| view.attr_visible?(k) && v.readable }.each do |attrname,attr|
+      attrname = attrname.to_sym
+      viewdef = view.definition[attrname]
+      viewinc = viewdef ? viewdef.include : false
+      subview = viewdef ? viewdef.subview : nil
+
+      case attr
+      when Model::Interface::Attribute::Reference
+        incs << attrname if viewinc
+      when Model::Interface::Attribute::EmbeddedModel
+        incs << attrname
+      when Model::Interface::Attribute::UniformModelsCollection
+        # eager loading with limit is not supported:
+        # http://api.rubyonrails.org/classes/ActiveRecord/Associations/ClassMethods.html
+        #
+
+        if !viewdef || !viewdef.limit
+          subinc = attr.model_class.constantize.interfaces[@name].eager_loading_hints(:view => subview)
+          incs << (subinc.any? ? { attrname => subinc } : attrname)
+        end
+      when Model::Interface::Attribute::UniformReferencesCollection
+        if viewinc && !viewdef.limit
+          subinc = attr.model_class.constantize.interfaces[@name].eager_loading_hints(:view => subview)
+          incs << (subinc.any? ? { attrname => subinc } : attrname)
+        end
+      when Model::Interface::Attribute::EmbeddedPolymorphicModel
+      when Model::Interface::Attribute::PolymorphicReference
+        incs << attrname if viewinc
+      when Model::Interface::Attribute::PolymorphicModelsCollection
+      when Model::Interface::Attribute::PolymorphicReferencesCollection
+      else
+      end
+    end
+
+    incs
+  end
+
   def ar_serializable_hash(obj, opts = {})
 
     view = opts[:view]

@@ -101,8 +101,13 @@ class View
     end
 
     def include!
-      @include = :true
+      @include = true
       @display = :show
+    end
+
+    def exclude!
+      @include = false
+      @display = :hide
     end
 
     def show!

@@ -65,8 +65,11 @@ module Controller
     end
 
     def index
-      # Avoid responding with nil-classes when the array is empty
+      @targets_relation = model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => rest_view))
 
+      find_targets
+
+      # Avoid responding with nil-classes when the array is empty
       root_name = ''
 
       if model
