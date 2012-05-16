@@ -65,7 +65,7 @@ module Controller
     end
 
     def index
-      @targets_relation = model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => rest_view))
+      @targets_relation ||= model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => rest_view))
 
       find_targets
 

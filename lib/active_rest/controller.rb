@@ -113,7 +113,7 @@ module Controller
 
       # member requests
       before_filter :only => [ :show, :edit, :update, :destroy, :validate_update ] do
-        @target_relation = model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => rest_view))
+        @target_relation ||= model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => rest_view))
         find_target
         true
       end
