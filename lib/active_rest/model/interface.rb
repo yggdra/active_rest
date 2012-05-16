@@ -257,7 +257,7 @@ class Interface
         end
       when Model::Interface::Attribute::UniformReferencesCollection
         if viewinc && !viewdef.limit
-          subinc = attr.model_class.constantize.interfaces[@name].eager_loading_hints(:view => subview)
+          subinc = attr.referenced_class_name.constantize.interfaces[@name].eager_loading_hints(:view => subview)
           incs << (subinc.any? ? { attrname => subinc } : attrname)
         end
       when Model::Interface::Attribute::EmbeddedPolymorphicModel
