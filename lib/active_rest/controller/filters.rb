@@ -170,7 +170,8 @@ module Controller
     #
     # See ActiveRest::filter for filter definitions.
     #
-    # Filter is taken from the :filter parameters when it is not a JSON object
+    # Filter is taken from the :filter parameters when it is not a JSON object.
+    # Multiple filters can be listed comma-separated.
     #
     # @param rel [ActiveRecord::Relation] relation on which to operate
     # @return [ActiveRecord::Relation] the new relation
