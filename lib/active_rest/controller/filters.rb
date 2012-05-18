@@ -180,10 +180,13 @@ module Controller
       # If a complex filter expression es present, decode and apply it
       if params[:filter] && params[:filter][0] != '{'
 
-        flt = rest_filters[params[:filter].to_sym]
-        raise ActiveRest::Exception::BadRequest.new('Filter not found') if !flt
+        params[:filter].split(',').each do |flt_name|
+          flt = rest_filters[flt_name.to_sym]
 
-        rel = flt.kind_of?(Proc) ? instance_exec(rel, &flt) : rel.send(flt)
+          raise ActiveRest::Exception::BadRequest.new('Filter not found') if !flt
+
+          rel = flt.kind_of?(Proc) ? instance_exec(rel, &flt) : rel.send(flt)
+        end
       end
 
       rel
