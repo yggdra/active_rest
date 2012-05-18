@@ -164,19 +164,43 @@ module Controller
       rel
     end
 
+    # Add conditions from a controller-defined filter
+    #
+    # Available filters are defined in the controller with the 'filter' class method.
+    #
+    # See ActiveRest::filter for filter definitions.
+    #
+    # Filter is taken from the :filter parameters when it is not a JSON object
+    #
+    # @param rel [ActiveRecord::Relation] relation on which to operate
+    # @return [ActiveRecord::Relation] the new relation
+    #
+    def apply_named_filter_to_relation(rel)
+
+      # If a complex filter expression es present, decode and apply it
+      if params[:filter] && params[:filter][0] != '{'
+
+        flt = rest_filters[params[:filter].to_sym]
+        raise ActiveRest::Exception::BadRequest.new('Filter not found') if !flt
+
+        rel = flt.kind_of?(Proc) ? instance_exec(rel, &flt) : rel.send(flt)
+      end
+
+      rel
+    end
+
     # Add conditions to a relation specified as a json object
     # Conditions are obtained from controller's :filter parameter
     #
     # See Expression for details on expression format.
     #
     # @param rel [ActiveRecord::Relation] relation on which to operate
-    #
     # @return [ActiveRecord::Relation] the new relation
     #
     def apply_json_filter_to_relation(rel)
 
       # If a complex filter expression es present, decode and apply it
-      if params[:filter]
+      if params[:filter] && params[:filter][0] == '{'
         begin
           exp = Expression.from_json(params[:filter], rel)
           rel = rel.where(exp.to_arel)

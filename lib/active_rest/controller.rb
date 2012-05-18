@@ -150,8 +150,29 @@ module Controller
       self.rest_views[name]
     end
 
-    def filter(name, val = nil, &block)
-      self.rest_filters[name] = val || block
+    # Define a filter available to be selected with the filter= parameter.
+    # The filter itself can be a scope defined in the model or a block operating on the relation.
+    #
+    # If opts is a symbol the scope named as the filter is selected.
+    # If opts is a hash of a single element, the name will be the key and the scope the value.
+    # If opts is a symbol and a block is passed the block will be invoked with the relation as a parameter and should
+    # return a relation with constraints applied. The block is called with the controller's bindings so it can
+    # access params and such.
+    #
+    # Examples:
+    #
+    # filter :name
+    # filter :name => :scopename
+    # filter(:name) { |rel| rel.where(...) }
+    #
+    def filter(opts, &block)
+      if opts.is_a?(Hash)
+        self.rest_filters[opts.keys.first] = opts.values.first
+      elsif block
+        self.rest_filters[opts] = block
+      else
+        self.rest_filters[opts] = opts.to_sym
+      end
     end
 
     def read_only!
@@ -283,6 +304,7 @@ module Controller
     @targets_relation ||= model.scoped
 
     # Filters
+    @targets_relation = apply_named_filter_to_relation(@targets_relation)
     @targets_relation = apply_json_filter_to_relation(@targets_relation)
     @targets_relation = apply_simple_filter_to_relation(@targets_relation)
     @targets_relation = apply_sorting_to_relation(@targets_relation)

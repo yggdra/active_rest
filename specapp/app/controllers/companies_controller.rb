@@ -9,8 +9,10 @@ class CompaniesController < ApplicationController
   view :foobar do
   end
 
-  filter :my_custom_filter do
-    false
+  filter :filter1
+  filter :filter2 => :scope1
+  filter :filter3 do |rel|
+    rel.where(:id => params[:foobar])
   end
 
   layout false
