@@ -111,11 +111,11 @@ class Company < ActiveRecord::Base
     'This is the virtual value'
   end
 
-  def self.filter1
+  def self.scope1
     where(:id => 1)
   end
 
-  def self.scope1
+  def self.scope_for_id_2
     where(:id => 2)
   end
 end

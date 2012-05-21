@@ -60,7 +60,7 @@ module Controller
       class_attribute :model
       class_attribute :rest_options
       class_attribute :rest_views
-      class_attribute :rest_filters
+      class_attribute :rest_scopes
       class_attribute :rest_read_only
       class_attribute :rest_transaction_handler
     end
@@ -68,7 +68,7 @@ module Controller
     base.rest_views = {}
     base.model = nil
     base.rest_options = {}
-    base.rest_filters = {}
+    base.rest_scopes = {}
     base.rest_transaction_handler = :rest_default_transaction_handler
 
     base.class_eval do
@@ -133,7 +133,7 @@ module Controller
       inherited_without_ar(child)
 
       child.rest_views = {}
-      child.rest_filters = {}
+      child.rest_scopes = {}
     end
 
     def rest_controller_without_model
@@ -150,10 +150,10 @@ module Controller
       self.rest_views[name]
     end
 
-    # Define a filter available to be selected with the filter= parameter.
-    # The filter itself can be a scope defined in the model or a block operating on the relation.
+    # Define a scope available to be selected with the :scopes parameter.
+    # The scope itself can be a scope defined in the model or a block operating on the relation.
     #
-    # If opts is a symbol the scope named as the filter is selected.
+    # If opts is a symbol the scope named as the scope is selected.
     # If opts is a hash of a single element, the name will be the key and the scope the value.
     # If opts is a symbol and a block is passed the block will be invoked with the relation as a parameter and should
     # return a relation with constraints applied. The block is called with the controller's bindings so it can
@@ -161,17 +161,17 @@ module Controller
     #
     # Examples:
     #
-    # filter :name
-    # filter :name => :scopename
-    # filter(:name) { |rel| rel.where(...) }
+    # scope :name
+    # scope :name => :scopename
+    # scope(:name) { |rel| rel.where(...) }
     #
-    def filter(opts, &block)
+    def scope(opts, &block)
       if opts.is_a?(Hash)
-        self.rest_filters[opts.keys.first] = opts.values.first
+        self.rest_scopes[opts.keys.first] = opts.values.first
       elsif block
-        self.rest_filters[opts] = block
+        self.rest_scopes[opts] = block
       else
-        self.rest_filters[opts] = opts.to_sym
+        self.rest_scopes[opts] = opts.to_sym
       end
     end
 
@@ -304,7 +304,7 @@ module Controller
     @targets_relation ||= model.scoped
 
     # Filters
-    @targets_relation = apply_named_filter_to_relation(@targets_relation)
+    @targets_relation = apply_scopes_to_relation(@targets_relation)
     @targets_relation = apply_json_filter_to_relation(@targets_relation)
     @targets_relation = apply_simple_filter_to_relation(@targets_relation)
     @targets_relation = apply_sorting_to_relation(@targets_relation)

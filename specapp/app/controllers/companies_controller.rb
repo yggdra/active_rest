@@ -9,9 +9,9 @@ class CompaniesController < ApplicationController
   view :foobar do
   end
 
-  filter :filter1
-  filter :filter2 => :scope1
-  filter :filter3 do |rel|
+  scope :scope1
+  scope :scope2 => :scope_for_id_2
+  scope :scope3 do |rel|
     rel.where(:id => params[:foobar])
   end
 

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'assert2/xhtml'
 
-describe CompaniesController, 'named filter' do
+describe CompaniesController, 'scope filter' do
 
   before(:each) do
     @c1 = FactoryGirl.create(:company_1)
@@ -10,17 +10,17 @@ describe CompaniesController, 'named filter' do
     @c3 = FactoryGirl.create(:company_3)
   end
 
-  it 'rejects unknown filters' do
+  it 'rejects unknown scopes' do
     get :index, :format => :json,
-        :filter => 'nonexistant'
+        :scopes => 'nonexistant'
 
     response.should_not be_success
     response.status.should == 400
   end
 
-  it 'applies filter with symbol parameter' do
+  it 'applies scope with symbol parameter' do
     get :index, :format => :json,
-        :filter => 'filter1'
+        :scopes => 'scope1'
 
     response.should be_success
 
@@ -30,9 +30,9 @@ describe CompaniesController, 'named filter' do
     b[1].should be_nil
   end
 
-  it 'applies filter with hash parameter' do
+  it 'applies scope with hash parameter' do
     get :index, :format => :json,
-        :filter => 'filter2'
+        :scopes => 'scope2'
 
     response.should be_success
 
@@ -42,9 +42,9 @@ describe CompaniesController, 'named filter' do
     b[1].should be_nil
   end
 
-  it 'applies filter with block parameter' do
+  it 'applies scope with block parameter' do
     get :index, :format => :json,
-        :filter => 'filter3', :foobar => 3
+        :scopes => 'scope3', :foobar => 3
 
     response.should be_success
 
@@ -54,9 +54,9 @@ describe CompaniesController, 'named filter' do
     b[1].should be_nil
   end
 
-  it 'applies multiple filters' do
+  it 'applies multiple scopes' do
     get :index, :format => :json,
-        :filter => 'filter1,filter3', :foobar => 1
+        :scopes => 'scope1,scope3', :foobar => 1
 
     response.should be_success
 
@@ -66,9 +66,9 @@ describe CompaniesController, 'named filter' do
     b[1].should be_nil
   end
 
-  it 'applies multiple filters' do
+  it 'applies multiple scopes' do
     get :index, :format => :json,
-        :filter => 'filter1,filter3', :foobar => 3
+        :scopes => 'scope1,scope3', :foobar => 3
 
     response.should be_success
 

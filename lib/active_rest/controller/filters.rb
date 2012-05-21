@@ -164,29 +164,26 @@ module Controller
       rel
     end
 
-    # Add conditions from a controller-defined filter
+    # Add conditions from a controller-defined scope
     #
-    # Available filters are defined in the controller with the 'filter' class method.
+    # Available scope are defined in the controller with the 'scope' class method.
     #
-    # See ActiveRest::filter for filter definitions.
+    # See ActiveRest::scope for scope definitions.
     #
-    # Filter is taken from the :filter parameters when it is not a JSON object.
-    # Multiple filters can be listed comma-separated.
+    # Scope names are taken from the :scopes parameters when it is not a JSON object.
+    # Multiple scopes can be listed comma-separated.
     #
     # @param rel [ActiveRecord::Relation] relation on which to operate
     # @return [ActiveRecord::Relation] the new relation
     #
-    def apply_named_filter_to_relation(rel)
+    def apply_scopes_to_relation(rel)
+      if params[:scopes]
+        params[:scopes].split(',').each do |scope_name|
+          scope = rest_scopes[scope_name.to_sym]
 
-      # If a complex filter expression es present, decode and apply it
-      if params[:filter] && params[:filter][0] != '{'
+          raise ActiveRest::Exception::BadRequest, "Scope #{scope_name} not found" if !scope
 
-        params[:filter].split(',').each do |flt_name|
-          flt = rest_filters[flt_name.to_sym]
-
-          raise ActiveRest::Exception::BadRequest.new('Filter not found') if !flt
-
-          rel = flt.kind_of?(Proc) ? instance_exec(rel, &flt) : rel.send(flt)
+          rel = scope.kind_of?(Proc) ? instance_exec(rel, &scope) : rel.send(scope)
         end
       end
 
@@ -204,7 +201,7 @@ module Controller
     def apply_json_filter_to_relation(rel)
 
       # If a complex filter expression es present, decode and apply it
-      if params[:filter] && params[:filter][0] == '{'
+      if params[:filter]
         begin
           exp = Expression.from_json(params[:filter], rel)
           rel = rel.where(exp.to_arel)
