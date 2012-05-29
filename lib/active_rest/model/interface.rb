@@ -262,7 +262,6 @@ class Interface
         end
       when Model::Interface::Attribute::EmbeddedPolymorphicModel
       when Model::Interface::Attribute::PolymorphicReference
-        incs << attrname if viewinc
       when Model::Interface::Attribute::PolymorphicModelsCollection
       when Model::Interface::Attribute::PolymorphicReferencesCollection
       else
