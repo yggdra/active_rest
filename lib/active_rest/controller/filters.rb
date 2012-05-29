@@ -154,8 +154,7 @@ module Controller
     def apply_simple_filter_to_relation(rel)
       params.each do |k,v|
         next if k[0] == '_'
-
-        next if !rel.klass.columns_hash[k]
+        next if !rel.columns_hash[k]
 
         (attr, rel) = model.nested_attribute(k, rel)
         rel = rel.where(attr.eq(v))
