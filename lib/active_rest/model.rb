@@ -75,6 +75,8 @@ module Model
   end
 
   def ar_serializable_hash(interface_name, opts = {})
+    raise "Interface #{interface_name} is not defined for class #{self.class.name}" if !interfaces[interface_name]
+
     interfaces[interface_name].ar_serializable_hash(self, opts)
   end
 
