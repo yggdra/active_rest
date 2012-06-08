@@ -91,6 +91,11 @@ class Interface
       @readable = false
     end
 
+    def to_s
+      "<#{self.class.name} name=#{@name} human_name=#{@human_name} default=#{@default} not_null=#{@not_null}" +
+      "flags=#{@ignored ? 'I' : ''}#{@readable ? 'R' : ''}#{@writable ? 'W' : ''}"
+    end
+
     #
     class Structure < Attribute
       attr_accessor :model_class

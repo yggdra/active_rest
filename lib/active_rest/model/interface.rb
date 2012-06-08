@@ -537,6 +537,10 @@ class Interface
     end
   end
 
+  def to_s
+    "<#{self.class.name} model=#{@model.class.name} name=#{@name} ai=#{@activerecord_autoinit}"
+  end
+
   class AssociatedRecordNotFound < StandardError
   end
 
