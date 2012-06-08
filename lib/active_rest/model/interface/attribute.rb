@@ -9,6 +9,7 @@ class Interface
   class Attribute
 
     attr_accessor :name
+    attr_accessor :name_in_model
     attr_accessor :type
     attr_accessor :interface
     attr_accessor :human_name
@@ -20,8 +21,14 @@ class Interface
     attr_accessor :writable
 
     def initialize(name, interface, h = {})
+      raise ArgumentError, 'Name can not be null' if !name
+
       @name = name
+      @name_in_model = name
+
       @interface = interface
+
+      @type = :string
 
       @human_name = ''
       @meta = {}
@@ -66,6 +73,7 @@ class Interface
     def apply(attr)
       # type ?
 
+      @name_in_model = attr.name_in_model if attr.name_in_model
       @human_name = attr.human_name
       @meta.merge!(attr.meta)
       @ignored = attr.ignored
@@ -92,8 +100,8 @@ class Interface
     end
 
     def to_s
-      "<#{self.class.name} name=#{@name} human_name=#{@human_name} default=#{@default} not_null=#{@not_null}" +
-      "flags=#{@ignored ? 'I' : ''}#{@readable ? 'R' : ''}#{@writable ? 'W' : ''}"
+      "<#{@type.capitalize} #{@name_in_model} => #{@name} human_name=#{@human_name} default=#{@default} not_null=#{@not_null}" +
+      "flags=#{@ignored ? 'I' : ''}#{@readable ? 'R' : ''}#{@writable ? 'W' : ''}>"
     end
 
     #

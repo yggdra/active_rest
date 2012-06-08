@@ -21,8 +21,8 @@ describe View do
       :name => 'big_corp',
       :not_writable_attribute => 34567,
       :city => 'NY',
-      :street => 'Fifth Avenue',
-      :zip => '28021',
+#      :street => 'Fifth Avenue',
+#      :zip => '28021',
       :is_active => true,
       :registration_date => @c1.registration_date,
       :group_id => nil,
@@ -35,9 +35,9 @@ describe View do
       :phones => [],
       :location => nil,
       :full_address => {
-        :address => nil,
+        :street => 'Fifth Avenue',
         :city => 'NY',
-        :zip => 'NY',
+        :zip => '28021',
         :_type=> 'Company::FullAddress'
       },
       :object_1 => nil,

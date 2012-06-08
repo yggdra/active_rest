@@ -3,22 +3,22 @@ class Company < ActiveRecord::Base
   class FullAddress
     include ActiveRest::Model
 
-    attr_reader :address, :city, :zip
+    attr_reader :street, :city, :zip
 
     interface :rest do
-      attribute(:address)
+      attribute(:street)
       attribute(:city)
       attribute(:zip)
     end
 
-    def initialize(address, city, zip)
-      @address = address
+    def initialize(street, city, zip)
+      @street = street
       @city = city
       @zip = zip
     end
 
     def to_s
-      [ @address, @city, @zip ].compact.join(', ')
+      [ @street, @city, @zip ].compact.join(', ')
     end
   end
 
@@ -64,9 +64,9 @@ class Company < ActiveRecord::Base
   composed_of :full_address,
             :class_name => '::Company::FullAddress',
             :mapping => [
-              [ :address, :address ],
+              [ :street, :street ],
               [ :city, :city ],
-              [ :city, :zip ],
+              [ :zip, :zip ],
             ]
 
   belongs_to :object_1, :polymorphic => true, :embedded => true

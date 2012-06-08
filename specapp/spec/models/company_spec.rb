@@ -115,17 +115,6 @@ describe Company, 'schema' do
       end
     end
 
-    # :zip ###############
-    describe ':zip key' do
-      it 'exists' do
-        @attrs.should have_key(:zip)
-      end
-
-      it 'has a :type of string' do
-        @attrs[:zip][:type].should == :string
-      end
-    end
-
     # :is_active ###############
     describe ':is_active key' do
       it 'exists' do
@@ -396,10 +385,6 @@ describe Company, 'ar_serializable_hash' do
     @ch[:name].should be_kind_of(String)
   end
 
-  it ':zip key is a string' do
-    @ch[:zip].should be_kind_of(String)
-  end
-
   it ':is_active key is a boolean' do
     @ch[:is_active].should be_kind_of(TrueClass)
   end
@@ -411,9 +396,6 @@ describe Company, 'ar_serializable_hash' do
   it 'simple attributes\' values should be correct' do
     @ch[:id].should == 4
     @ch[:name].should == 'Huge Corp Corp.'
-    @ch[:city].should == 'Seveso'
-    @ch[:street].should == 'Via Mezzera 29/A'
-    @ch[:zip].should == '20030'
     @ch[:is_active].should == true
   end
 
@@ -491,8 +473,8 @@ describe Company, 'ar_serializable_hash' do
       @ch[:full_address].should be_a(Hash)
     end
 
-    it 'has :address key' do
-      @ch[:full_address].should have_key(:address)
+    it 'has :street key' do
+      @ch[:full_address].should have_key(:street)
     end
   end
 

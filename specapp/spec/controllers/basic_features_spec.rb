@@ -23,9 +23,11 @@ describe CompaniesController do
         'created_at' => { 'type' => 'timestamp' },
         'updated_at' => { 'type' => 'timestamp' },
         'name' => { 'type' => 'string', 'human_name' => 'Nome' },
-        'city' => { 'type' => 'string' },
-        'street' => {'type' => 'string' },
-        'zip' => {'type' => 'string' },
+        'full_address' => {
+          'city' => { 'type' => 'string' },
+          'street' => {'type' => 'string' },
+          'zip' => {'type' => 'string' },
+        },
         'is_active' => {'type' => 'boolean' },
         'registration_date' => {'type' => 'timestamp' },
         'group_id' => { 'type' => 'integer' },
@@ -127,11 +129,13 @@ describe CompaniesController do
     b = ActiveSupport::JSON.decode(response.body)
 
     b.should deep_include({
-      'city' => 'Springfield',
       'id' => 2,
       'name' => 'compuglobal',
-      'street' => 'Bart\'s road',
-      'zip' => '513',
+      'full_address' => {
+        'city' => 'Springfield',
+        'street' => 'Bart\'s road',
+        'zip' => '513',
+      },
     })
   end
 

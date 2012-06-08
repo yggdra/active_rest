@@ -160,14 +160,21 @@ class Interface
   def attribute(name, type = nil, &block)
     a = @attrs || @delayed_attrs
 
+    name_in_model = name
+    if name.is_a?(Hash)
+      name_in_model, name = name.keys.first, name.values.first
+    end
+
     if type
       begin
         a[name] ||= "ActiveRest::Model::Interface::Attribute::#{type}".constantize.new(name, self)
       rescue NameError
-        a[name] ||= Attribute.new(name, self, :type => type.split('::').last.underscore.to_sym)
+        a[name] ||= Attribute.new(name, self,
+          :type => type.split('::').last.underscore.to_sym,
+          :name_in_model => name_in_model)
       end
     else
-      a[name] ||= Attribute.new(name, self)
+      a[name] ||= Attribute.new(name, self, :name_in_model => name_in_model)
     end
 
     a[name].instance_exec(&block) if block
@@ -263,12 +270,12 @@ class Interface
 
         if !viewdef || !viewdef.limit
           subinc = attr.model_class.constantize.interfaces[@name].eager_loading_hints(:view => subview)
-          incs << (subinc.any? ? { attrname => subinc } : attrname)
+          incs << (subinc.any? ? { attr.name_in_model => subinc } : attr.name_in_model)
         end
       when Model::Interface::Attribute::UniformReferencesCollection
         if viewinc && !viewdef.limit
           subinc = attr.referenced_class_name.constantize.interfaces[@name].eager_loading_hints(:view => subview)
-          incs << (subinc.any? ? { attrname => subinc } : attrname)
+          incs << (subinc.any? ? { attr.name_in_model => subinc } : attr.name_in_model)
         end
       when Model::Interface::Attribute::EmbeddedPolymorphicModel
       when Model::Interface::Attribute::PolymorphicReference
@@ -320,18 +327,18 @@ class Interface
 
       case attr
       when Model::Interface::Attribute::Structure
-        val = obj.send(attrname)
+        val = obj.send(attr.name_in_model)
         values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
       when Model::Interface::Attribute::Reference
         if viewinc
-          val = obj.send(attrname)
+          val = obj.send(attr.name_in_model)
           values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
         end
       when Model::Interface::Attribute::EmbeddedModel
-        val = obj.send(attrname)
+        val = obj.send(attr.name_in_model)
         values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
       when Model::Interface::Attribute::UniformModelsCollection
-        vals = obj.send(attrname)
+        vals = obj.send(attr.name_in_model)
         if viewdef
           vals = vals.limit(viewdef.limit) if viewdef.limit
           vals = vals.order(viewdef.order) if viewdef.order
@@ -339,7 +346,7 @@ class Interface
         values[attrname] = vals.map { |x| x.ar_serializable_hash(@name, opts.merge(:view => subview)) }
       when Model::Interface::Attribute::UniformReferencesCollection
         if viewinc
-          vals = obj.send(attrname)
+          vals = obj.send(attr.name_in_model)
           if viewdef
             vals = vals.limit(viewdef.limit) if viewdef.limit
             vals = vals.order(viewdef.order) if viewdef.order
@@ -347,20 +354,20 @@ class Interface
           values[attrname] = vals.map { |x| x.ar_serializable_hash(@name, opts.merge(:view => subview)) }
         end
       when Model::Interface::Attribute::EmbeddedPolymorphicModel
-        val = obj.send(attrname)
+        val = obj.send(attr.name_in_model)
         values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
       when Model::Interface::Attribute::PolymorphicReference
         if viewinc
-          val = obj.send(attrname)
+          val = obj.send(attr.name_in_model)
           values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
         else
-          ref = obj.association(attrname).reflection
+          ref = obj.association(attr.name_in_model).reflection
           values[attrname] = { :id => obj.send(ref.foreign_key), :_type => obj.send(ref.foreign_type) }
         end
       when Model::Interface::Attribute::PolymorphicModelsCollection
       when Model::Interface::Attribute::PolymorphicReferencesCollection
       else
-        val = obj.send(attrname)
+        val = obj.send(attr.name_in_model)
 
         if !val.nil?
           case attr.type
@@ -538,7 +545,7 @@ class Interface
   end
 
   def to_s
-    "<#{self.class.name} model=#{@model.class.name} name=#{@name} ai=#{@activerecord_autoinit}"
+    "<#{self.class.name} model=#{@model.class.name} name=#{@name} ai=#{@activerecord_autoinit}>"
   end
 
   class AssociatedRecordNotFound < StandardError

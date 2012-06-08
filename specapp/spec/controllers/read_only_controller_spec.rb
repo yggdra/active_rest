@@ -29,11 +29,13 @@ describe ReadOnlyCompaniesController do
     response.should be_success
 
     ActiveSupport::JSON.decode(response.body).should deep_include({
-      'city' => 'Springfield',
       'id' => 2,
       'name' => 'compuglobal',
-      'street' => 'Bart\'s road',
-      'zip' => '513',
+      'full_address' => {
+        'city' => 'Springfield',
+        'street' => 'Bart\'s road',
+        'zip' => '513',
+      },
     })
   end
 
