@@ -32,7 +32,8 @@ class Interface
     @opts = opts
     @delayed_attrs = {}
     @views = {}
-    @activerecord_autoinit = false
+    @activerecord_autoinit = true
+    @attrs = nil
 
     @allow_polymorphic_creation = false
 
@@ -42,13 +43,7 @@ class Interface
   def model=(model)
     @model = model
 
-    if model <= ActiveRecord::Base
-      @activerecord_autoinit = true
-      @attrs = nil
-    else
-      @activerecord_autoinit = false
-      @attrs = {}
-    end
+    @activerecord_autoinit = false if !(model <= ActiveRecord::Base)
   end
 
   def initialize_copy(source)
@@ -57,36 +52,27 @@ class Interface
       @attrs.each { |k,v| (@attrs[k] = v.clone).interface = self }
     end
 
-    @delayed_attrs = @delayed_attrs.clone
-    @delayed_attrs.each { |k,v| (@delayed_attrs[k] = v.clone).interface = self }
+    if @delayed_attrs
+      @delayed_attrs = @delayed_attrs.clone
+      @delayed_attrs.each { |k,v| (@delayed_attrs[k] = v.clone).interface = self }
+    end
 
     super
   end
 
   def attrs
-    @attrs || autoinitialize_attrs_from_ar_model
+    @attrs || initialize_attrs
   end
 
-  def attribute(name, type = nil, &block)
-    a = @attrs || @delayed_attrs
-
-    if type
-      begin
-        a[name] ||= "ActiveRest::Model::Interface::Attribute::#{type}".constantize.new(name, self)
-      rescue NameError
-        a[name] ||= Attribute.new(name, self, :type => type.split('::').last.underscore.to_sym)
-      end
+  def initialize_attrs
+    if @activerecord_autoinit
+      autoinitialize_attrs_from_ar_model
     else
-      a[name] ||= Attribute.new(name, self)
+      @attrs = @delayed_attrs
+      @delayed_attrs = nil
     end
 
-    a[name].instance_exec(&block) if block
-  end
-
-  def view(name, &block)
-    @views[name] ||= View.new(name)
-    @views[name].instance_exec(&block) if block
-    @views[name]
+    @attrs
   end
 
   def mark_attr_to_be_excluded(name)
@@ -166,7 +152,31 @@ class Interface
       end
     end
 
+    @delayed_attrs = nil
+
     @attrs
+  end
+
+  def attribute(name, type = nil, &block)
+    a = @attrs || @delayed_attrs
+
+    if type
+      begin
+        a[name] ||= "ActiveRest::Model::Interface::Attribute::#{type}".constantize.new(name, self)
+      rescue NameError
+        a[name] ||= Attribute.new(name, self, :type => type.split('::').last.underscore.to_sym)
+      end
+    else
+      a[name] ||= Attribute.new(name, self)
+    end
+
+    a[name].instance_exec(&block) if block
+  end
+
+  def view(name, &block)
+    @views[name] ||= View.new(name)
+    @views[name].instance_exec(&block) if block
+    @views[name]
   end
 
   def schema(options = {})

@@ -107,6 +107,16 @@ class Company < ActiveRecord::Base
     end
   end
 
+  interface :search_result do
+    self.activerecord_autoinit = false
+    attribute(:id) { self.type = :integer }
+    attribute(:search_summary) { self.type = :string }
+  end
+
+  def search_summary
+    'This is company summary'
+  end
+
   def virtual
     'This is the virtual value'
   end
