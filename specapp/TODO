@@ -1,0 +1,10 @@
+
+
+Test views in models
+
+Test polymorphic creation
+
+Test transaction handler being called
+Test transactin handler being inherited
+
+Test inherited attributes
