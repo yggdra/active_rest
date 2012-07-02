@@ -179,10 +179,16 @@ class Interface
     #
     class UniformReferencesCollection < Attribute
       attr_accessor :referenced_class_name
+      attr_accessor :foreign_key
+      attr_accessor :foreign_type
+      attr_accessor :as
 
       def definition
         res = super
         res[:referenced_class] = @referenced_class_name
+        res[:foreign_key] = @foreign_key if @foreign_key
+        res[:foreign_type] = @foreign_type if @foreign_type
+        res[:as] = @as if @as
         res
       end
     end

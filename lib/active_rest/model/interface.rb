@@ -136,7 +136,11 @@ class Interface
             Attribute::UniformModelsCollection.new(name, self, :model_class => reflection.class_name)
         else
           @attrs[name] =
-            Attribute::UniformReferencesCollection.new(name, self, :referenced_class_name => reflection.class_name)
+            Attribute::UniformReferencesCollection.new(name, self,
+              :referenced_class_name => reflection.class_name,
+              :foreign_key => (!reflection.is_a?(ActiveRecord::Reflection::ThroughReflection) ? reflection.foreign_key : nil),
+              :foreign_type => (!reflection.is_a?(ActiveRecord::Reflection::ThroughReflection) ? reflection.type : nil),
+              :as => reflection.options[:as])
         end
 
       else
