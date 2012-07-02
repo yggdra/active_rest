@@ -35,6 +35,11 @@ module Model
     end
   end
 
+  class ModelError < StandardError ; end
+  class UnknownRelation < ModelError ; end
+  class UnknownField < ModelError ; end
+  class PolymorphicRelationNotSupported < ModelError ; end
+
   module ClassMethods
 
     def inherited_with_ar(child)
@@ -61,6 +66,10 @@ module Model
 
       reflection = (reflection ? reflection : rel).reflections[attr_split[0].to_sym]
       raise UnknownField, "Unknown relation #{attr_split[0]}" if !reflection
+
+      if reflection.options[:polymorphic]
+        raise PolymorphicRelationNotSupported
+      end
 
       rel = rel.joins(attr_split[0].to_sym)
 
