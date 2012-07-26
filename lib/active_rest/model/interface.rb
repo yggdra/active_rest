@@ -456,7 +456,7 @@ class Interface
       when Attribute::EmbeddedModel
         record = obj.send(valuename)
 
-        if value['_destroy']
+        if !value || value['_destroy']
           # DESTROY
           record.mark_for_destruction if record
         elsif record && value['id'] && value['id'] != 0 && record.id == value['id']
@@ -543,6 +543,8 @@ class Interface
     case type
     when :datetime
       :timestamp
+    when :text
+      :string
     else
       type
     end
