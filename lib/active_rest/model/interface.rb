@@ -89,9 +89,13 @@ class Interface
 
     @model.columns.each do |column|
       name = column.name.to_sym
+
+      type = map_column_type(column.type)
+      type = :object if @model.serialized_attributes[column.name]
+
       @attrs[name] =
         Attribute.new(name, self,
-          :type => map_column_type(column.type),
+          :type => type,
           :default => column.default,
           :notnull => !column.null,
         )
