@@ -521,7 +521,7 @@ class Interface
 
             if attributes['_destroy']
               # DESTROY
-              existing_record.mark_for_destruction
+              existing_record.destroy
             else
               # UPDATE
               existing_record.interfaces[@name].apply_update_attributes(existing_record, attributes)
