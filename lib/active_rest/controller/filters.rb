@@ -242,7 +242,6 @@ module Controller
 
       rel
     end
-
   end
 
 end

@@ -301,19 +301,26 @@ module Controller
   # find all with conditions
   #
   def find_targets
-    @targets_relation ||= model.scoped
+    if params[:_search]
+      # Fulltext search
 
-    # Filters
-    @targets_relation = apply_scopes_to_relation(@targets_relation)
-    @targets_relation = apply_json_filter_to_relation(@targets_relation)
-    @targets_relation = apply_simple_filter_to_relation(@targets_relation)
-    @targets_relation = apply_sorting_to_relation(@targets_relation)
+      @targets = model.search(params[:_search])
+      @count = @targets.count
+    else
+      @targets_relation ||= model.scoped
 
-    # Display filters
-    @paginated_targets_relation = apply_pagination_to_relation(@targets_relation)
+      # Filters
+      @targets_relation = apply_scopes_to_relation(@targets_relation)
+      @targets_relation = apply_json_filter_to_relation(@targets_relation)
+      @targets_relation = apply_simple_filter_to_relation(@targets_relation)
 
-    @targets = @paginated_targets_relation
-    @count = @targets_relation.count
+      # Display filters
+      @targets_relation = apply_sorting_to_relation(@targets_relation)
+      @paginated_targets_relation = apply_pagination_to_relation(@targets_relation)
+
+      @targets = @paginated_targets_relation
+      @count = @targets_relation.count
+    end
   end
 end
 
