@@ -51,6 +51,7 @@ module Rescuer
       status_code = e.respond_to?(:http_status_code) ? e.http_status_code : 500
 
       respond_to do |format|
+        format.html { raise e }
         format.xml { render :xml => res, :status => status_code }
         format.yaml { render :yaml => res, :status => status_code }
         format.json { render :json => res, :status => status_code }
