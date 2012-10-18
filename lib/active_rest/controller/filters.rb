@@ -156,7 +156,10 @@ module Controller
         next if k[0] == '_'
         next if !rel.columns_hash[k]
 
-        (attr, rel) = model.nested_attribute(k, rel)
+        (attr, path) = model.nested_attribute(k)
+
+        path.each { |x| rel = rel.joins(x) }
+
         rel = rel.where(attr.eq(v))
       end
 
@@ -208,9 +211,13 @@ module Controller
           # If the expression references linked relations, join them. 'includes' *should* produce a LEFT OUTER JOIN
           # so the expression would match if the linked relation is missing
           #
-          exp.joins.uniq.each do |join|
-            rel = rel.includes(join.to_sym)
+
+          join = nil
+          exp.joins.uniq.each do |x|
+            join = join ? { join => x.to_sym } : x.to_sym
           end
+
+          rel = rel.joins(join)
         rescue Expression::SyntaxError => e
           raise ActiveRest::Exception::BadRequest.new(e.message)
         end
@@ -232,7 +239,10 @@ module Controller
         expr = nil
 
         search_in.each do |x|
-          (attr, rel) = model.nested_attribute(x, rel)
+          (attr, path) = model.nested_attribute(x)
+
+          path.each { |x| rel = rel.joins(x) }
+
           e = attr.matches('%' + params[:search] + '%')
           expr = expr ? expr.or(e) : e
         end

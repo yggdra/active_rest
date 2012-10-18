@@ -44,7 +44,7 @@ module Controller
       target.send(:attributes=, @request_resource)
 
       if !target.valid?
-        raise UnprocessableEntity.new('The form is invalid',
+        raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
                 :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
                 :retry_possible => false)
       end
@@ -60,7 +60,7 @@ module Controller
       @target.send(:attributes=, @request_resource)
 
       if !target.valid?
-        raise UnprocessableEntity.new('The form is invalid',
+        raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
                 :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
                 :retry_possible => false)
       end

@@ -54,26 +54,26 @@ module Model
       self.interfaces[name].instance_exec(&block)
     end
 
-    def nested_attribute(attrname, rel = self.scoped, table = rel.table)
+    def nested_attribute(attrs, path = [])
+      attrs = attrs.to_s.split('.') if !attrs.kind_of?(Array)
 
-      attr_split = attrname.to_s.split('.')
+      path.push(attrs[0].to_sym)
 
-      if attr_split.count == 1
-        attr = table[attr_split[0]]
-        raise UnknownField, "Unknown field '#{attrname}'" if !attr
-        return attr, rel
+      if attrs.count == 1
+        attr = self.scoped.table[attrs[0]]
+
+        raise UnknownField, "Unknown field '#{attrs[0]}' in model #{self.name}" if !attr
+        return attr, path
       end
 
-      reflection = (reflection ? reflection : rel).reflections[attr_split[0].to_sym]
-      raise UnknownField, "Unknown relation #{attr_split[0]}" if !reflection
+      reflection = reflections[attrs[0].to_sym]
+      raise UnknownField, "Unknown relation #{attrs[0]}" if !reflection
 
       if reflection.options[:polymorphic]
         raise PolymorphicRelationNotSupported
       end
 
-      rel = rel.joins(attr_split[0].to_sym)
-
-      nested_attribute(attr_split[1..-1].join('.'), rel, reflection.klass.scoped.table)
+      reflection.klass.nested_attribute(attrs[1..-1], path)
     end
   end
 
