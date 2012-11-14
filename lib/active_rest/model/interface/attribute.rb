@@ -124,6 +124,7 @@ class Interface
     #
     class Reference < Attribute
       attr_accessor :referenced_class_name
+      attr_accessor :can_be_eager_loaded
 
       def definition
         res = super
@@ -136,6 +137,7 @@ class Interface
     #
     class EmbeddedModel < Attribute
       attr_accessor :model_class
+      attr_accessor :can_be_eager_loaded
 
       def definition
         res = super
@@ -153,6 +155,7 @@ class Interface
     #
     class UniformModelsCollection < Attribute
       attr_accessor :model_class
+      attr_accessor :can_be_eager_loaded
 
       def definition
         res = super
@@ -182,6 +185,7 @@ class Interface
       attr_accessor :foreign_key
       attr_accessor :foreign_type
       attr_accessor :as
+      attr_accessor :can_be_eager_loaded
 
       def definition
         res = super

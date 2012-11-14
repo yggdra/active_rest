@@ -275,7 +275,7 @@ module Controller
         desc = ($1 && $1 == '-')
         attrname = $2
 
-        (attr, rel) = model.nested_attribute(attrname, rel)
+        (attr, rel) = rel.klass.nested_attribute(attrname, rel)
         attr = attr.desc if desc
 
         rel = rel.order(attr)

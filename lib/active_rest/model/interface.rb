@@ -124,27 +124,34 @@ class Interface
         else
           if reflection.options[:embedded]
             @attrs[name] =
-              Attribute::EmbeddedModel.new(name, self, :model_class => reflection.class_name)
+              Attribute::EmbeddedModel.new(name, self,
+                :model_class => reflection.class_name,
+                :can_be_eager_loaded => true)
 
             # Hide embedded foreign key column
             mark_attr_to_be_excluded(reflection.foreign_key.to_sym)
           else
             @attrs[name] =
-              Attribute::Reference.new(name, self, :referenced_class_name => reflection.class_name)
+              Attribute::Reference.new(name, self,
+                :referenced_class_name => reflection.class_name,
+                :can_be_eager_loaded => true)
           end
         end
 
       when :has_many
         if reflection.options[:embedded]
           @attrs[name] =
-            Attribute::UniformModelsCollection.new(name, self, :model_class => reflection.class_name)
+            Attribute::UniformModelsCollection.new(name, self,
+              :model_class => reflection.class_name,
+              :can_be_eager_loaded => true)
         else
           @attrs[name] =
             Attribute::UniformReferencesCollection.new(name, self,
               :referenced_class_name => reflection.class_name,
               :foreign_key => (!reflection.is_a?(ActiveRecord::Reflection::ThroughReflection) ? reflection.foreign_key : nil),
               :foreign_type => (!reflection.is_a?(ActiveRecord::Reflection::ThroughReflection) ? reflection.type : nil),
-              :as => reflection.options[:as])
+              :as => reflection.options[:as],
+              :can_be_eager_loaded => true)
         end
 
       else
@@ -260,7 +267,9 @@ class Interface
     view ||= View.new(:anonymous)
 
     incs = []
-    attrs.select { |k,v| view.attr_visible?(k) && v.readable }.each do |attrname,attr|
+    attrs.each do |attrname,attr|
+      next if view.attr_visible?(attrname) && attr.readable
+
       attrname = attrname.to_sym
       viewdef = view.definition[attrname]
       viewinc = viewdef ? viewdef.include : false
@@ -268,20 +277,20 @@ class Interface
 
       case attr
       when Model::Interface::Attribute::Reference
-        incs << attrname if viewinc
+        incs << attrname if viewinc && attr.can_be_eager_loaded
       when Model::Interface::Attribute::EmbeddedModel
-        incs << attrname
+        incs << attrname if attr.can_be_eager_loaded
       when Model::Interface::Attribute::UniformModelsCollection
         # eager loading with limit is not supported:
         # http://api.rubyonrails.org/classes/ActiveRecord/Associations/ClassMethods.html
         #
 
-        if !viewdef || !viewdef.limit
+        if !viewdef || !viewdef.limit && attr.can_be_eager_loaded
           subinc = attr.model_class.constantize.interfaces[@name].eager_loading_hints(:view => subview)
           incs << (subinc.any? ? { attr.name_in_model => subinc } : attr.name_in_model)
         end
       when Model::Interface::Attribute::UniformReferencesCollection
-        if viewinc && !viewdef.limit
+        if viewinc && !viewdef.limit && attr.can_be_eager_loaded
           subinc = attr.referenced_class_name.constantize.interfaces[@name].eager_loading_hints(:view => subview)
           incs << (subinc.any? ? { attr.name_in_model => subinc } : attr.name_in_model)
         end

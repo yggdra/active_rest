@@ -23,6 +23,9 @@ class View
   attr_accessor :extjs_polymorphic_workaround
   attr_accessor :eager_loading_hints
 
+  attr_accessor :limit
+  attr_accessor :order
+
   def initialize(name = :anonymous, &block)
     @name = name
 

@@ -57,14 +57,14 @@ module Model
     def nested_attribute(attrs, path = [])
       attrs = attrs.to_s.split('.') if !attrs.kind_of?(Array)
 
-      path.push(attrs[0].to_sym)
-
       if attrs.count == 1
         attr = self.scoped.table[attrs[0]]
 
         raise UnknownField, "Unknown field '#{attrs[0]}' in model #{self.name}" if !attr
         return attr, path
       end
+
+      path.push(attrs[0].to_sym)
 
       reflection = reflections[attrs[0].to_sym]
       raise UnknownField, "Unknown relation #{attrs[0]}" if !reflection

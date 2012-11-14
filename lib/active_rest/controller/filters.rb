@@ -156,9 +156,9 @@ module Controller
         next if k[0] == '_'
         next if !rel.columns_hash[k]
 
-        (attr, path) = model.nested_attribute(k)
+        (attr, path) = rel.klass.nested_attribute(k)
 
-        path.each { |x| rel = rel.joins(x) }
+        path.each { |x| rel = rel.joins { __send__(x).outer } }
 
         rel = rel.where(attr.eq(v))
       end
@@ -217,7 +217,7 @@ module Controller
             join = join ? { join => x.to_sym } : x.to_sym
           end
 
-          rel = rel.joins(join)
+          rel = rel.joins { __send__(join).outer } if join
         rescue Expression::SyntaxError => e
           raise ActiveRest::Exception::BadRequest.new(e.message)
         end
