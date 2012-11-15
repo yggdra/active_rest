@@ -89,25 +89,15 @@ module Controller
           if attr
             raise SyntaxError, "Attribute '#{attr}' name has invalid chars" if attr =~ /[^a-zA-Z0-9._]/
 
-            attr_split = attr.split('.')
-            if attr_split.count > 1
-
-              raise "Unsupported joins deeper than one level" if attr_split.count > 2
-
-              relation = @rel.reflections[attr_split[0].to_sym]
-              raise UnknownField, "Unknown relation #{attr_split[0]}" if !relation
-
-              @joins << attr_split[0]
-              attr = attr_split[1..-1].join('.')
-
-              raise UnknownField, "Unknown field '#{attr}'" if !relation.klass.columns_hash[attr]
-
-              return relation.klass.scoped.table[attr]
-            else
-              raise UnknownField, "Unknown field '#{attr}'" if !@rel.columns_hash[attr]
-
-              return @rel.table[attr]
+            begin
+              (attr, path) = @rel.klass.nested_attribute(attr)
+            rescue ActiveRest::Model::UnknownField => e
+              raise UnknownField, "Unknown field '#{attr}'"
             end
+
+            @joins.push(path)
+
+            return attr
           else
             return to_arel_recur(term)
           end
@@ -154,13 +144,14 @@ module Controller
     def apply_simple_filter_to_relation(rel)
       params.each do |k,v|
         next if k[0] == '_'
-        next if !rel.columns_hash[k]
 
-        (attr, path) = rel.klass.nested_attribute(k)
+        begin
+          (attr, path) = rel.klass.nested_attribute(k)
 
-        path.each { |x| rel = rel.joins { __send__(x).outer } }
-
-        rel = rel.where(attr.eq(v))
+          rel = rel.joins { path.inject(self) { |a,x| a.__send__(x) } } if path.any?
+          rel = rel.where(attr.eq(v))
+        rescue ActiveRest::Model::UnknownField
+        end
       end
 
       rel
@@ -208,16 +199,12 @@ module Controller
           exp = Expression.from_json(params[:filter], rel)
           rel = rel.where(exp.to_arel)
 
-          # If the expression references linked relations, join them. 'includes' *should* produce a LEFT OUTER JOIN
-          # so the expression would match if the linked relation is missing
-          #
-
-          join = nil
-          exp.joins.uniq.each do |x|
-            join = join ? { join => x.to_sym } : x.to_sym
+          # Does an outer join for first path component
+          exp.joins.each do |path|
+#            rel = rel.joins { path.inject(self) { |a,x| a.__send__(x) } } if path.any?
+#
+            rel = rel.joins { path[1..-1].inject(self.__send__(path[0]).outer) { |a,x| a.__send__(x) } } if path.any?
           end
-
-          rel = rel.joins { __send__(join).outer } if join
         rescue Expression::SyntaxError => e
           raise ActiveRest::Exception::BadRequest.new(e.message)
         end
