@@ -60,7 +60,7 @@ module Model
       if attrs.count == 1
         attr = self.scoped.table[attrs[0]]
 
-        raise UnknownField, "Unknown field '#{attrs[0]}' in model #{self.name}" if !attr
+        raise UnknownField, "Unknown field '#{attrs[0]}' in model #{self.name}" if !attr || !self.columns_hash[attrs[0]]
         return attr, path
       end
 

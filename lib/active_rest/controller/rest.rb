@@ -67,7 +67,13 @@ module Controller
     def index
 #      @targets_relation = model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => rest_view)) if model
 
-      find_targets
+      begin
+        find_targets
+      rescue ActiveRest::Model::UnknownField => e
+        raise ActiveRest::Exception::BadRequest.new(e.message,
+                :per_field_msgs => { e.attribute_name => 'not found' },
+                :retry_possible => false)
+      end
 
       # Avoid responding with nil-classes when the array is empty
       root_name = ''
