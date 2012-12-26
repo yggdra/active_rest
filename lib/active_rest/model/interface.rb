@@ -47,6 +47,9 @@ class Interface
   end
 
   def initialize_copy(source)
+    @views = @views.clone
+    @views.each { |k,v| @views[k] = v.clone }
+
     if @attrs
       @attrs = @attrs.clone
       @attrs.each { |k,v| (@attrs[k] = v.clone).interface = self }
