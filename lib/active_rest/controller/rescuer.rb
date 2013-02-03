@@ -30,7 +30,7 @@ module Rescuer
     if log_level != :none
       message = "\nRendered exception: #{e.class} (#{e.message}):\n"
       message << "  " << e.backtrace.join("\n  ")
-      logger.send(e.log_level || :warn, "#{message}\n\n")
+      logger.send(log_level, "#{message}\n\n")
     end
 
     if is_true?(params[:_suppress_response])
