@@ -24,7 +24,10 @@ module Rescuer
   #
   def rest_ar_exception_rescue_action(e)
 
-    if !e.respond_to?(:log_level) || e.log_level != :none
+    log_level = :warn
+    log_level = e.log_level if e.respond_to?(:log_level)
+
+    if log_level != :none
       message = "\nRendered exception: #{e.class} (#{e.message}):\n"
       message << "  " << e.backtrace.join("\n  ")
       logger.send(e.log_level || :warn, "#{message}\n\n")
