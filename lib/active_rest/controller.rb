@@ -250,6 +250,9 @@ module Controller
     find_opts = {}
 
     @target = @target_relation.find(tid, find_opts)
+  rescue ActiveRecord::RecordNotFound => e
+    raise ActiveRest::Exception::NotFound.new(e.message,
+            :retry_possible => false)
   end
 
   # Add conditions to a relation to implement sorting. Conditions are obtained from controller's parameters
@@ -321,6 +324,9 @@ module Controller
       @targets = @paginated_targets_relation
       @count = @targets_relation.count
     end
+  rescue ActiveRecord::RecordNotFound => e
+    raise ActiveRest::Exception::NotFound.new(e.message,
+            :retry_possible => false)
   end
 end
 

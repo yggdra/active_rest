@@ -31,6 +31,10 @@ class Exception < StandardError
     def initialize(msg = '', public_data = {}, private_data = {})
       super msg, :not_found, public_data, private_data
     end
+
+    def log_level
+      :none
+    end
   end
 
   class NotAcceptable < Exception

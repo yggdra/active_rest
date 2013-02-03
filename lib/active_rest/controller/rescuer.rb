@@ -24,9 +24,11 @@ module Rescuer
   #
   def rest_ar_exception_rescue_action(e)
 
-    message = "\nRendered exception: #{e.class} (#{e.message}):\n"
-    message << "  " << e.backtrace.join("\n  ")
-    logger.warn("#{message}\n\n")
+    if !e.respond_to?(:log_level) || e.log_level != :none
+      message = "\nRendered exception: #{e.class} (#{e.message}):\n"
+      message << "  " << e.backtrace.join("\n  ")
+      logger.send(e.log_level || :warn, "#{message}\n\n")
+    end
 
     if is_true?(params[:_suppress_response])
       render :nothing => true, :status => e.status
