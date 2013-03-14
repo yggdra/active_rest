@@ -36,8 +36,17 @@ module Model
   end
 
   class ModelError < StandardError ; end
-  class UnknownRelation < ModelError ; end
-  class UnknownField < ModelError ; end
+  class AttributeError < ModelError
+    attr_accessor :attribute_name
+
+    def initialize(msg, attribute_name)
+      super msg
+      @attribute_name = attribute_name
+    end
+  end
+
+  class UnknownRelation < AttributeError ; end
+  class UnknownField < AttributeError ; end
   class PolymorphicRelationNotSupported < ModelError ; end
 
   module ClassMethods
@@ -60,14 +69,17 @@ module Model
       if attrs.count == 1
         attr = self.scoped.table[attrs[0]]
 
-        raise UnknownField, "Unknown field '#{attrs[0]}' in model #{self.name}" if !attr || !self.columns_hash[attrs[0]]
+        if !attr || !self.columns_hash[attrs[0]]
+          raise UnknownField.new("Unknown field '#{attrs[0]}' in model #{self.name}", attrs[0])
+        end
+
         return attr, path
       end
 
       path.push(attrs[0].to_sym)
 
       reflection = reflections[attrs[0].to_sym]
-      raise UnknownField, "Unknown relation #{attrs[0]}" if !reflection
+      raise UnknownRelation.new("Unknown relation #{attrs[0]}", attrs[0]) if !reflection
 
       if reflection.options[:polymorphic]
         raise PolymorphicRelationNotSupported
