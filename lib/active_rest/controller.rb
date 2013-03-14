@@ -63,6 +63,9 @@ module Controller
       class_attribute :rest_scopes
       class_attribute :rest_read_only
       class_attribute :rest_transaction_handler
+
+      define_callbacks :find_target
+      define_callbacks :find_targets
     end
 
     base.rest_views = {}
@@ -179,6 +182,54 @@ module Controller
       self.rest_read_only = true
     end
 
+
+    #
+    # finder callbacks
+    #
+    def append_after_find_target_filter(*names, &blk)
+      _insert_callbacks(names, blk) do |name, options|
+        set_callback(:find_target, :after, name, options)
+      end
+    end
+
+    def prepend_after_find_target_filter(*names, &blk)
+     _insert_callbacks(names, blk) do |name, options|
+       set_callback(:find_target, :after, name, options.merge(:prepend => true))
+     end
+    end
+
+    def skip_after_find_target_filter(*names, &blk)
+     _insert_callbacks(names, blk) do |name, options|
+       skip_callback(:find_target, :after, name, options)
+     end
+    end
+
+    def append_after_find_targets_filter(*names, &blk)
+      _insert_callbacks(names, blk) do |name, options|
+        set_callback(:find_targets, :after, name, options)
+      end
+    end
+
+    def prepend_after_find_targets_filter(*names, &blk)
+     _insert_callbacks(names, blk) do |name, options|
+       set_callback(:find_targets, :after, name, options.merge(:prepend => true))
+     end
+    end
+
+    def skip_after_find_targets_filter(*names, &blk)
+     _insert_callbacks(names, blk) do |name, options|
+       skip_callback(:find_targets, :after, name, options)
+     end
+    end
+
+    alias_method :after_find_target, :append_after_find_target_filter
+    alias_method :prepend_after_find_target, :prepend_after_find_target_filter
+    alias_method :skip_after_find_target, :skip_after_find_target_filter
+
+    alias_method :after_find_targets, :append_after_find_targets_filter
+    alias_method :prepend_after_find_targets, :prepend_after_find_targets_filter
+    alias_method :skip_after_find_targets, :skip_after_find_targets_filter
+
     private
 
     def map_column_type(type)
@@ -242,14 +293,16 @@ module Controller
   # find a single resource
   #
   def find_target(opts = {})
-    @target_relation ||= model.scoped
+    run_callbacks :find_target, action_name do
+      @target_relation ||= model.scoped
 
-    tid = opts[:id] || params[:id]
-    opts.delete(:id)
+      tid = opts[:id] || params[:id]
+      opts.delete(:id)
 
-    find_opts = {}
+      find_opts = {}
 
-    @target = @target_relation.find(tid, find_opts)
+      @target = @target_relation.find(tid, find_opts)
+    end
   rescue ActiveRecord::RecordNotFound => e
     raise ActiveRest::Exception::NotFound.new(e.message,
             :retry_possible => false)
@@ -304,25 +357,27 @@ module Controller
   # find all with conditions
   #
   def find_targets
-    if params[:_search]
-      # Fulltext search
+    run_callbacks :find_targets, action_name do
+      if params[:_search]
+        # Fulltext search
 
-      @targets = model.search(params[:_search])
-      @count = @targets.count
-    else
-      @targets_relation ||= model.scoped
+        @targets = model.search(params[:_search])
+        @count = @targets.count
+      else
+        @targets_relation ||= model.scoped
 
-      # Filters
-      @targets_relation = apply_scopes_to_relation(@targets_relation)
-      @targets_relation = apply_json_filter_to_relation(@targets_relation)
-      @targets_relation = apply_simple_filter_to_relation(@targets_relation)
+        # Filters
+        @targets_relation = apply_scopes_to_relation(@targets_relation)
+        @targets_relation = apply_json_filter_to_relation(@targets_relation)
+        @targets_relation = apply_simple_filter_to_relation(@targets_relation)
 
-      # Display filters
-      @targets_relation = apply_sorting_to_relation(@targets_relation)
-      @paginated_targets_relation = apply_pagination_to_relation(@targets_relation)
+        # Display filters
+        @targets_relation = apply_sorting_to_relation(@targets_relation)
+        @paginated_targets_relation = apply_pagination_to_relation(@targets_relation)
 
-      @targets = @paginated_targets_relation
-      @count = @targets_relation.count
+        @targets = @paginated_targets_relation
+        @count = @targets_relation.count
+      end
     end
   rescue ActiveRecord::RecordNotFound => e
     raise ActiveRest::Exception::NotFound.new(e.message,
