@@ -72,6 +72,7 @@ module Controller
       rescue ActiveRest::Model::UnknownField => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
                 :per_field_msgs => { e.attribute_name => 'not found' },
+                :errors => {e.attribute_name => ['not found'] },
                 :retry_possible => false)
       end
 
@@ -139,14 +140,17 @@ module Controller
       rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
                 :per_field_msgs => { e.attribute_name => 'Is not writable' },
+                :errors => { e.attribute_name => ['Is not writable'] },
                 :retry_possible => false)
       rescue ActiveRest::Model::Interface::AttributeNotFound => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
                 :per_field_msgs => { e.attribute_name => 'not found' },
+                :errors => { e.attribute_name => ['not found'] },
                 :retry_possible => false)
       rescue ActiveRecord::RecordInvalid => e
         raise ActiveRest::Exception::UnprocessableEntity.new(e.message,
                 :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
+                :errors => target.errors.to_hash,
                 :retry_possible => false)
       rescue ActiveRecord::RecordNotSaved => e
         raise ActiveRest::Exception::UnprocessableEntity.new(e.message,
@@ -190,14 +194,17 @@ module Controller
       rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
                 :per_field_msgs => { e.attribute_name => 'Is not writable' },
+                :errors => { e.attribute_name => ['Is not writable'] },
                 :retry_possible => false)
       rescue ActiveRest::Model::Interface::AttributeNotFound => e
         raise ActiveRest::Exception::BadRequest.new(e.message,
                 :per_field_msgs => { e.attribute_name => 'not found' },
+                :errors => { e.attribute_name => ['not found'] },
                 :retry_possible => false)
       rescue ActiveRecord::RecordInvalid => e
         raise ActiveRest::Exception::UnprocessableEntity.new(e.message,
                 :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
+                :errors => target.errors.to_hash,
                 :retry_possible => false)
       rescue ActiveRecord::RecordNotSaved => e
         raise ActiveRest::Exception::UnprocessableEntity.new(e.message,
