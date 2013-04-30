@@ -248,24 +248,18 @@ describe CompaniesController do
     delete :destroy, :id => id, :format => :json
     response.should be_success
 
-# Workaound for Rails/RSpec bug?!?
-    lambda {
-      get :show, :id => id, :format => :json
-    }.should raise_error(ActiveRecord::RecordNotFound)
+    get :show, :id => id, :format => :json
 
-#    response.should_not be_success
-#    response.status.should == 404
+    response.should_not be_success
+    response.status.should == 404
   end
 
   it 'rejects deletion of an unknown record' do
 
-# Workaound for Rails/RSpec bug?!?
-    lambda {
-      delete :destroy, :id => 100, :format => :json
-    }.should raise_error(ActiveRecord::RecordNotFound)
+    delete :destroy, :id => 100, :format => :json
 
-#    response.should_not be_success
-#    response.status.should == 404
+    response.should_not be_success
+    response.status.should == 404
   end
 end
 
