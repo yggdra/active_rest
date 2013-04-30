@@ -41,7 +41,7 @@ module Controller
 
     def validate_create
       target = model.new
-      target.send(:attributes=, @request_resource)
+      model.interfaces[:rest].apply_creation_attributes(target, @request_resource)
 
       if !target.valid?
         raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
@@ -57,7 +57,7 @@ module Controller
     def validate_update
       find_target
 
-      @target.send(:attributes=, @request_resource)
+      model.interfaces[:rest].apply_update_attributes(target, @request_resource)
 
       if !target.valid?
         raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
