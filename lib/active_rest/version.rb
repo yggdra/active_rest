@@ -1,3 +1,3 @@
 module ActiveRest
-  VERSION = '4.11.13'
+  VERSION = '4.11.17'
 end

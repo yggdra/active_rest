@@ -45,7 +45,7 @@ module Controller
 
       if !target.valid?
         raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
-                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
+                :errors =>  target.errors.to_hash,
                 :retry_possible => false)
       end
 
@@ -61,7 +61,7 @@ module Controller
 
       if !target.valid?
         raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
-                :per_field_msgs => target.errors.inject({}) { |h, (k, v)| h[k] = v; h },
+                :errors =>  target.errors.to_hash,
                 :retry_possible => false)
       end
 
