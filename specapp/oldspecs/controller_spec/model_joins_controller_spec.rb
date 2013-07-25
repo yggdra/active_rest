@@ -33,7 +33,7 @@ end
 # A
 class ModelJoinsAController < ActionController::Base
   layout false
-  rest_controller_for Company , :model_options => { :join => { :users => [:name] } }
+  ar_controller_for Company , :model_options => { :join => { :users => [:name] } }
 end
 
 describe ModelJoinsAController do
@@ -50,7 +50,7 @@ end
 # B
 class ModelJoinsBController < ActionController::Base
   layout false
-  rest_controller_for Company , :model_options => { :join => { :users => { :name => 'new_name' } } }
+  ar_controller_for Company , :model_options => { :join => { :users => { :name => 'new_name' } } }
 end
 
 describe ModelJoinsBController do
@@ -67,7 +67,7 @@ end
 # C
 class ModelJoinsCController < ActionController::Base
   layout false
-  rest_controller_for Company , :model_options => { :join => { :users => true } }
+  ar_controller_for Company , :model_options => { :join => { :users => true } }
 end
 
 describe ModelJoinsCController do
@@ -85,7 +85,7 @@ end
 # D
 class ModelJoinsDController < ActionController::Base
   layout false
-  rest_controller_for Company , :model_options => { :join => { :users => false } }
+  ar_controller_for Company , :model_options => { :join => { :users => false } }
 end
 
 describe ModelJoinsDController do
@@ -103,7 +103,7 @@ end
 # E
 class ModelJoinsEController < ActionController::Base
   layout false
-  rest_controller_for Company , :model_options => { :join => { :users => [:name], :contacts => true } }
+  ar_controller_for Company , :model_options => { :join => { :users => [:name], :contacts => true } }
 end
 
 describe ModelJoinsEController do
@@ -127,7 +127,7 @@ end
 # F
 class ModelJoinsFController < ActionController::Base
   layout false
-  rest_controller_for Company , :model_options => { :join => { :unknown_reflection => true, :contacts => true } }
+  ar_controller_for Company , :model_options => { :join => { :unknown_reflection => true, :contacts => true } }
 end
 
 describe ModelJoinsFController do

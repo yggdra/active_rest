@@ -7,7 +7,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 class FinderAutoController < ActionController::Base
   layout false
-  rest_controller_for Company, :index_options => { :finder => :auto }
+  ar_controller_for Company, :index_options => { :finder => :auto }
 end
 
 describe FinderAutoController do

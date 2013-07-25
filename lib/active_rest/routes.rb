@@ -10,7 +10,7 @@
 # License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
-module ::ActionController #:nodoc:
+module ::ActionDispatch #:nodoc:
   module Routing #:nodoc:
     class Mapper #:nodoc:
       module Resources

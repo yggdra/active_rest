@@ -154,18 +154,18 @@ describe CompaniesController do
     }
   end
 
-  it 'sets rest_view to action name if not specified in the URI parameters' do
+  it 'sets ar_view to action name if not specified in the URI parameters' do
     get :show, :id => @c2.id, :format => :json
 
-    controller.rest_view.should be_a(ActiveRest::View)
-    controller.rest_view.name.should == :show
+    controller.ar_view.should be_a(ActiveRest::View)
+    controller.ar_view.name.should == :show
   end
 
-  it 'sets rest_view to URI parameter view if specified' do
+  it 'sets ar_view to URI parameter view if specified' do
     get :show, :id => @c2.id, :format => :json, :view => 'foobar'
 
-    controller.rest_view.should be_a(ActiveRest::View)
-    controller.rest_view.name.should == :foobar
+    controller.ar_view.should be_a(ActiveRest::View)
+    controller.ar_view.name.should == :foobar
   end
 
   it 'creates a new record' do

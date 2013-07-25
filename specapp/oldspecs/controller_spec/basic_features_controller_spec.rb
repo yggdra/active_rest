@@ -8,7 +8,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 class BasicFeaturesController < ActionController::Base
   layout false
-  rest_controller_for Company, :index_options => { :finder => :basic }
+  ar_controller_for Company, :index_options => { :finder => :basic }
 end
 
 #
@@ -203,7 +203,7 @@ end
 #
 class BasicFeaturesExtJSUploadController < ApplicationController
   layout false
-  rest_controller_for Company
+  ar_controller_for Company
 end
 
 describe BasicFeaturesExtJSUploadController do

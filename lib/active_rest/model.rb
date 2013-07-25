@@ -55,7 +55,10 @@ module Model
       inherited_without_ar(child)
 
       child.interfaces = child.interfaces.clone
-      child.interfaces.each { |k,v| (child.interfaces[k] = v.clone).model = child }
+      child.interfaces.each do |k,v|
+        child.interfaces[k] = v.clone
+        child.interfaces[k].model = child
+      end
     end
 
     def interface(name, &block)
@@ -101,6 +104,11 @@ module Model
     interfaces[interface_name].ar_serializable_hash(self, opts)
   end
 
+  def ar_apply_update_attributes(interface_name, values, opts = {})
+    raise "Interface #{interface_name} is not defined for class #{self.class.name}" if !interfaces[interface_name]
+
+    interfaces[interface_name].apply_update_attributes(self, values, opts)
+  end
 end
 
 end

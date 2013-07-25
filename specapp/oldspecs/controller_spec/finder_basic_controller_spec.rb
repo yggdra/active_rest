@@ -10,7 +10,7 @@ require File.expand_path(File.dirname(__FILE__)+ '/../models/contact')
 
 class CompanyFindersController < ActionController::Base
   layout false
-  rest_controller_for Company
+  ar_controller_for Company
 end
 
 #

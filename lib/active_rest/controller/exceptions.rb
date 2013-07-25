@@ -1,4 +1,17 @@
+#
+# ActiveRest
+#
+# Copyright (C) 2008-2011, Intercom Srl, Daniele Orlandi
+#
+# Author:: Daniele Orlandi <daniele@orlandi.com>
+#          Lele Forzani <lele@windmill.it>
+#          Alfredo Cerutti <acerutti@intercom.it>
+#
+# License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+#
+
 module ActiveRest
+module Controller
 
 class Exception < StandardError
   attr_accessor :http_status_code
@@ -48,6 +61,49 @@ class Exception < StandardError
       super msg, :unprocessable_entity, public_data, private_data
     end
   end
+
+  class AAAError < Exception
+    attr_accessor :reason
+    attr_accessor :short_msg
+
+    def initialize(opts = {})
+      super(opts[:short_msg])
+
+      self.reason = :unknown
+      opts.each { |k,v| send "#{k}=", v }
+    end
+
+
+    def to_hash
+     {
+      :http_status_code => http_status_code,
+      :reason => reason,
+      :short_msg => short_msg,
+     }
+    end
+
+    def to_json(opts = {})
+      to_hash.to_json
+    end
+
+    def to_xml(opts = {})
+      to_hash.to_xml
+    end
+  end
+
+  class AuthenticationError < AAAError
+    def initialize(opts)
+      super({ :http_status_code => 401 }.merge opts)
+    end
+  end
+
+  class AuthorizationError < AAAError
+    def initialize(opts)
+      super({ :http_status_code => 403 }.merge opts)
+    end
+  end
+
 end
 
+end
 end

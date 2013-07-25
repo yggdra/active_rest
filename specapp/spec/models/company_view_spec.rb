@@ -390,11 +390,11 @@ describe View, 'with_perms!' do
       with_perms!
     end
 
-    @c.ar_serializable_hash(:rest, :view => v).should ==
+    @c.ar_serializable_hash(:rest, :view => v).should deep_include(
      {
-      :_object_perms => { :read => true, :write => true, :delete => true},
-      :_attr_perms => {}
-     }
+      :_object_perms => { :delete => true },
+      :_attr_perms => { :id => { :read => true, :write => true } }
+     })
   end
 end
 

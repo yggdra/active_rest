@@ -21,7 +21,7 @@ end
 
 class FinderCustomController < ActionController::Base
   layout false
-  rest_controller_for Company, :index_options => { :finder => BigCorporation::Finder }
+  ar_controller_for Company, :index_options => { :finder => BigCorporation::Finder }
 end
 
 #

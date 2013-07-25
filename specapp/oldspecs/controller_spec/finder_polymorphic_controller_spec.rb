@@ -10,7 +10,7 @@ require File.expand_path(File.dirname(__FILE__)+ '/../models/contact')
 
 class FinderPolymorphicController < ActionController::Base
   layout false
-  rest_controller_for Contact, :index_options => {
+  ar_controller_for Contact, :index_options => {
             :finder => :polymorphic,
             :polymorphic => {
                           :filter_field => :my_filter_name,

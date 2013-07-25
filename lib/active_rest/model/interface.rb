@@ -1,4 +1,17 @@
+#
+# ActiveRest
+#
+# Copyright (C) 2008-2013, Intercom Srl, Daniele Orlandi
+#
+# Author:: Daniele Orlandi <daniele@orlandi.com>
+#          Lele Forzani <lele@windmill.it>
+#          Alfredo Cerutti <acerutti@intercom.it>
+#
+# License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+#
+
 require 'active_rest/model/interface/attribute'
+require 'active_rest/model/interface/capability'
 
 class Array
   def ar_serializable_hash(ifname, opts = {})
@@ -25,15 +38,18 @@ class Interface
   attr_reader :views
   attr_accessor :activerecord_autoinit
 
-  attr_reader :delayed_attrs
+  attr_reader :config_attrs
+
+  attr_reader :capabilities
 
   def initialize(name, model, opts = {})
     @name = name
     @opts = opts
-    @delayed_attrs = {}
+    @config_attrs = {}
     @views = {}
     @activerecord_autoinit = true
     @attrs = nil
+    @capabilities = {}
 
     @allow_polymorphic_creation = false
 
@@ -55,9 +71,13 @@ class Interface
       @attrs.each { |k,v| (@attrs[k] = v.clone).interface = self }
     end
 
-    if @delayed_attrs
-      @delayed_attrs = @delayed_attrs.clone
-      @delayed_attrs.each { |k,v| (@delayed_attrs[k] = v.clone).interface = self }
+    if @config_attrs
+      @config_attrs = @config_attrs.clone
+      @config_attrs.each { |k,v| (@config_attrs[k] = v.clone).interface = self }
+    end
+
+    if @capabilities
+      @capabilities = @capabilities.clone
     end
 
     super
@@ -71,8 +91,8 @@ class Interface
     if @activerecord_autoinit
       autoinitialize_attrs_from_ar_model
     else
-      @attrs = @delayed_attrs
-      @delayed_attrs = nil
+      @attrs = @config_attrs
+      @config_attrs = nil
     end
 
     @attrs
@@ -82,8 +102,8 @@ class Interface
     if @attrs[name]
       @attrs[name].exclude!
     else
-      @delayed_attrs[name] ||= Attribute.new(name, @interface)
-      @delayed_attrs[name].exclude!
+      @config_attrs[name] ||= Attribute.new(name, @interface)
+      @config_attrs[name].exclude!
     end
   end
 
@@ -105,7 +125,6 @@ class Interface
     end
 
     @model.reflections.each do |name, reflection|
-
       case reflection.macro
       when :composed_of
         @attrs[name] =
@@ -162,7 +181,7 @@ class Interface
       end
     end
 
-    @delayed_attrs.each do |attrname, attr|
+    @config_attrs.each do |attrname, attr|
       if @attrs[attrname]
         @attrs[attrname].apply(attr)
       else
@@ -170,13 +189,11 @@ class Interface
       end
     end
 
-    @delayed_attrs = nil
-
     @attrs
   end
 
   def attribute(name, type = nil, &block)
-    a = @attrs || @delayed_attrs
+    a = @attrs || @config_attrs
 
     name_in_model = name
     if name.is_a?(Hash)
@@ -196,6 +213,11 @@ class Interface
     end
 
     a[name].instance_exec(&block) if block
+  end
+
+  def capability(name, &block)
+    capabilities[name] = Capability.new(name, self)
+    capabilities[name].instance_exec(&block) if block
   end
 
   def view(name, &block)
@@ -310,7 +332,22 @@ class Interface
     incs
   end
 
+  def authorization_required?
+    capabilities.any?
+  end
+
   def ar_serializable_hash(obj, opts = {})
+    capas = []
+
+    if opts[:aaa_context]
+      capasyms = opts[:aaa_context].global_capabilities
+
+      if obj.respond_to? :capabilities_for
+        capasyms += obj.capabilities_for(opts[:aaa_context])
+      end
+
+      capas = capabilities.slice(*capasyms)
+    end
 
     view = opts[:view]
 
@@ -339,8 +376,27 @@ class Interface
 
     values = {}
     perms = {}
-    attrs.select { |k,v| view.attr_visible?(k) && v.readable }.each do |attrname,attr|
+    attrs.each do |attrname,attr|
       attrname = attrname.to_sym
+
+      readable =
+         attr.readable && # Defined readable in interface
+         (!authorization_required? || !!capas.map { |k,v| v.readable?(attrname) }.reduce(&:|)) # Authorized to be read
+
+      writable =
+         attr.writable && # Defined writable in interface
+         (!authorization_required? || !!capas.map { |k,v| v.writable?(attrname) }.reduce(&:|)) # Authorized to be written
+
+      if with_perms
+        perms[attrname] ||= {}
+        perms[attrname][:read] = readable
+        perms[attrname][:write] = true
+      end
+
+      # Visible in view
+      next if !view.attr_visible?(attrname)
+      next if !readable
+
       viewdef = view.definition[attrname]
       viewinc = viewdef ? viewdef.include : false
       subview = viewdef ? viewdef.subview : nil
@@ -406,12 +462,6 @@ class Interface
 
         values[attrname] = val
       end
-
-      if with_perms
-        perms[attrname] ||= {}
-        perms[attrname][:read] = true
-        perms[attrname][:write] = true
-      end
     end
 
     view.definition.each do |attrname,attr|
@@ -429,8 +479,6 @@ class Interface
 
     if with_perms
       res[:_object_perms] = {
-        :read => true,
-        :write => true,
         :delete => true
       }
 
@@ -448,7 +496,19 @@ class Interface
     apply_model_attributes(*args)
   end
 
-  def apply_model_attributes(obj, values)
+  def apply_model_attributes(obj, values, opts = {})
+    capas = []
+
+    if opts[:aaa_context]
+      capasyms = opts[:aaa_context].global_capabilities
+
+      if obj.respond_to? :capabilities_for
+        capasyms += obj.capabilities_for(opts[:aaa_context])
+      end
+
+      capas = capabilities.slice(*capasyms)
+    end
+
     values.each do |valuename, value|
 
       valuename = valuename.to_sym
@@ -465,7 +525,12 @@ class Interface
 
       raise AttributeNotFound.new(obj, valuename) if !attr
       next if attr.ignored
-      raise AttributeNotWriteable.new(obj, valuename) if !attr.writable
+
+      writable =
+         attr.writable &&
+         !!capas.map { |k,v| v.writable?(valuename) }.reduce(&:|)
+
+      raise AttributeNotWriteable.new(obj, valuename) if !writable
 
       case attr
       when Attribute::Reference
@@ -568,6 +633,14 @@ class Interface
 
   def to_s
     "<#{self.class.name} model=#{@model.class.name} name=#{@name} ai=#{@activerecord_autoinit}>"
+  end
+
+  def attr_readable?(capas, name)
+    !!(capas.map { |x| @capabilities[x.to_sym].readable?(name) }.reduce(&:|))
+  end
+
+  def attr_writable?(capas, name)
+    !!(capas.map { |x| @capabilities[x.to_sym].writable?(name) }.reduce(&:|))
   end
 
   class AssociatedRecordNotFound < StandardError

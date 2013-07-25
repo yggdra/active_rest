@@ -2,7 +2,7 @@ class VirtattrCompaniesController < ApplicationController
   include ActiveRest::Controller
 
   layout false
-  rest_controller_for Company
+  ar_controller_for Company
 
   view :show do
     # Simple virtual attribute

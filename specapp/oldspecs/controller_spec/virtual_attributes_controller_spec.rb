@@ -9,7 +9,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../models/user_virtual_attrs
 
 class VirtualAttributesController < ActionController::Base
   layout false
-  rest_controller_for UserVirtualAttrs
+  ar_controller_for UserVirtualAttrs
 end
 
 

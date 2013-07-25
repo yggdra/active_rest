@@ -14,7 +14,7 @@ class IndexExtraConditionsController < ActionController::Base
   #
   # NOTE - actually only the basic finder support this feature
   #
-  rest_controller_for Company, :index_options => { :extra_conditions => :append_my_conditions, :finder => :basic }
+  ar_controller_for Company, :index_options => { :extra_conditions => :append_my_conditions, :finder => :basic }
 
   def append_my_conditions
     { :id => 3 } # force to find id 3 - maybe a runtime value :-p

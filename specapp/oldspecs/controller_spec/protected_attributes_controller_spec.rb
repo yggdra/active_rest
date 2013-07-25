@@ -7,7 +7,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 class WithGuardProtectedAttributesController < ActionController::Base
   layout false
-  rest_controller_for CompanyProtected, :index_options => { :finder => :basic }
+  ar_controller_for CompanyProtected, :index_options => { :finder => :basic }
 
   def guard_protected_attributes
     true # DO NOT let mass-assign - Rails' default
@@ -16,7 +16,7 @@ end
 
 class WithoutGuardProtectedAttributesController < ActionController::Base
   layout false
-  rest_controller_for CompanyProtected, :index_options => { :finder => :basic }
+  ar_controller_for CompanyProtected, :index_options => { :finder => :basic }
 
   def guard_protected_attributes
     false # let mass-assign

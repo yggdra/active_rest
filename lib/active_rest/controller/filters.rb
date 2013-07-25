@@ -172,9 +172,9 @@ module Controller
     def apply_scopes_to_relation(rel)
       if params[:scopes]
         params[:scopes].split(',').each do |scope_name|
-          scope = rest_scopes[scope_name.to_sym]
+          scope = ar_scopes[scope_name.to_sym]
 
-          raise ActiveRest::Exception::BadRequest, "Scope #{scope_name} not found" if !scope
+          raise Exception::BadRequest, "Scope #{scope_name} not found" if !scope
 
           rel = scope.kind_of?(Proc) ? instance_exec(rel, &scope) : rel.send(scope)
         end
@@ -206,7 +206,7 @@ module Controller
             rel = rel.joins { path[1..-1].inject(self.__send__(path[0]).outer) { |a,x| a.__send__(x) } } if path.any?
           end
         rescue Expression::SyntaxError => e
-          raise ActiveRest::Exception::BadRequest.new(e.message)
+          raise Exception::BadRequest.new(e.message)
         end
       end
 

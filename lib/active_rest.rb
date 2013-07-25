@@ -4,7 +4,8 @@ require 'active_rest/routes'
 require 'active_rest/model'
 require 'active_rest/view'
 require 'active_rest/controller'
-require 'active_rest/exceptions'
+
+require 'active_record/associations/builder/has_many'
 
 require 'active_record'
 

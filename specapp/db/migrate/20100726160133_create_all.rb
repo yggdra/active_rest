@@ -75,6 +75,11 @@ class CreateAll < ActiveRecord::Migration
       t.references  :owner
     end
 
+    create_table :accounts, :force => true do |t|
+      t.string   :name
+      t.string   :secret
+    end
+
 
   end
 

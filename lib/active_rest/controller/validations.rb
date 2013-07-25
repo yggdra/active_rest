@@ -14,6 +14,8 @@ module ActiveRest
 module Controller
   module Validations
 
+    class ActiveRecordSucks < Exception ; end
+
     def self.included(base)
       #:nodoc:
     end
@@ -43,10 +45,17 @@ module Controller
       target = model.new
       model.interfaces[:rest].apply_creation_attributes(target, @request_resource)
 
-      if !target.valid?
-        raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
-                :errors =>  target.errors.to_hash,
-                :retry_possible => false)
+      begin
+        ActiveRecord::Base.transaction do
+          if !target.valid?
+            raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
+                    :errors =>  target.errors.to_hash,
+                    :retry_possible => false)
+          end
+
+          raise ActiveRecordSucks
+        end
+      rescue ActiveRecordSucks
       end
 
       respond_to do |format|
@@ -57,12 +66,19 @@ module Controller
     def validate_update
       find_target
 
-      model.interfaces[:rest].apply_update_attributes(target, @request_resource)
+      begin
+        ActiveRecord::Base.transaction do
+          model.interfaces[:rest].apply_update_attributes(target, @request_resource)
 
-      if !target.valid?
-        raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
-                :errors =>  target.errors.to_hash,
-                :retry_possible => false)
+          if !target.valid?
+            raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
+                    :errors =>  target.errors.to_hash,
+                    :retry_possible => false)
+          end
+
+          raise ActiveRecordSucks
+        end
+      rescue ActiveRecordSucks
       end
 
       respond_to do |format|

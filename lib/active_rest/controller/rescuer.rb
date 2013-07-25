@@ -22,7 +22,7 @@ module Rescuer
 
   # Rescue action for ActiveRest::Exception kind of exceptions
   #
-  def rest_ar_exception_rescue_action(e)
+  def ar_exception_rescue_action(e)
 
     log_level = :warn
     log_level = e.log_level if e.respond_to?(:log_level)

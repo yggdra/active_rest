@@ -13,7 +13,7 @@ require File.expand_path(File.dirname(__FILE__)+ '/../models/user')
 #
 class FinderOperatorsController < ActionController::Base
   layout false
-  rest_controller_for Company, :index_options => { :finder => :operators }
+  ar_controller_for Company, :index_options => { :finder => :operators }
 end
 
 describe FinderOperatorsController do
@@ -89,7 +89,7 @@ end
 #
 class FinderOperatorsWJController < ActionController::Base
   layout false
-  rest_controller_for Company, :index_options => { :finder => :Operators },
+  ar_controller_for Company, :index_options => { :finder => :Operators },
                                :model_options => { :join => { :users => true } }
 end
 describe FinderOperatorsWJController do
@@ -161,7 +161,7 @@ end
 #
 class FinderOperatorsWJoinAndMappingController < ActionController::Base
   layout false
-  rest_controller_for Company, :index_options => {:finder => :Operators},
+  ar_controller_for Company, :index_options => {:finder => :Operators},
   :model_options => { :join => { :users => { :name => 'my_name'} } }
 end
 describe FinderOperatorsWJoinAndMappingController do

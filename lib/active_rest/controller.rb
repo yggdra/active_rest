@@ -11,16 +11,17 @@
 #
 
 require 'active_rest/controller/filters'
-require 'active_rest/controller/rest'
+require 'active_rest/controller/verbs'
 require 'active_rest/controller/validations'
 require 'active_rest/controller/rescuer'
+require 'active_rest/controller/exceptions'
 
 module ActiveRest
 
 # ActiveRest::Controller is a mixin to be included in your controllers to make them RESTful.
 #
 # If the model can be deducted from controller name, it is automatically configured, otherwise it has to be specified
-# by calling {#rest_controller_for}
+# by calling {#ar_controller_for}
 #
 # Example:
 #
@@ -46,44 +47,83 @@ module ActiveRest
 module Controller
 
   include Filters
-  include Rest
+  include Verbs
   include Validations
   include Rescuer
 
   attr_accessor :target
   attr_accessor :targets
 
+  attr_accessor :ar_capabilities
+
   def self.included(base)
     base.extend(ClassMethods)
 
     base.instance_eval do
       class_attribute :model
-      class_attribute :rest_options
-      class_attribute :rest_views
-      class_attribute :rest_scopes
-      class_attribute :rest_read_only
-      class_attribute :rest_transaction_handler
+      class_attribute :ar_options
+      class_attribute :ar_views
+      class_attribute :ar_scopes
+      class_attribute :ar_read_only
+      class_attribute :ar_transaction_handler
 
       define_callbacks :find_target
       define_callbacks :find_targets
+
+      define_callbacks :show
+
+      set_callback(:show, :before) do
+        return if @ar_authorized
+
+        if @target.interfaces[:rest].authorization_required?
+          capasyms = []
+
+          if @aaa_context
+            capasyms += @aaa_context.global_capabilities
+          end
+
+          if @target.respond_to?(:capabilities_for)
+            capasyms += @target.capabilities_for(@aaa_context)
+          end
+
+          capasyms = capasyms.select { |x| @target.interfaces[:rest].capabilities[x] }
+
+          if capasyms.any?
+            @ar_authorized = true
+          else
+            raise Exception::AuthorizationError.new(
+                  :reason => :forbidden,
+                  :short_msg => 'You do not have the required capability to access the resource.')
+          end
+        else
+          @ar_authorized = true
+        end
+      end
     end
 
-    base.rest_views = {}
+    base.ar_views = {}
     base.model = nil
-    base.rest_options = {}
-    base.rest_scopes = {}
-    base.rest_transaction_handler = :rest_default_transaction_handler
+    base.ar_options = {}
+    base.ar_scopes = {}
+    base.ar_transaction_handler = :ar_default_transaction_handler
 
     base.class_eval do
       class << self
         alias_method_chain :inherited, :ar
       end
 
-      rescue_from ActiveRest::Exception, :with => :rest_ar_exception_rescue_action
+      rescue_from Exception, :with => :ar_exception_rescue_action
+
+      rescue_from Exception::AAAError do |e|
+        # Be less verbose, it's not really an exception
+        respond_to do |format|
+          format.xml { render :xml => e, :status => e.http_status_code }
+          format.json { render :json => e, :status => e.http_status_code }
+        end
+      end
 
       # are we just requiring validations ?
       prepend_before_filter(:only => [ :update, :create ]) do
-
         if request.content_mime_type == :json
           @request_resource = ActiveSupport::JSON.decode(request.body)
         end
@@ -104,8 +144,8 @@ module Controller
 
       prepend_before_filter do
         # prevent any action that can modify the record or change the table
-        if self.class.rest_read_only && request.method != 'GET'
-          raise ActiveRest::Exception::MethodNotAllowed.new('Read only in effect')
+        if self.class.ar_read_only && request.method != 'GET'
+          raise Exception::MethodNotAllowed.new('Read only in effect')
         end
 
         # setup I18n if options has this information
@@ -113,133 +153,12 @@ module Controller
 
         true
       end
-
-      # member requests
-      before_filter :only => [ :show, :edit, :update, :destroy, :validate_update ] do
-        @target_relation = model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => rest_view)) if model
-        find_target
-        true
-      end
-
-#      base.append_after_filter :x_sendfile, :only => [ :index ]
     end
 
 #    begin
-#      base.rest_controller_for(base.controller_name.classify.constantize)
+#      base.ar_controller_for(base.controller_name.classify.constantize)
 #    rescue NameError
 #    end
-  end
-
-  module ClassMethods
-
-    def inherited_with_ar(child)
-      inherited_without_ar(child)
-
-      child.rest_views = {}
-      child.rest_scopes = {}
-    end
-
-    def rest_controller_without_model
-    end
-
-    def rest_controller_for(model, options = {})
-      self.model = model
-      self.rest_options = options
-    end
-
-    def view(name, &block)
-      self.rest_views[name] ||= View.new(name)
-      self.rest_views[name].instance_exec(&block) if block
-      self.rest_views[name]
-    end
-
-    # Define a scope available to be selected with the :scopes parameter.
-    # The scope itself can be a scope defined in the model or a block operating on the relation.
-    #
-    # If opts is a symbol the scope named as the scope is selected.
-    # If opts is a hash of a single element, the name will be the key and the scope the value.
-    # If opts is a symbol and a block is passed the block will be invoked with the relation as a parameter and should
-    # return a relation with constraints applied. The block is called with the controller's bindings so it can
-    # access params and such.
-    #
-    # Examples:
-    #
-    # scope :name
-    # scope :name => :scopename
-    # scope(:name) { |rel| rel.where(...) }
-    #
-    def scope(opts, &block)
-      if opts.is_a?(Hash)
-        self.rest_scopes[opts.keys.first] = opts.values.first
-      elsif block
-        self.rest_scopes[opts] = block
-      else
-        self.rest_scopes[opts] = opts.to_sym
-      end
-    end
-
-    def read_only!
-      self.rest_read_only = true
-    end
-
-
-    #
-    # finder callbacks
-    #
-    def append_after_find_target_filter(*names, &blk)
-      _insert_callbacks(names, blk) do |name, options|
-        set_callback(:find_target, :after, name, options)
-      end
-    end
-
-    def prepend_after_find_target_filter(*names, &blk)
-     _insert_callbacks(names, blk) do |name, options|
-       set_callback(:find_target, :after, name, options.merge(:prepend => true))
-     end
-    end
-
-    def skip_after_find_target_filter(*names, &blk)
-     _insert_callbacks(names, blk) do |name, options|
-       skip_callback(:find_target, :after, name, options)
-     end
-    end
-
-    def append_after_find_targets_filter(*names, &blk)
-      _insert_callbacks(names, blk) do |name, options|
-        set_callback(:find_targets, :after, name, options)
-      end
-    end
-
-    def prepend_after_find_targets_filter(*names, &blk)
-     _insert_callbacks(names, blk) do |name, options|
-       set_callback(:find_targets, :after, name, options.merge(:prepend => true))
-     end
-    end
-
-    def skip_after_find_targets_filter(*names, &blk)
-     _insert_callbacks(names, blk) do |name, options|
-       skip_callback(:find_targets, :after, name, options)
-     end
-    end
-
-    alias_method :after_find_target, :append_after_find_target_filter
-    alias_method :prepend_after_find_target, :prepend_after_find_target_filter
-    alias_method :skip_after_find_target, :skip_after_find_target_filter
-
-    alias_method :after_find_targets, :append_after_find_targets_filter
-    alias_method :prepend_after_find_targets, :prepend_after_find_targets_filter
-    alias_method :skip_after_find_targets, :skip_after_find_targets_filter
-
-    private
-
-    def map_column_type(type)
-      case type
-      when :datetime
-        :timestamp
-      else
-        type
-      end
-    end
   end
 
   # Select the proper view based on URI parameters and action name.
@@ -248,15 +167,15 @@ module Controller
   #
   # @return [View] the selected view
   #
-  def rest_view
+  def ar_view
     view = nil
 
     if params[:view]
-      view = self.class.rest_views[params[:view].to_sym] ||
+      view = self.class.ar_views[params[:view].to_sym] ||
              self.class.model.interfaces[:rest].views[params[:view].to_sym]
     end
 
-    view ||= self.class.rest_views[action_name.to_sym] ||
+    view ||= self.class.ar_views[action_name.to_sym] ||
              self.class.model.interfaces[:rest].views[action_name.to_sym] ||
              View.new(:anonymous)
     view
@@ -270,7 +189,7 @@ module Controller
 
   # default transaction handler which simply starts an ActiveRecord transaction
   #
-  def rest_default_transaction_handler
+  def ar_default_transaction_handler
     model.transaction do
       yield
     end
@@ -293,9 +212,10 @@ module Controller
   # find a single resource
   #
   def find_target(opts = {})
-    run_callbacks :find_target, action_name do
-      @target_relation ||= model.scoped
+    @target_relation ||= model.scoped
+    @target_relation = model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
 
+    run_callbacks :find_target, action_name do
       tid = opts[:id] || params[:id]
       opts.delete(:id)
 
@@ -304,7 +224,7 @@ module Controller
       @target = @target_relation.find(tid, find_opts)
     end
   rescue ActiveRecord::RecordNotFound => e
-    raise ActiveRest::Exception::NotFound.new(e.message,
+    raise Exception::NotFound.new(e.message,
             :retry_possible => false)
   end
 
@@ -380,9 +300,121 @@ module Controller
       end
     end
   rescue ActiveRecord::RecordNotFound => e
-    raise ActiveRest::Exception::NotFound.new(e.message,
+    raise Exception::NotFound.new(e.message,
             :retry_possible => false)
   end
+
+  module ClassMethods
+    def inherited_with_ar(child)
+      inherited_without_ar(child)
+
+      child.ar_views = {}
+      child.ar_scopes = {}
+    end
+
+    def ar_controller_without_model
+    end
+
+    def ar_controller_for(model, options = {})
+      self.model = model
+      self.ar_options = options
+    end
+
+    def view(name, &block)
+      self.ar_views[name] ||= View.new(name)
+      self.ar_views[name].instance_exec(&block) if block
+      self.ar_views[name]
+    end
+
+    # Define a scope available to be selected with the :scopes parameter.
+    # The scope itself can be a scope defined in the model or a block operating on the relation.
+    #
+    # If opts is a symbol the scope named as the scope is selected.
+    # If opts is a hash of a single element, the name will be the key and the scope the value.
+    # If opts is a symbol and a block is passed the block will be invoked with the relation as a parameter and should
+    # return a relation with constraints applied. The block is called with the controller's bindings so it can
+    # access params and such.
+    #
+    # Examples:
+    #
+    # scope :name
+    # scope :name => :scopename
+    # scope(:name) { |rel| rel.where(...) }
+    #
+    def scope(opts, &block)
+      if opts.is_a?(Hash)
+        self.ar_scopes[opts.keys.first] = opts.values.first
+      elsif block
+        self.ar_scopes[opts] = block
+      else
+        self.ar_scopes[opts] = opts.to_sym
+      end
+    end
+
+    def read_only!
+      self.ar_read_only = true
+    end
+
+
+    #
+    # finder callbacks
+    #
+    def append_after_find_target_filter(*names, &blk)
+      _insert_callbacks(names, blk) do |name, options|
+        set_callback(:find_target, :after, name, options)
+      end
+    end
+
+    def prepend_after_find_target_filter(*names, &blk)
+     _insert_callbacks(names, blk) do |name, options|
+       set_callback(:find_target, :after, name, options.merge(:prepend => true))
+     end
+    end
+
+    def skip_after_find_target_filter(*names, &blk)
+     _insert_callbacks(names, blk) do |name, options|
+       skip_callback(:find_target, :after, name, options)
+     end
+    end
+
+    def append_after_find_targets_filter(*names, &blk)
+      _insert_callbacks(names, blk) do |name, options|
+        set_callback(:find_targets, :after, name, options)
+      end
+    end
+
+    def prepend_after_find_targets_filter(*names, &blk)
+     _insert_callbacks(names, blk) do |name, options|
+       set_callback(:find_targets, :after, name, options.merge(:prepend => true))
+     end
+    end
+
+    def skip_after_find_targets_filter(*names, &blk)
+     _insert_callbacks(names, blk) do |name, options|
+       skip_callback(:find_targets, :after, name, options)
+     end
+    end
+
+    alias_method :after_find_target, :append_after_find_target_filter
+    alias_method :prepend_after_find_target, :prepend_after_find_target_filter
+    alias_method :skip_after_find_target, :skip_after_find_target_filter
+
+    alias_method :after_find_targets, :append_after_find_targets_filter
+    alias_method :prepend_after_find_targets, :prepend_after_find_targets_filter
+    alias_method :skip_after_find_targets, :skip_after_find_targets_filter
+
+    private
+
+    def map_column_type(type)
+      case type
+      when :datetime
+        :timestamp
+      else
+        type
+      end
+    end
+  end
+
 end
 
 end

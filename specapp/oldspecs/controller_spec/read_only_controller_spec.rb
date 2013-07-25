@@ -10,7 +10,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../models/contact')
 
 class ReadOnlyController < ActionController::Base
   layout false
-  rest_controller_for User, :read_only => true
+  ar_controller_for User, :read_only => true
 end
 
 #
