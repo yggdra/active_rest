@@ -59,7 +59,7 @@ module Controller
       end
 
       respond_to do |format|
-        format.any { render :nothing => true }
+        format.any { render :nothing => true, :status => :accepted }
       end
     end
 
@@ -82,7 +82,7 @@ module Controller
       end
 
       respond_to do |format|
-        format.any { render :nothing => true }
+        format.any { render :nothing => true, :status => :accepted }
       end
     end
   end

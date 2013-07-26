@@ -14,17 +14,25 @@ class Engine < Rails::Engine
 end
 end
 
-# Rails 3.1 - 3.2
 module ActiveRecord::Associations::Builder
   class HasMany
-    self.valid_options += [ :embedded ]
+    alias_method :ar_valid_options, :valid_options
+    def valid_options
+      ar_valid_options + [ :embedded ]
+    end
   end
 
   class HasOne
-    self.valid_options += [ :embedded, :embedded_in ]
+    alias_method :ar_valid_options, :valid_options
+    def valid_options
+      ar_valid_options + [ :embedded, :embedded_in ]
+    end
   end
 
   class BelongsTo
-    self.valid_options += [ :embedded, :embedded_in ]
+    alias_method :ar_valid_options, :valid_options
+    def valid_options
+      ar_valid_options + [ :embedded, :embedded_in ]
+    end
   end
 end

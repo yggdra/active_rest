@@ -105,7 +105,7 @@ describe CompaniesController do
 
     put :update, :id => @c2.id, :format => :json
 
-    response.status.should == 400
+    response.status.should == 422
   end
 
   it 'responds to index' do
@@ -275,7 +275,7 @@ describe CompaniesController do
   end
 
   it 'validates resource creation without creating the object' do
-    request.env['X-Validate-Only'] = true
+    request.headers['X-Validate-Only'] = true
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = {
            :name => 'Brand new PRO company',
@@ -286,7 +286,7 @@ describe CompaniesController do
 
     post :create, :format => :json
 
-    response.status.should == 200
+    response.status.should == 202
 
     # check the full list
     get :index,  :format => :json
@@ -294,13 +294,13 @@ describe CompaniesController do
   end
 
   it 'validates resource update without creating the object' do
-    request.env['X-Validate-Only'] = true
+    request.headers['X-Validate-Only'] = true
     request.env['CONTENT_TYPE'] = 'application/json'
     request.env['RAW_POST_DATA'] = { :name => 'Renamed to Compuglobal TM' }.to_json
 
     put :update, :id => @c2.id, :format => :json
 
-    response.status.should == 200
+    response.status.should == 202
 
     # try to read - the value must be the previous
     get :show, :id => @c2.id, :format => :json

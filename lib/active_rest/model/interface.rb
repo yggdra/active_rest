@@ -340,19 +340,18 @@ class Interface
     capas = []
 
     if opts[:aaa_context]
-      capasyms = opts[:aaa_context].global_capabilities
+      capas = opts[:aaa_context].global_capabilities
 
       if obj.respond_to? :capabilities_for
-        capasyms += obj.capabilities_for(opts[:aaa_context])
+        capas += obj.capabilities_for(opts[:aaa_context])
       end
-
-      capas = capabilities.slice(*capasyms)
     end
 
     view = opts[:view]
 
     if view.is_a?(Symbol)
       view = @views[view]
+      view = @views[:_default_] if !view
       raise ViewNotFound, "View #{opts[:view]} not found" if !view
     end
 
@@ -381,11 +380,11 @@ class Interface
 
       readable =
          attr.readable && # Defined readable in interface
-         (!authorization_required? || !!capas.map { |k,v| v.readable?(attrname) }.reduce(&:|)) # Authorized to be read
+         attr_readable?(capas, attrname)
 
       writable =
          attr.writable && # Defined writable in interface
-         (!authorization_required? || !!capas.map { |k,v| v.writable?(attrname) }.reduce(&:|)) # Authorized to be written
+         attr_writable?(capas, attrname)
 
       if with_perms
         perms[attrname] ||= {}
@@ -500,13 +499,11 @@ class Interface
     capas = []
 
     if opts[:aaa_context]
-      capasyms = opts[:aaa_context].global_capabilities
+      capas = opts[:aaa_context].global_capabilities
 
       if obj.respond_to? :capabilities_for
-        capasyms += obj.capabilities_for(opts[:aaa_context])
+        capas += obj.capabilities_for(opts[:aaa_context])
       end
-
-      capas = capabilities.slice(*capasyms)
     end
 
     values.each do |valuename, value|
@@ -528,7 +525,7 @@ class Interface
 
       writable =
          attr.writable &&
-         !!capas.map { |k,v| v.writable?(valuename) }.reduce(&:|)
+         attr_writable?(capas, valuename)
 
       raise AttributeNotWriteable.new(obj, valuename) if !writable
 
@@ -566,7 +563,7 @@ class Interface
           association.target
         else
           ids = value.map {|a| a['id'] || a[:id] }.compact
-          ids.empty? ? [] : association.scoped.where(association.klass.primary_key => ids)
+          ids.empty? ? [] : association.all.where(association.klass.primary_key => ids)
         end
 
         value.each do |attributes|
@@ -636,11 +633,11 @@ class Interface
   end
 
   def attr_readable?(capas, name)
-    !!(capas.map { |x| @capabilities[x.to_sym].readable?(name) }.reduce(&:|))
+    !authorization_required? || !!capas.map { |x| @capabilities[x.to_sym].readable?(name) }.reduce(&:|)
   end
 
   def attr_writable?(capas, name)
-    !!(capas.map { |x| @capabilities[x.to_sym].writable?(name) }.reduce(&:|))
+    !authorization_required? || !!capas.map { |x| @capabilities[x.to_sym].writable?(name) }.reduce(&:|)
   end
 
   class AssociatedRecordNotFound < StandardError

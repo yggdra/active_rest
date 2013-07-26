@@ -1,11 +1,12 @@
 source 'http://rubygems.org'
 
-gem 'rails', '~> 3.2.0'
+#gem 'rails', '~> 3.2.0'
+gem 'rails', '~> 4.0.0'
 
 gem 'sqlite3-ruby', :require => 'sqlite3'
 
 gem 'squeel'
-gem 'active_rest', '>= 3.0.1', :path => '..'
+gem 'active_rest', '>= 5.0.0', :path => '..'
 
 # Bundle gems for certain environments:
 group :test, :development do

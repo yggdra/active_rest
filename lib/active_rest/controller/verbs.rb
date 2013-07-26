@@ -66,7 +66,7 @@ module Verbs
   end
 
   def index
-#      @targets_relation = model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
+#      @targets_relation = model.all.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
 
     begin
       find_targets
@@ -84,7 +84,7 @@ module Verbs
                     ActiveSupport::Inflector.underscore(model.name)).tr('/', '_')
     end
 
-    respond_with(@targets.kind_of?(ActiveRecord::Relation) ? @targets.all : @targets,
+    respond_with(@targets,
                  :total => @count,
                  :root => root_name) do |format|
       yield(format) if block_given?
@@ -188,7 +188,7 @@ module Verbs
       send(ar_transaction_handler) do
         before_update
 
-        model.ar_apply_update_attributes(:rest, @target, @request_resource, :aaa_context => @aaa_context)
+        @target.ar_apply_update_attributes(:rest, @request_resource, :aaa_context => @aaa_context)
 
         before_save
 
@@ -197,7 +197,7 @@ module Verbs
         after_update
       end
     rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
-      raise Exception::BadRequest.new(e.message,
+      raise Exception::UnprocessableEntity.new(e.message,
               :errors => { e.attribute_name => [ 'Is not writable' ] },
               :retry_possible => false)
     rescue ActiveRest::Model::Interface::AttributeNotFound => e

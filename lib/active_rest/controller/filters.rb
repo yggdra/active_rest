@@ -72,7 +72,7 @@ module Controller
 
         if @tree[:field]
           # Valid for boolean fields
-          return @rel.scoped.table[@tree[:field]]
+          return @rel.table[@tree[:field]]
         else
           return to_arel_recur(@tree)
         end

@@ -212,10 +212,10 @@ module Controller
   # find a single resource
   #
   def find_target(opts = {})
-    @target_relation ||= model.scoped
-    @target_relation = model.scoped.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
+    @target_relation ||= model.all
+    @target_relation = model.all.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
 
-    run_callbacks :find_target, action_name do
+    run_callbacks :find_target do
       tid = opts[:id] || params[:id]
       opts.delete(:id)
 
@@ -246,7 +246,7 @@ module Controller
 
     sorts = params[:sort].split(',')
 
-    sorts.each do |sort|
+    sorts.reverse.each do |sort|
       if sort =~ /^([-+]?)(.*)$/
         desc = ($1 && $1 == '-')
         attrname = $2
@@ -277,14 +277,14 @@ module Controller
   # find all with conditions
   #
   def find_targets
-    run_callbacks :find_targets, action_name do
+    run_callbacks :find_targets do
       if params[:_search]
         # Fulltext search
 
         @targets = model.search(params[:_search])
         @count = @targets.count
       else
-        @targets_relation ||= model.scoped
+        @targets_relation ||= model.all
 
         # Filters
         @targets_relation = apply_scopes_to_relation(@targets_relation)

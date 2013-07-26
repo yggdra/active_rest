@@ -70,7 +70,7 @@ module Model
       attrs = attrs.to_s.split('.') if !attrs.kind_of?(Array)
 
       if attrs.count == 1
-        attr = self.scoped.table[attrs[0]]
+        attr = self.all.table[attrs[0]]
 
         if !attr || !self.columns_hash[attrs[0]]
           raise UnknownField.new("Unknown field '#{attrs[0]}' in model #{self.name}", attrs[0])
