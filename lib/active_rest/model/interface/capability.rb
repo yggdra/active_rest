@@ -56,6 +56,11 @@ class Capability
     @attr_acc[name.to_sym] |= READABLE | WRITABLE
   end
 
+  def no_access(name, &block)
+    @attr_acc[name.to_sym] ||= 0
+    @attr_acc[name.to_sym] &= ~(READABLE | WRITABLE)
+  end
+
   def readable?(name)
     @attr_acc[name.to_sym] ? ((@attr_acc[name.to_sym] & READABLE) != 0) : @default_readable
   end
