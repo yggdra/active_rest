@@ -10,20 +10,22 @@
 # License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
-module ::ActionDispatch #:nodoc:
-  module Routing #:nodoc:
-    class Mapper #:nodoc:
-      module Resources
-        def aresources(*resources, &block)
-          resources(*resources) do
-            collection do
-              get :schema
-            end
+module ActionDispatch #:nodoc:
+module Routing #:nodoc:
+class Mapper #:nodoc:
 
-            yield if block_given?
-          end
-        end
+module Resources
+  def aresources(*resources, &block)
+    resources(*resources) do
+      collection do
+        get :schema
       end
+
+      yield if block_given?
     end
   end
+end
+
+end
+end
 end

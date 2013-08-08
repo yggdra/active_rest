@@ -133,7 +133,35 @@ class Interface
         # Hide attributes composing the structure
         reflection.options[:mapping].each { |x| mark_attr_to_be_excluded(x[0].to_sym) }
 
-      when :belongs_to, :has_one
+      when :belongs_to
+        if reflection.options[:polymorphic]
+          if reflection.options[:embedded]
+            @attrs[name] = Attribute::EmbeddedPolymorphicModel.new(name, self)
+
+            mark_attr_to_be_excluded(reflection.foreign_key.to_sym)
+            mark_attr_to_be_excluded(reflection.foreign_type.to_sym)
+          else
+            @attrs[name] = Attribute::PolymorphicReference.new(name, self)
+          end
+        else
+          if reflection.options[:embedded]
+            @attrs[name] =
+              Attribute::EmbeddedModel.new(name, self,
+                :model_class => reflection.class_name,
+                :can_be_eager_loaded => true)
+
+            # Hide embedded foreign key column
+            mark_attr_to_be_excluded(reflection.foreign_key.to_sym)
+          else
+            @attrs[name] =
+              Attribute::Reference.new(name, self,
+                :referenced_class_name => reflection.class_name,
+                :foreign_key => reflection.foreign_key.to_s,
+                :can_be_eager_loaded => true)
+          end
+        end
+
+      when :has_one
         if reflection.options[:polymorphic]
           if reflection.options[:embedded]
             @attrs[name] = Attribute::EmbeddedPolymorphicModel.new(name, self)
@@ -347,6 +375,8 @@ class Interface
       end
     end
 
+    capas &= capabilities.keys
+
     view = opts[:view]
 
     if view.is_a?(Symbol)
@@ -506,6 +536,8 @@ class Interface
       end
     end
 
+    capas &= capabilities.keys
+
     values.each do |valuename, value|
 
       valuename = valuename.to_sym
@@ -563,7 +595,7 @@ class Interface
           association.target
         else
           ids = value.map {|a| a['id'] || a[:id] }.compact
-          ids.empty? ? [] : association.all.where(association.klass.primary_key => ids)
+          ids.empty? ? [] : association.scoped.where(association.klass.primary_key => ids)
         end
 
         value.each do |attributes|

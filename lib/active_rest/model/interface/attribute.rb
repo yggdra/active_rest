@@ -59,13 +59,13 @@ class Interface
       res[:writable] = @writable
       res[:readable] = @readable
 
-      res[:edit_on_creation] = true
-      res[:visible_on_creation] = true
+#      res[:edit_on_creation] = true
+#      res[:visible_on_creation] = true
 
-      res[:after_creation_perms] = {
-        :write => true,
-        :read => true,
-      }
+#      res[:after_creation_perms] = {
+#        :write => true,
+#        :read => true,
+#      }
 
       res
     end
@@ -124,11 +124,13 @@ class Interface
     #
     class Reference < Attribute
       attr_accessor :referenced_class_name
+      attr_accessor :foreign_key
       attr_accessor :can_be_eager_loaded
 
       def definition
         res = super
         res[:referenced_class] = @referenced_class_name
+        res[:foreign_key] = @referenced_class_name
         res
       end
     end

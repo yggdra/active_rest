@@ -90,7 +90,7 @@ module Controller
             raise SyntaxError, "Attribute '#{attr}' name has invalid chars" if attr =~ /[^a-zA-Z0-9._]/
 
             begin
-              (attr, path) = @rel.klass.nested_attribute(attr)
+              (attr, path) = @rel.nested_attribute(attr)
             rescue ActiveRest::Model::UnknownField => e
               raise UnknownField, "Unknown field '#{attr}'"
             end
@@ -146,7 +146,7 @@ module Controller
         next if k[0] == '_'
 
         begin
-          (attr, path) = rel.klass.nested_attribute(k)
+          (attr, path) = rel.nested_attribute(k)
 
           rel = rel.joins { path.inject(self) { |a,x| a.__send__(x) } } if path.any?
           rel = rel.where(attr.eq(v))

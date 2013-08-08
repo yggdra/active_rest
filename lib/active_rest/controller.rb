@@ -123,7 +123,7 @@ module Controller
       end
 
       # are we just requiring validations ?
-      prepend_before_filter(:only => [ :update, :create ]) do
+      prepend_before_action(:only => [ :update, :create ]) do
         if request.content_mime_type == :json
           @request_resource = ActiveSupport::JSON.decode(request.body)
         end
@@ -142,7 +142,7 @@ module Controller
         true
       end
 
-      prepend_before_filter do
+      prepend_before_action do
         # prevent any action that can modify the record or change the table
         if self.class.ar_read_only && request.method != 'GET'
           raise Exception::MethodNotAllowed.new('Read only in effect')
@@ -212,8 +212,8 @@ module Controller
   # find a single resource
   #
   def find_target(opts = {})
-    @target_relation ||= model.all
-    @target_relation = model.all.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
+    @target_relation ||= model
+    @target_relation = model.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
 
     run_callbacks :find_target do
       tid = opts[:id] || params[:id]
@@ -251,7 +251,7 @@ module Controller
         desc = ($1 && $1 == '-')
         attrname = $2
 
-        (attr, rel) = rel.klass.nested_attribute(attrname, rel)
+        (attr, rel) = rel.nested_attribute(attrname, rel)
         attr = attr.desc if desc
 
         rel = rel.order(attr)
