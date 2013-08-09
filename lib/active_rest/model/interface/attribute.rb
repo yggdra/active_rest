@@ -130,7 +130,7 @@ class Interface
       def definition
         res = super
         res[:referenced_class] = @referenced_class_name
-        res[:foreign_key] = @referenced_class_name
+        res[:foreign_key] = @foreign_key if @foreign_key
         res
       end
     end
