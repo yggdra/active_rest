@@ -595,7 +595,7 @@ class Interface
           association.target
         else
           ids = value.map {|a| a['id'] || a[:id] }.compact
-          ids.empty? ? [] : association.scoped.where(association.klass.primary_key => ids)
+          ids.empty? ? [] : association.scope.where(association.klass.primary_key => ids)
         end
 
         value.each do |attributes|
