@@ -148,7 +148,14 @@ class Interface
           raise "Missing interface #{@interface.name} from model #{@model_class}"
         end
 
-        res[:schema] = @model_class.constantize.interfaces[@interface.name].schema
+        res[:class_name] = @model_class
+
+        if @model_class.constantize.interfaces[@interface.name] != @interface
+          # Avoid endless recursion
+          # FIXME TODO: does not avoid recursion if two or more schemas are nested
+          res[:schema] = @model_class.constantize.interfaces[@interface.name].schema
+        end
+
         res
       end
     end
@@ -166,7 +173,13 @@ class Interface
           raise "Missing interface #{@interface.name} from model #{@model_class}"
         end
 
-        res[:schema] = @model_class.constantize.interfaces[@interface.name].schema
+        res[:class_name] = @model_class
+
+        if @model_class.constantize.interfaces[@interface.name] != @interface
+          # Avoid endless recursion
+          # FIXME TODO: does not avoid recursion if two or more schemas are nested
+          res[:schema] = @model_class.constantize.interfaces[@interface.name].schema
+        end
 
         res[:edit_on_creation] = true
         res[:visible_on_creation] = true
