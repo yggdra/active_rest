@@ -381,11 +381,10 @@ class Interface
 
     if view.is_a?(Symbol)
       view = @views[view]
-      view = @views[:_default_] if !view
       raise ViewNotFound, "View #{opts[:view]} not found" if !view
     end
 
-    view ||= View.new(:anonymous)
+    view ||= @views[:_default_] || View.new(:anonymous)
 
     with_perms = (view.with_perms || opts[:with_perms] == true) && opts[:with_perms] != false
 
