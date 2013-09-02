@@ -121,6 +121,7 @@ class Interface
           :type => type,
           :default => column.default,
           :notnull => !column.null,
+          :writable => ![ :id, :created_at, :updated_at ].include?(name),
         )
     end
 
@@ -151,6 +152,8 @@ class Interface
                 :can_be_eager_loaded => true)
 
             # Hide embedded foreign key column
+            mark_attr_to_be_excluded(reflection.foreign_key.to_sym)
+          elsif reflection.options[:embedded_in]
             mark_attr_to_be_excluded(reflection.foreign_key.to_sym)
           else
             @attrs[name] =
