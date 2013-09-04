@@ -50,6 +50,11 @@ module Model
   class PolymorphicRelationNotSupported < ModelError ; end
 
   module ClassMethods
+    def ar_new(interface_name, values, opts = {})
+      obj = new
+      obj.ar_apply_creation_attributes(interface_name, values, opts)
+      obj
+    end
 
     def inherited_with_ar(child)
       inherited_without_ar(child)
@@ -108,6 +113,12 @@ module Model
     raise "Interface #{interface_name} is not defined for class #{self.class.name}" if !interfaces[interface_name]
 
     interfaces[interface_name].apply_update_attributes(self, values, opts)
+  end
+
+  def ar_apply_creation_attributes(interface_name, values, opts = {})
+    raise "Interface #{interface_name} is not defined for class #{self.class.name}" if !interfaces[interface_name]
+
+    interfaces[interface_name].apply_creation_attributes(self, values, opts)
   end
 end
 
