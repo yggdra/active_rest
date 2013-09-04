@@ -132,9 +132,7 @@ module Verbs
     begin
       send(ar_transaction_handler) do
         before_create
-        @target ||= model.new
-
-        model.interfaces[:rest].apply_creation_attributes(@target, @request_resource, :aaa_context => @aaa_context)
+        @target ||= model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
 
         before_save
 

@@ -42,8 +42,7 @@ module Controller
     #
 
     def validate_create
-      target = model.new
-      model.interfaces[:rest].apply_creation_attributes(target, @request_resource)
+      target = model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
 
       begin
         ActiveRecord::Base.transaction do

@@ -540,58 +540,59 @@ class Interface
 
     capas &= capabilities.keys
 
-    values.each do |valuename, value|
+    values.each do |attr_name, value|
 
-      valuename = valuename.to_sym
-      attr = attrs[valuename]
+      attr_name = attr_name.to_sym
+      attr = attrs[attr_name]
 
-      if valuename == :_type
+      if attr_name == :_type
         next if !value
         next if @allow_polymorphic_creation && value.constantize <= obj.class
         next if value.constantize == obj.class
 
         raise ClassDoesNotMatch.new(obj.class, value.constantize)
       end
-      next if valuename == :id
+      next if attr_name == :id
 
-      raise AttributeNotFound.new(obj, valuename) if !attr
+      raise AttributeNotFound.new(obj, attr_name) if !attr
       next if attr.ignored
 
       writable =
          attr.writable &&
-         attr_writable?(capas, valuename)
+         attr_writable?(capas, attr_name)
 
-      raise AttributeNotWriteable.new(obj, valuename) if !writable
+      raise AttributeNotWriteable.new(obj, attr_name) if !writable
 
       case attr
       when Attribute::Reference
       when Attribute::EmbeddedModel
-        record = obj.send(valuename)
+        record = obj.send(attr_name)
 
         if !value || value['_destroy']
           # DESTROY
           record.mark_for_destruction if record
         elsif record && value['id'] && value['id'] != 0 && record.id == value['id']
           # UPDATE
-          record.interfaces[@name].apply_update_attributes(record, value)
+          record.ar_apply_update_attributes(@name, value, opts)
         else
           # CREATE
 
           # We have to do this since it is embedded
           record.mark_for_destruction if record
 
+          newrecord = nil
           if @allow_polymorphic_creation && value.has_key('_type') && value['_type']
             newrecord = value['_type'].constantize.new
           else
-            newrecord = obj.send("build_#{valuename}")
+            newrecord = obj.send("build_#{attr_name}")
           end
 
-          newrecord.interfaces[@name].apply_creation_attributes(newrecord, value)
+          newrecord.ar_apply_creation_attributes(@name, value, opts)
         end
 
       when Attribute::UniformModelsCollection
 
-        association = obj.association(valuename)
+        association = obj.association(attr_name)
 
         existing_records = if association.loaded?
           association.target
@@ -607,12 +608,11 @@ class Interface
             # CREATE
 
             if attributes['_type'] && attr.model_class.constantize.interfaces[@name].allow_polymorphic_creation
-              newrecord = attributes[:_type].constantize.new
-              newrecord.interfaces[@name].apply_creation_attributes(newrecord, attributes)
+              newrecord = attributes[:_type].constantize.ar_new(@name, attributes, opts)
               association.concat(newrecord)
             else
               newrecord = association.build
-              newrecord.interfaces[@name].apply_creation_attributes(newrecord, attributes)
+              newrecord.ar_apply_creation_attributes(@name, attributes, opts)
             end
 
           elsif existing_record = existing_records.detect { |record| record.id.to_s == attributes['id'].to_s }
@@ -632,7 +632,7 @@ class Interface
               existing_record.destroy
             else
               # UPDATE
-              existing_record.interfaces[@name].apply_update_attributes(existing_record, attributes)
+              existing_record.ar_apply_update_attributes(@name, attributes, opts)
             end
           else
             raise AssociatedRecordNotFound.new
@@ -645,7 +645,7 @@ class Interface
       when Attribute::PolymorphicReferencesCollection
 
       when Attribute::Structure, Attribute
-        obj.send("#{valuename}=", value)
+        obj.send("#{attr_name}=", value)
       end
 
     end
@@ -678,23 +678,24 @@ class Interface
   end
 
   class AttributeError < StandardError
-    attr_accessor :model_class
+    attr_accessor :object
     attr_accessor :attribute_name
 
-    def initialize(model_class, attribute_name)
+    def initialize(object, attribute_name)
+      @object = object
       @attribute_name = attribute_name
     end
   end
 
   class AttributeNotWriteable < AttributeError
     def to_s
-      "Attribute #{@attribute_name} in class #{@model_class} is not writable"
+      "Attribute #{@attribute_name} in class #{@object.class} is not writable"
     end
   end
 
   class AttributeNotFound < AttributeError
     def to_s
-      "Attribute #{@attribute_name} in class #{@model_class} not found"
+      "Attribute #{@attribute_name} in class #{@object.class} not found"
     end
   end
 
