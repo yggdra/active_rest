@@ -45,6 +45,7 @@ module ActiveRest
 #
 #
 module Controller
+  extend ActiveSupport::Concern
 
   include Filters
   include Verbs
@@ -56,103 +57,102 @@ module Controller
 
   attr_accessor :ar_capabilities
 
-  def self.included(base)
-    base.extend(ClassMethods)
+  module Shit
+  end
 
-    base.instance_eval do
-      class_attribute :model
-      class_attribute :ar_options
-      class_attribute :ar_views
-      class_attribute :ar_scopes
-      class_attribute :ar_read_only
-      class_attribute :ar_transaction_handler
+  included do
+    class_attribute :model
+    self.model = nil
 
-      define_callbacks :find_target
-      define_callbacks :find_targets
+    class_attribute :ar_options
+    self.ar_options = {}
 
-      define_callbacks :show
+    class_attribute :ar_views
+    self.ar_views = {}
 
-      set_callback(:show, :before) do
-        return if @ar_authorized
+    class_attribute :ar_scopes
+    self.ar_scopes = {}
 
-        if @target.interfaces[:rest].authorization_required?
-          capasyms = []
+    class_attribute :ar_read_only
 
-          if @aaa_context
-            capasyms += @aaa_context.global_capabilities
-          end
+    class_attribute :ar_transaction_handler
+    self.ar_transaction_handler = :ar_default_transaction_handler
 
-          if @target.respond_to?(:capabilities_for)
-            capasyms += @target.capabilities_for(@aaa_context)
-          end
+    define_callbacks :find_target
+    define_callbacks :find_targets
 
-          capasyms = capasyms.select { |x| @target.interfaces[:rest].capabilities[x] }
+    define_callbacks :show
 
-          if capasyms.any?
-            @ar_authorized = true
-          else
-            raise Exception::AuthorizationError.new(
-                  :reason => :forbidden,
-                  :short_msg => 'You do not have the required capability to access the resource.')
-          end
-        else
-          @ar_authorized = true
+    class << self
+      alias_method_chain :inherited, :ar
+    end
+
+    set_callback(:show, :before) do
+      return if @ar_authorized
+
+      if @target.interfaces[:rest].authorization_required?
+        capasyms = []
+
+        if @aaa_context
+          capasyms += @aaa_context.global_capabilities
         end
+
+        if @target.respond_to?(:capabilities_for)
+          capasyms += @target.capabilities_for(@aaa_context)
+        end
+
+        capasyms = capasyms.select { |x| @target.interfaces[:rest].capabilities[x] }
+
+        if capasyms.any?
+          @ar_authorized = true
+        else
+          raise Exception::AuthorizationError.new(
+                :reason => :forbidden,
+                :short_msg => 'You do not have the required capability to access the resource.')
+        end
+      else
+        @ar_authorized = true
       end
     end
 
-    base.ar_views = {}
-    base.model = nil
-    base.ar_options = {}
-    base.ar_scopes = {}
-    base.ar_transaction_handler = :ar_default_transaction_handler
+    rescue_from Exception do |e|
+      ar_exception_rescue_action(e)
+    end
 
-    base.class_eval do
-      class << self
-        alias_method_chain :inherited, :ar
+    rescue_from Exception::AAAError do |e|
+      ar_exception_rescue_action(e, :log_level => :none)
+    end
+
+    # are we just requiring validations ?
+    prepend_before_action(:only => [ :update, :create ]) do
+      if request.content_mime_type == :json
+        @request_resource = ActiveSupport::JSON.decode(request.body)
       end
 
-      rescue_from Exception, :with => :ar_exception_rescue_action
+      # if a X-Validate-Only header is present RESTful request is considered a "dry-run" and gets rerouted to
+      # a different action named validate_*
 
-      rescue_from Exception::AAAError do |e|
-        # Be less verbose, it's not really an exception
-        respond_to do |format|
-          format.xml { render :xml => e, :status => e.http_status_code }
-          format.json { render :json => e, :status => e.http_status_code }
-        end
+      if is_true?(request.headers['X-Validate-Only'])
+        # I didn't find a better way to internal redirect to a different action
+        new_action = 'validate_' + action_name
+        action_name = new_action
+        send(action_name)
+        return false
       end
 
-      # are we just requiring validations ?
-      prepend_before_action(:only => [ :update, :create ]) do
-        if request.content_mime_type == :json
-          @request_resource = ActiveSupport::JSON.decode(request.body)
-        end
+      true
+    end
 
-        # if a X-Validate-Only header is present RESTful request is considered a "dry-run" and gets rerouted to
-        # a different action named validate_*
-
-        if is_true?(request.headers['X-Validate-Only'])
-          # I didn't find a better way to internal redirect to a different action
-          new_action = 'validate_' + action_name
-          action_name = new_action
-          send(action_name)
-          return false
-        end
-
-        true
+    prepend_before_action do
+      # prevent any action that can modify the record or change the table
+      if self.class.ar_read_only && request.method != 'GET'
+        raise Exception::MethodNotAllowed.new('Read only in effect')
       end
 
-      prepend_before_action do
-        # prevent any action that can modify the record or change the table
-        if self.class.ar_read_only && request.method != 'GET'
-          raise Exception::MethodNotAllowed.new('Read only in effect')
-        end
+      # setup I18n if options has this information
+      I18n.locale = params[:language].to_sym if params[:language]
 
-        # setup I18n if options has this information
-        I18n.locale = params[:language].to_sym if params[:language]
-
-        true
-      end
+      true
     end
 
 #    begin
