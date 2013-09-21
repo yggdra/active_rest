@@ -65,6 +65,7 @@ class Exception < StandardError
   class AAAError < Exception
     attr_accessor :reason
     attr_accessor :short_msg
+    attr_accessor :headers
 
     def initialize(opts = {})
       super(opts[:short_msg])

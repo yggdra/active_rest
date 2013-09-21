@@ -22,10 +22,13 @@ module Rescuer
 
   # Rescue action for ActiveRest::Exception kind of exceptions
   #
-  def ar_exception_rescue_action(e)
+  def ar_exception_rescue_action(e, opts = {})
+
+    headers.merge!(e.headers) if e.respond_to?(:headers) && e.headers
 
     log_level = :warn
     log_level = e.log_level if e.respond_to?(:log_level)
+    log_level = opts[:log_level] if opts[:log_level]
 
     if log_level != :none
       message = "\nRendered exception: #{e.class} (#{e.message}):\n"
@@ -37,6 +40,7 @@ module Rescuer
       render :nothing => true, :status => e.status
     else
       res = {
+        :type => e.class.name,
         :reason => :exception,
         :short_msg => e.message,
         :long_msg => '',
@@ -56,7 +60,6 @@ module Rescuer
       status_code = e.respond_to?(:http_status_code) ? e.http_status_code : 500
 
       respond_to do |format|
-        format.html { raise e }
         format.xml { render :xml => res, :status => status_code }
         format.yaml { render :yaml => res, :status => status_code }
         format.json { render :json => res, :status => status_code }
