@@ -396,14 +396,14 @@ describe Account, 'apply_update_attributes' do
   end
 end
 
-describe Account, '' do
+describe Account, 'ar_apply_update_attributes' do
   before(:each) do
     @a1= FactoryGirl.create(:account1)
     @a2= FactoryGirl.create(:account2)
     @a3= FactoryGirl.create(:account3)
   end
 
-  it 'does not raise an error when empty update is specified' do
+  it 'does not raise an error when empty update is specified if the resource is accessible in some way' do
     lambda { @a1.ar_apply_update_attributes(:rest, { }, :aaa_context => context_2) }.should_not raise_error
     lambda { @a1.ar_apply_update_attributes(:rest, { }, :aaa_context => context_3) }.should_not raise_error
     lambda { @a1.ar_apply_update_attributes(:rest, { }, :aaa_context => context_4) }.should_not raise_error
@@ -419,7 +419,28 @@ describe Account, '' do
     lambda { @a3.ar_apply_update_attributes(:rest, { }, :aaa_context => context_s) }.should_not raise_error
   end
 
-  it 'raise an error when not writeable attributes are specified' do
+  it 'does not raise an error when writable attributes are written' do
+    lambda { @a1.ar_apply_update_attributes(:rest, { :name => 'newname' }, :aaa_context => context_3) }.should_not raise_error
+    lambda { @a1.ar_apply_update_attributes(:rest, { :name => 'newname', :balance => 0, :secret => 'new_secret' },
+                                            :aaa_context => context_4) }.should_not raise_error
+    lambda { @a1.ar_apply_update_attributes(:rest, { :name => 'newname', :balance => 0, :secret => 'new_secret' },
+                                            :aaa_context => context_5) }.should_not raise_error
+    lambda { @a1.ar_apply_update_attributes(:rest, { :name => 'newname', :balance => 0, :secret => 'new_secret' },
+                                            :aaa_context => context_s) }.should_not raise_error
+
+    lambda { @a2.ar_apply_update_attributes(:rest, { :name => 'newname' }, :aaa_context => context_3) }.should_not raise_error
+    lambda { @a2.ar_apply_update_attributes(:rest, { :name => 'newname', :balance => 0, :secret => 'new_secret' },
+                                            :aaa_context => context_4) }.should_not raise_error
+    lambda { @a2.ar_apply_update_attributes(:rest, { :name => 'newname', :balance => 0, :secret => 'new_secret' },
+                                            :aaa_context => context_5) }.should_not raise_error
+    lambda { @a2.ar_apply_update_attributes(:rest, { :name => 'newname', :balance => 0, :secret => 'new_secret' },
+                                            :aaa_context => context_s) }.should_not raise_error
+
+    lambda { @a3.ar_apply_update_attributes(:rest, { :name => 'newname', :balance => 0, :secret => 'new_secret' },
+                                            :aaa_context => context_s) }.should_not raise_error
+  end
+
+  it 'raises an error when not writeable attributes are specified' do
     lambda { @a1.ar_apply_update_attributes(:rest, { :name => 'Foo' }, :aaa_context => context_2) }.
       should raise_error(ActiveRest::Model::Interface::AttributeNotWriteable)
 
@@ -438,5 +459,29 @@ describe Account, '' do
 
     lambda { @a1.ar_apply_update_attributes(:rest, { :name => 'Foo', :secret => 'Bar' }, :aaa_context => context_3) }.
      should raise_error(ActiveRest::Model::Interface::AttributeNotWriteable)
+  end
+end
+
+describe Account, 'interface[:rest].allow_action?' do
+  before(:each) do
+    @a1= FactoryGirl.create(:account1)
+    @a2= FactoryGirl.create(:account2)
+    @a3= FactoryGirl.create(:account3)
+  end
+
+  it 'allows special_action to users with special_functions capabilities' do
+    @a1.interfaces[:rest].action_allowed?([ :special_functions ], :special_action).should be_true
+  end
+
+  it 'allows special_action to users with superuser capabilities' do
+    @a1.interfaces[:rest].action_allowed?([ :superuser ], :special_action).should be_true
+  end
+
+  it 'denies special_action to users with no capabilities' do
+    @a1.interfaces[:rest].action_allowed?([ ], :special_action).should be_false
+  end
+
+  it 'denies special_action to users with any other capabilities' do
+    @a1.interfaces[:rest].action_allowed?([ :edit_as_user, :edit_as_admin, :edit_as_reseller ], :special_action).should be_false
   end
 end

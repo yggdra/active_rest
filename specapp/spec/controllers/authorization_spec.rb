@@ -10,10 +10,13 @@ class MockupAAAContext
   end
 end
 
-#context_1 = MockupAAAContext.new([], 1)
-#context_2 = MockupAAAContext.new([], 2)
-#context_3 = MockupAAAContext.new([], 3)
-#
+context_1 = MockupAAAContext.new([], 1)
+context_2 = MockupAAAContext.new([], 2)
+context_3 = MockupAAAContext.new([], 3)
+context_4 = MockupAAAContext.new([], 4)
+context_5 = MockupAAAContext.new([], 5)
+context_s = MockupAAAContext.new([ :superuser ], 6)
+
 #describe AccountsController do
 #
 #  before(:each) do
@@ -23,7 +26,7 @@ end
 #  end
 #
 #  it 'returns model\'s schema with GET /schema' do
-#    get 'schema', :format => :json
+#    get 'schema', :format => :json, :session_
 #    response.should be_success
 #
 #    b = ActiveSupport::JSON.decode(response.body)

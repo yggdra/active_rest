@@ -368,7 +368,7 @@ class Interface
   end
 
   def relevant_capabilities(capas)
-    capas.select { |x| capabilities[x.to_sym] }
+    capas &= capabilities.keys
   end
 
   def action_allowed?(capas, action)
@@ -378,15 +378,17 @@ class Interface
   def ar_serializable_hash(obj, opts = {})
     capas = []
 
-    if opts[:aaa_context]
-      capas = opts[:aaa_context].global_capabilities
+    if authorization_required?
+      if opts[:aaa_context]
+        capas = opts[:aaa_context].global_capabilities
 
-      if obj.respond_to? :capabilities_for
-        capas += obj.capabilities_for(opts[:aaa_context])
+        if obj.respond_to? :capabilities_for
+          capas += obj.capabilities_for(opts[:aaa_context])
+        end
       end
-    end
 
-    capas &= capabilities.keys
+      capas = relevant_capabilities(capas)
+    end
 
     view = opts[:view]
 
@@ -547,7 +549,7 @@ class Interface
         end
       end
 
-      capas &= capabilities.keys
+      capas = relevant_capabilities(capas)
 
       raise ResourceNotWritable.new(obj.class) if capas.empty?
     end

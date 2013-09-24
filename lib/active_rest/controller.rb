@@ -304,7 +304,7 @@ module Controller
             :short_msg => 'You do not have the required capability to access the resource.')
     end
 
-    unless intf.action_allowed?(capas, opts[:action])
+    unless intf.action_allowed?(user_capas, opts[:action])
       raise Exception::AuthorizationError.new(
             :reason => :forbidden,
             :short_msg => 'You do not have the required capability to operate this action.')
