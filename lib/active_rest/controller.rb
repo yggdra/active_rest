@@ -249,7 +249,7 @@ module Controller
         # Fulltext search
 
         @resources = ar_model.search(params[:_search])
-        @count = @resources.count
+        @resources_count = @resources.count
       else
         @resources_relation ||= ar_model.all
 

@@ -86,7 +86,7 @@ module Verbs
     end
 
     respond_with(@resources,
-                 :total => @count,
+                 :total => @resources_count,
                  :root => root_name) do |format|
       yield(format) if block_given?
     end
