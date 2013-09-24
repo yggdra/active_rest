@@ -7,7 +7,7 @@ class TransactionCompaniesController < ApplicationController
   self.ar_transaction_handler = :xact_handler
 
   def xact_handler
-    model.transaction do
+    ar_model.transaction do
       yield
     end
   end

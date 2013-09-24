@@ -39,13 +39,13 @@ module Controller
 
     def validate_create
       ar_authorize_model_action(:action => :create)
-      target = model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
+      resource = ar_model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
 
       begin
         ActiveRecord::Base.transaction do
-          if !target.valid?
+          if !resource.valid?
             raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
-                    :errors =>  target.errors.to_hash,
+                    :errors =>  resource.errors.to_hash,
                     :retry_possible => false)
           end
 
@@ -65,11 +65,11 @@ module Controller
 
       begin
         ActiveRecord::Base.transaction do
-          model.interfaces[:rest].apply_update_attributes(target, @request_resource)
+          ar_model.interfaces[:rest].apply_update_attributes(resource, @request_resource)
 
-          if !target.valid?
+          if !resource.valid?
             raise ActiveRest::Exception::UnprocessableEntity.new('The form is invalid',
-                    :errors =>  target.errors.to_hash,
+                    :errors =>  resource.errors.to_hash,
                     :retry_possible => false)
           end
 

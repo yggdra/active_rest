@@ -55,7 +55,7 @@ module Verbs
   #A
 
   def schema
-    @schema = model.interfaces[:rest].schema
+    @schema = ar_model.interfaces[:rest].schema
 
     respond_to do |format|
       format.xml { render :xml => @schema.to_xml(:dasherize => false) }
@@ -66,7 +66,7 @@ module Verbs
   end
 
   def index
-#      @targets_relation = model.all.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
+#      @resources_relation = ar_model.all.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
 
     begin
       ar_retrieve_resources
@@ -80,33 +80,33 @@ module Verbs
     # Avoid responding with nil-classes when the array is empty
     root_name = ''
 
-    if model
+    if ar_model
       root_name = ActiveSupport::Inflector.pluralize(
-                    ActiveSupport::Inflector.underscore(model.name)).tr('/', '_')
+                    ActiveSupport::Inflector.underscore(ar_model.name)).tr('/', '_')
     end
 
-    respond_with(@targets,
+    respond_with(@resources,
                  :total => @count,
                  :root => root_name) do |format|
       yield(format) if block_given?
     end
   end
 
-  # GET /target/1
+  # GET /resource/1
   def show
     ar_retrieve_resource
     ar_authorize_action
 
-    respond_with(@target) do |format|
+    respond_with(@resource) do |format|
       yield(format) if block_given?
     end
   end
 
-  # GET /target/new
+  # GET /resource/new
   def new
-    @target = model.new
+    @resource = ar_model.new
 
-    respond_with(@target) do |format|
+    respond_with(@resource) do |format|
       yield(format) if block_given?
     end
   end
@@ -126,7 +126,7 @@ module Verbs
   def after_destroy ; end
   def after_destroy_commit ; end
 
-  # POST /targets
+  # POST /resources
 # if parameter '_only_validation' is present only validation actions will be ran
   def create
     ar_authorize_model_action
@@ -134,11 +134,11 @@ module Verbs
     begin
       send(ar_transaction_handler) do
         before_create
-        @target ||= model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
+        @resource ||= ar_model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
 
         before_save
 
-        @target.save!
+        @resource.save!
         after_create
       end
     rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
@@ -154,7 +154,7 @@ module Verbs
               :retry_possible => false)
     rescue ActiveRecord::RecordInvalid => e
       raise Exception::UnprocessableEntity.new(e.message,
-              :errors => target.errors.to_hash,
+              :errors => @resource.errors.to_hash,
               :retry_possible => false)
     rescue ActiveRecord::RecordNotSaved => e
       raise Exception::UnprocessableEntity.new(e.message,
@@ -166,24 +166,24 @@ module Verbs
     if is_true?(params[:_suppress_response])
       render :nothing => true, :status => :created
     else
-      ar_retrieve_resource(:id => @target.id)
-      respond_with(@target, :status => :created) do |format|
+      ar_retrieve_resource(:id => @resource.id)
+      respond_with(@resource, :status => :created) do |format|
         yield(format) if block_given?
       end
     end
   end
 
-  # GET /target/1/edit
+  # GET /resource/1/edit
   def edit
     ar_retrieve_resource
     ar_authorize_action
 
-    respond_with(@target) do |format|
+    respond_with(@resource) do |format|
       yield(format) if block_given?
     end
   end
 
-  # PUT /target/1
+  # PUT /resource/1
   # if parameter '_only_validation' is present only validation actions will be ran
   def update
     ar_retrieve_resource
@@ -193,11 +193,11 @@ module Verbs
       send(ar_transaction_handler) do
         before_update
 
-        @target.ar_apply_update_attributes(:rest, @request_resource, :aaa_context => @aaa_context)
+        @resource.ar_apply_update_attributes(:rest, @request_resource, :aaa_context => @aaa_context)
 
         before_save
 
-        @target.save!
+        @resource.save!
 
         after_update
       end
@@ -211,7 +211,7 @@ module Verbs
               :retry_possible => false)
     rescue ActiveRecord::RecordInvalid => e
       raise Exception::UnprocessableEntity.new(e.message,
-              :errors => target.errors.to_hash,
+              :errors => @resource.errors.to_hash,
               :retry_possible => false)
     rescue ActiveRecord::RecordNotSaved => e
       raise Exception::UnprocessableEntity.new(e.message,
@@ -224,20 +224,20 @@ module Verbs
       render :nothing => true
     else
       ar_retrieve_resource
-      respond_with(@target) do |format|
+      respond_with(@resource) do |format|
         yield(format) if block_given?
       end
     end
   end
 
-  # DELETE /target/1
+  # DELETE /resource/1
   def destroy
     ar_retrieve_resource
     ar_authorize_action
 
     send(ar_transaction_handler) do
       before_destroy
-      @target.destroy
+      @resource.destroy
       after_destroy
     end
 

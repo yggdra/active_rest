@@ -226,7 +226,7 @@ module Controller
         expr = nil
 
         search_in.each do |x|
-          (attr, path) = model.nested_attribute(x)
+          (attr, path) = ar_model.nested_attribute(x)
 
           path.each { |x| rel = rel.joins(x) }
 

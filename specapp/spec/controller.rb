@@ -3,7 +3,7 @@ require 'spec_helper'
 describe ActiveRest::Controller do
 
   it 'autoconfigures model if possible' do
-    UsersController.model.should == User
+    UsersController.ar_model.should == User
   end
 
   it 'fails silently if unable' do
@@ -13,7 +13,7 @@ describe ActiveRest::Controller do
       end
     }.should_not raise_error
 
-    FooBarBlahBlahsController.model.should be_nil
+    FooBarBlahBlahsController.ar_model.should be_nil
   end
 
 end

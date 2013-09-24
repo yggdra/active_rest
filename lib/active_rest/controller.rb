@@ -52,14 +52,14 @@ module Controller
   include Validations
   include Rescuer
 
-  attr_accessor :target
-  attr_accessor :targets
+  attr_accessor :resource
+  attr_accessor :resources
 
   attr_accessor :ar_capabilities
 
   included do
-    class_attribute :model
-    self.model = nil
+    class_attribute :ar_model
+    self.ar_model = nil
 
     class_attribute :ar_options
     self.ar_options = {}
@@ -137,17 +137,17 @@ module Controller
 
     if params[:view]
       view = self.class.ar_views[params[:view].to_sym] ||
-             self.class.model.interfaces[:rest].views[params[:view].to_sym]
+             self.class.ar_model.interfaces[:rest].views[params[:view].to_sym]
     end
 
     view ||= self.class.ar_views[action_name.to_sym] ||
-             self.class.model.interfaces[:rest].views[action_name.to_sym] ||
+             self.class.ar_model.interfaces[:rest].views[action_name.to_sym] ||
              View.new(:anonymous)
     view
   end
 
-  def model
-    @model || @model = self.class.model
+  def ar_model
+    @ar_model || @ar_model = self.class.ar_model
   end
 
   protected
@@ -155,7 +155,7 @@ module Controller
   # default transaction handler which simply starts an ActiveRecord transaction
   #
   def ar_default_transaction_handler
-    model.transaction do
+    ar_model.transaction do
       yield
     end
   end
@@ -170,26 +170,26 @@ module Controller
   #
   # model name to underscore, even when namespaced
   #
-  def model_symbol
-    model.to_s.underscore.gsub(/\//, '_')
+  def ar_model_symbol
+    ar_model.to_s.underscore.gsub(/\//, '_')
   end
 
   # find a single resource
   #
   def ar_retrieve_resource(opts = {})
-    @target_relation ||= model
-    @target_relation = model.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
+    @resource_relation ||= ar_model
+    @resource_relation = ar_model.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
 
     run_callbacks :ar_retrieve_resource do
       tid = opts[:id] || params[:id]
       opts.delete(:id)
 
-      @target = @target_relation.find(tid)
+      @resource = @resource_relation.find(tid)
     end
 
     #ar_authorize_action if !opts[:skip_authorization]
 
-    @target
+    @resource
   rescue ActiveRecord::RecordNotFound => e
     raise Exception::NotFound.new(e.message,
             :retry_possible => false)
@@ -248,26 +248,26 @@ module Controller
       if params[:_search]
         # Fulltext search
 
-        @targets = model.search(params[:_search])
-        @count = @targets.count
+        @resources = ar_model.search(params[:_search])
+        @count = @resources.count
       else
-        @targets_relation ||= model.all
+        @resources_relation ||= ar_model.all
 
         # Filters
-        @targets_relation = apply_scopes_to_relation(@targets_relation)
-        @targets_relation = apply_json_filter_to_relation(@targets_relation)
-        @targets_relation = apply_simple_filter_to_relation(@targets_relation)
+        @resources_relation = apply_scopes_to_relation(@resources_relation)
+        @resources_relation = apply_json_filter_to_relation(@resources_relation)
+        @resources_relation = apply_simple_filter_to_relation(@resources_relation)
 
         # Display filters
-        @targets_relation = apply_sorting_to_relation(@targets_relation)
-        @paginated_targets_relation = apply_pagination_to_relation(@targets_relation)
+        @resources_relation = apply_sorting_to_relation(@resources_relation)
+        @paginated_resources_relation = apply_pagination_to_relation(@resources_relation)
 
-        @targets = @paginated_targets_relation
-        @count = @targets_relation.count
+        @resources = @paginated_resources_relation
+        @resources_count = @resources_relation.count
       end
     end
 
-    @targets
+    @resources
   rescue ActiveRecord::RecordNotFound => e
     raise Exception::NotFound.new(e.message,
             :retry_possible => false)
@@ -282,18 +282,18 @@ module Controller
   def ar_authorize_action(opts = {})
     opts[:action] ||= params[:action].to_sym
 
-    if @target.interfaces[:rest].authorization_required?
+    if @resource.interfaces[:rest].authorization_required?
       capasyms = []
 
       if @aaa_context
         capasyms += @aaa_context.global_capabilities
       end
 
-      if @target.respond_to?(:capabilities_for)
-        capasyms += @target.capabilities_for(@aaa_context)
+      if @resource.respond_to?(:capabilities_for)
+        capasyms += @resource.capabilities_for(@aaa_context)
       end
 
-      capas = capasyms.select { |x| @target.interfaces[:rest].capabilities[x] }
+      capas = capasyms.select { |x| @resource.interfaces[:rest].capabilities[x] }
 
       if !capas.any?
         raise Exception::AuthorizationError.new(
@@ -322,8 +322,8 @@ module Controller
     def ar_controller_without_model
     end
 
-    def ar_controller_for(model, options = {})
-      self.model = model
+    def ar_controller_for(ar_model, options = {})
+      self.ar_model = ar_model
       self.ar_options = options
     end
 
