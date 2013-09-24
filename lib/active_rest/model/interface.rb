@@ -367,6 +367,14 @@ class Interface
     capabilities.any?
   end
 
+  def relevant_capabilities(capas)
+    capas.select { |x| capabilities[x.to_sym] }
+  end
+
+  def action_allowed?(capas, action)
+    capas.any? { |x| capabilities[x.to_sym] ? capabilities[x.to_sym].allow_action?(action) : false }
+  end
+
   def ar_serializable_hash(obj, opts = {})
     capas = []
 

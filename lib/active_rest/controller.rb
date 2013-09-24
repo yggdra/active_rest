@@ -282,30 +282,32 @@ module Controller
   def ar_authorize_action(opts = {})
     opts[:action] ||= params[:action].to_sym
 
-    if @resource.interfaces[:rest].authorization_required?
-      capasyms = []
+    intf = @resource.interfaces[:rest]
 
-      if @aaa_context
-        capasyms += @aaa_context.global_capabilities
-      end
+    return true if !intf.authorization_required?
 
-      if @resource.respond_to?(:capabilities_for)
-        capasyms += @resource.capabilities_for(@aaa_context)
-      end
+    # Build a list of capabilities the user *has*
+    user_capas = []
 
-      capas = capasyms.select { |x| @resource.interfaces[:rest].capabilities[x] }
+    # First global capabilities
+    user_capas += @aaa_context.global_capabilities if @aaa_context
 
-      if !capas.any?
-        raise Exception::AuthorizationError.new(
-              :reason => :forbidden,
-              :short_msg => 'You do not have the required capability to access the resource.')
-      end
+    # Then capabilities given to the specific resource by the ACL
+    user_capas += @resource.capabilities_for(@aaa_context) if @resource.respond_to?(:capabilities_for)
 
-      unless capas.any? { |x| x.allow_action?(opts[:action]) }
-        raise Exception::AuthorizationError.new(
-              :reason => :forbidden,
-              :short_msg => 'You do not have the required capability to operate this action.')
-      end
+    # Filter out the capabilites not relevant to this resource
+    user_capas = intf.relevant_capabilities(user_capas)
+
+    if !user_capas.any?
+      raise Exception::AuthorizationError.new(
+            :reason => :forbidden,
+            :short_msg => 'You do not have the required capability to access the resource.')
+    end
+
+    unless intf.action_allowed?(capas, opts[:action])
+      raise Exception::AuthorizationError.new(
+            :reason => :forbidden,
+            :short_msg => 'You do not have the required capability to operate this action.')
     end
 
     true

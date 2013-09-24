@@ -73,7 +73,7 @@ class Capability
   end
 
   def allow_action?(name)
-    @allow_all_actions || @action[name.to_sym]
+    @allow_all_actions || @actions[name.to_sym]
   end
 
   def readable?(name)
