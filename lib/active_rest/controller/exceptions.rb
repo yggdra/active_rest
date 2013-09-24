@@ -40,6 +40,12 @@ class Exception < StandardError
     end
   end
 
+  class Forbidden < Exception
+    def initialize(msg = '', public_data = {}, private_data = {})
+      super msg, :forbidden, public_data, private_data
+    end
+  end
+
   class NotFound < Exception
     def initialize(msg = '', public_data = {}, private_data = {})
       super msg, :not_found, public_data, private_data
@@ -59,6 +65,12 @@ class Exception < StandardError
   class UnprocessableEntity < Exception
     def initialize(msg = '', public_data = {}, private_data = {})
       super msg, :unprocessable_entity, public_data, private_data
+    end
+  end
+
+  class Conflict < Exception
+    def initialize(msg = '', public_data = {}, private_data = {})
+      super msg, :conflict, public_data, private_data
     end
   end
 

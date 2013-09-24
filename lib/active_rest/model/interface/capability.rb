@@ -10,13 +10,16 @@ class Capability
   attr_accessor :name
 
   attr_accessor :attr_acc
+  attr_accessor :actions
 
   def initialize(name, interface, h = {})
     raise ArgumentError, 'Name can not be null' if !name
 
     @name = name
     @attr_acc = {}
+    @actions = {}
 
+    @allow_all_actions = false
     @default_readable = false
     @default_writable = false
 
@@ -29,6 +32,14 @@ class Capability
 
   def default_writable!
     @default_writable = true
+  end
+
+  def allow_all_actions!
+    @allow_all_actions = true
+  end
+
+  def action(name)
+    @actions[name.to_sym] = true
   end
 
   def readable(name, &block)
@@ -59,6 +70,10 @@ class Capability
   def no_access(name, &block)
     @attr_acc[name.to_sym] ||= 0
     @attr_acc[name.to_sym] &= ~(READABLE | WRITABLE)
+  end
+
+  def allow_action?(name)
+    @allow_all_actions || @action[name.to_sym]
   end
 
   def readable?(name)

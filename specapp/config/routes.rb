@@ -20,4 +20,7 @@ Railsspec::Application.routes.draw do
 
   aresources :inclattr_companies do
   end
+
+  aresources :accounts do
+  end
 end

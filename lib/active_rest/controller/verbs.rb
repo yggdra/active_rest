@@ -69,7 +69,8 @@ module Verbs
 #      @targets_relation = model.all.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
 
     begin
-      find_targets
+      ar_retrieve_resources
+      ar_authorize_model_action
     rescue ActiveRest::Model::UnknownField => e
       raise ActiveRest::Exception::BadRequest.new(e.message,
               :errors => { e.attribute_name => [ 'not found' ] },
@@ -93,9 +94,8 @@ module Verbs
 
   # GET /target/1
   def show
-    find_target
-
-    ar_check_whole_verb_authorization(:show)
+    ar_retrieve_resource
+    ar_authorize_action
 
     respond_with(@target) do |format|
       yield(format) if block_given?
@@ -129,6 +129,8 @@ module Verbs
   # POST /targets
 # if parameter '_only_validation' is present only validation actions will be ran
   def create
+    ar_authorize_model_action
+
     begin
       send(ar_transaction_handler) do
         before_create
@@ -140,12 +142,15 @@ module Verbs
         after_create
       end
     rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
-      raise Exception::BadRequest.new(e.message,
+      raise Exception::Conflict.new(e.message,
               :errors => { e.attribute_name => [ 'Is not writable' ] },
               :retry_possible => false)
     rescue ActiveRest::Model::Interface::AttributeNotFound => e
       raise Exception::BadRequest.new(e.message,
               :errors => { e.attribute_name => [ 'not found' ] },
+              :retry_possible => false)
+    rescue ActiveRest::Model::Interface::ResourceNotWritable => e
+      raise Exception::Forbidden.new(e.message,
               :retry_possible => false)
     rescue ActiveRecord::RecordInvalid => e
       raise Exception::UnprocessableEntity.new(e.message,
@@ -161,7 +166,7 @@ module Verbs
     if is_true?(params[:_suppress_response])
       render :nothing => true, :status => :created
     else
-      find_target(:id => @target.id)
+      ar_retrieve_resource(:id => @target.id)
       respond_with(@target, :status => :created) do |format|
         yield(format) if block_given?
       end
@@ -170,7 +175,8 @@ module Verbs
 
   # GET /target/1/edit
   def edit
-    find_target
+    ar_retrieve_resource
+    ar_authorize_action
 
     respond_with(@target) do |format|
       yield(format) if block_given?
@@ -180,7 +186,8 @@ module Verbs
   # PUT /target/1
   # if parameter '_only_validation' is present only validation actions will be ran
   def update
-    find_target
+    ar_retrieve_resource
+    ar_authorize_action
 
     begin
       send(ar_transaction_handler) do
@@ -216,7 +223,7 @@ module Verbs
     if is_true?(params[:_suppress_response])
       render :nothing => true
     else
-      find_target
+      ar_retrieve_resource
       respond_with(@target) do |format|
         yield(format) if block_given?
       end
@@ -225,7 +232,8 @@ module Verbs
 
   # DELETE /target/1
   def destroy
-    find_target
+    ar_retrieve_resource
+    ar_authorize_action
 
     send(ar_transaction_handler) do
       before_destroy
@@ -241,20 +249,6 @@ module Verbs
       format.yaml { render :yaml => {} }
       format.json { render :json => {} }
       format.any { render :nothing => true }
-    end
-  end
-
-  protected
-
-  def ar_check_whole_verb_authorization(verb)
-    @ar_authorized = nil
-
-    run_callbacks verb
-
-    if !@ar_authorized
-      raise Exception::AuthorizationError.new(
-            :reason => :forbidden,
-            :short_msg => 'You are not authorized to access the resource.')
     end
   end
 

@@ -9,19 +9,20 @@
 # from scratch. The latter is a flawed and unsustainable approach (the more migrations
 # you'll amass, the slower it'll run and the greater likelihood for issues).
 #
-# It's strongly recommended to check this file into your version control system.
+# It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100726160133) do
+ActiveRecord::Schema.define(version: 20100726160133) do
 
-  create_table "accounts", :force => true do |t|
-    t.string "name"
-    t.string "secret"
+  create_table "accounts", force: true do |t|
+    t.string  "name"
+    t.string  "secret"
+    t.integer "balance"
   end
 
-  create_table "companies", :force => true do |t|
-    t.datetime "created_at",             :null => false
-    t.datetime "updated_at",             :null => false
-    t.string   "name",                   :null => false
+  create_table "companies", force: true do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "name",                   null: false
     t.string   "city"
     t.string   "street"
     t.string   "zip"
@@ -42,63 +43,63 @@ ActiveRecord::Schema.define(:version => 20100726160133) do
     t.integer  "not_writable_attribute"
   end
 
-  create_table "company_bars", :force => true do |t|
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+  create_table "company_bars", force: true do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
     t.string   "name"
   end
 
-  create_table "company_foos", :force => true do |t|
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+  create_table "company_foos", force: true do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
     t.string   "name"
   end
 
-  create_table "company_locations", :force => true do |t|
+  create_table "company_locations", force: true do |t|
     t.float  "lat"
     t.float  "lon"
     t.string "raw_name"
   end
 
-  create_table "company_phones", :force => true do |t|
+  create_table "company_phones", force: true do |t|
     t.integer "company_id"
     t.string  "number"
   end
 
-  create_table "contacts", :force => true do |t|
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+  create_table "contacts", force: true do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
     t.integer  "owner_id"
     t.string   "owner_type"
     t.string   "field"
     t.string   "value"
   end
 
-  create_table "external_object_bars", :force => true do |t|
+  create_table "external_object_bars", force: true do |t|
     t.string "name"
   end
 
-  create_table "external_object_foos", :force => true do |t|
+  create_table "external_object_foos", force: true do |t|
     t.string "name"
   end
 
-  create_table "groups", :force => true do |t|
+  create_table "groups", force: true do |t|
     t.string "name"
   end
 
-  create_table "ownable_object_bars", :force => true do |t|
+  create_table "ownable_object_bars", force: true do |t|
     t.string  "name"
     t.integer "owner_id"
   end
 
-  create_table "ownable_object_foos", :force => true do |t|
+  create_table "ownable_object_foos", force: true do |t|
     t.string  "name"
     t.integer "owner_id"
   end
 
-  create_table "users", :force => true do |t|
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+  create_table "users", force: true do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
     t.string   "name"
     t.integer  "company_id"
   end

@@ -530,15 +530,19 @@ class Interface
   def apply_model_attributes(obj, values, opts = {})
     capas = []
 
-    if opts[:aaa_context]
-      capas = opts[:aaa_context].global_capabilities
+    if authorization_required?
+      if opts[:aaa_context]
+        capas = opts[:aaa_context].global_capabilities
 
-      if obj.respond_to? :capabilities_for
-        capas += obj.capabilities_for(opts[:aaa_context])
+        if obj.respond_to? :capabilities_for
+          capas += obj.capabilities_for(opts[:aaa_context])
+        end
       end
-    end
 
-    capas &= capabilities.keys
+      capas &= capabilities.keys
+
+      raise ResourceNotWritable.new(obj.class) if capas.empty?
+    end
 
     values.each do |attr_name, value|
 
@@ -696,6 +700,18 @@ class Interface
   class AttributeNotFound < AttributeError
     def to_s
       "Attribute #{@attribute_name} in class #{@object.class} not found"
+    end
+  end
+
+  class ResourceNotWritable < StandardError
+    attr_accessor :object
+
+    def initialize(object)
+      @object = object
+    end
+
+    def to_s
+      "Object #{@object.class} not writable"
     end
   end
 

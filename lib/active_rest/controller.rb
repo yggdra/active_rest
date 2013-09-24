@@ -57,9 +57,6 @@ module Controller
 
   attr_accessor :ar_capabilities
 
-  module Shit
-  end
-
   included do
     class_attribute :model
     self.model = nil
@@ -74,45 +71,16 @@ module Controller
     self.ar_scopes = {}
 
     class_attribute :ar_read_only
+    self.ar_read_only = false
 
     class_attribute :ar_transaction_handler
     self.ar_transaction_handler = :ar_default_transaction_handler
 
-    define_callbacks :find_target
-    define_callbacks :find_targets
-
-    define_callbacks :show
+    define_callbacks :ar_retrieve_resource
+    define_callbacks :ar_retrieve_resources
 
     class << self
       alias_method_chain :inherited, :ar
-    end
-
-    set_callback(:show, :before) do
-      return if @ar_authorized
-
-      if @target.interfaces[:rest].authorization_required?
-        capasyms = []
-
-        if @aaa_context
-          capasyms += @aaa_context.global_capabilities
-        end
-
-        if @target.respond_to?(:capabilities_for)
-          capasyms += @target.capabilities_for(@aaa_context)
-        end
-
-        capasyms = capasyms.select { |x| @target.interfaces[:rest].capabilities[x] }
-
-        if capasyms.any?
-          @ar_authorized = true
-        else
-          raise Exception::AuthorizationError.new(
-                :reason => :forbidden,
-                :short_msg => 'You do not have the required capability to access the resource.')
-        end
-      else
-        @ar_authorized = true
-      end
     end
 
     rescue_from Exception do |e|
@@ -148,9 +116,6 @@ module Controller
       if self.class.ar_read_only && request.method != 'GET'
         raise Exception::MethodNotAllowed.new('Read only in effect')
       end
-
-      # setup I18n if options has this information
-      I18n.locale = params[:language].to_sym if params[:language]
 
       true
     end
@@ -211,18 +176,20 @@ module Controller
 
   # find a single resource
   #
-  def find_target(opts = {})
+  def ar_retrieve_resource(opts = {})
     @target_relation ||= model
     @target_relation = model.includes(model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if model
 
-    run_callbacks :find_target do
+    run_callbacks :ar_retrieve_resource do
       tid = opts[:id] || params[:id]
       opts.delete(:id)
 
-      find_opts = {}
-
-      @target = @target_relation.find(tid, find_opts)
+      @target = @target_relation.find(tid)
     end
+
+    #ar_authorize_action if !opts[:skip_authorization]
+
+    @target
   rescue ActiveRecord::RecordNotFound => e
     raise Exception::NotFound.new(e.message,
             :retry_possible => false)
@@ -276,8 +243,8 @@ module Controller
 
   # find all with conditions
   #
-  def find_targets
-    run_callbacks :find_targets do
+  def ar_retrieve_resources
+    run_callbacks :ar_retrieve_resources do
       if params[:_search]
         # Fulltext search
 
@@ -299,9 +266,49 @@ module Controller
         @count = @targets_relation.count
       end
     end
+
+    @targets
   rescue ActiveRecord::RecordNotFound => e
     raise Exception::NotFound.new(e.message,
             :retry_possible => false)
+  end
+
+  def ar_authorize_model_action(opts = {})
+    opts[:action] ||= params[:action].to_sym
+
+    true
+  end
+
+  def ar_authorize_action(opts = {})
+    opts[:action] ||= params[:action].to_sym
+
+    if @target.interfaces[:rest].authorization_required?
+      capasyms = []
+
+      if @aaa_context
+        capasyms += @aaa_context.global_capabilities
+      end
+
+      if @target.respond_to?(:capabilities_for)
+        capasyms += @target.capabilities_for(@aaa_context)
+      end
+
+      capas = capasyms.select { |x| @target.interfaces[:rest].capabilities[x] }
+
+      if !capas.any?
+        raise Exception::AuthorizationError.new(
+              :reason => :forbidden,
+              :short_msg => 'You do not have the required capability to access the resource.')
+      end
+
+      unless capas.any? { |x| x.allow_action?(opts[:action]) }
+        raise Exception::AuthorizationError.new(
+              :reason => :forbidden,
+              :short_msg => 'You do not have the required capability to operate this action.')
+      end
+    end
+
+    true
   end
 
   module ClassMethods
@@ -354,54 +361,6 @@ module Controller
     def read_only!
       self.ar_read_only = true
     end
-
-
-    #
-    # finder callbacks
-    #
-    def append_after_find_target_filter(*names, &blk)
-      _insert_callbacks(names, blk) do |name, options|
-        set_callback(:find_target, :after, name, options)
-      end
-    end
-
-    def prepend_after_find_target_filter(*names, &blk)
-     _insert_callbacks(names, blk) do |name, options|
-       set_callback(:find_target, :after, name, options.merge(:prepend => true))
-     end
-    end
-
-    def skip_after_find_target_filter(*names, &blk)
-     _insert_callbacks(names, blk) do |name, options|
-       skip_callback(:find_target, :after, name, options)
-     end
-    end
-
-    def append_after_find_targets_filter(*names, &blk)
-      _insert_callbacks(names, blk) do |name, options|
-        set_callback(:find_targets, :after, name, options)
-      end
-    end
-
-    def prepend_after_find_targets_filter(*names, &blk)
-     _insert_callbacks(names, blk) do |name, options|
-       set_callback(:find_targets, :after, name, options.merge(:prepend => true))
-     end
-    end
-
-    def skip_after_find_targets_filter(*names, &blk)
-     _insert_callbacks(names, blk) do |name, options|
-       skip_callback(:find_targets, :after, name, options)
-     end
-    end
-
-    alias_method :after_find_target, :append_after_find_target_filter
-    alias_method :prepend_after_find_target, :prepend_after_find_target_filter
-    alias_method :skip_after_find_target, :skip_after_find_target_filter
-
-    alias_method :after_find_targets, :append_after_find_targets_filter
-    alias_method :prepend_after_find_targets, :prepend_after_find_targets_filter
-    alias_method :skip_after_find_targets, :skip_after_find_targets_filter
 
     private
 

@@ -1,7 +1,7 @@
 #
 # ActiveRest
 #
-# Copyright (C) 2008-2011, Intercom Srl, Daniele Orlandi
+# Copyright (C) 2008-2013, Intercom Srl, Daniele Orlandi
 #
 # Author:: Daniele Orlandi <daniele@orlandi.com>
 #          Lele Forzani <lele@windmill.it>
@@ -15,10 +15,6 @@ module Controller
   module Validations
 
     class ActiveRecordSucks < Exception ; end
-
-    def self.included(base)
-      #:nodoc:
-    end
 
     #
     # VALIDATIONS
@@ -42,6 +38,7 @@ module Controller
     #
 
     def validate_create
+      ar_authorize_model_action(:action => :create)
       target = model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
 
       begin
@@ -63,7 +60,8 @@ module Controller
     end
 
     def validate_update
-      find_target
+      ar_retrieve_resource
+      ar_authorize_action(:action => :update)
 
       begin
         ActiveRecord::Base.transaction do

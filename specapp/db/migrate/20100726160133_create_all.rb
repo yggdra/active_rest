@@ -78,6 +78,7 @@ class CreateAll < ActiveRecord::Migration
     create_table :accounts, :force => true do |t|
       t.string   :name
       t.string   :secret
+      t.integer  :balance
     end
 
 
