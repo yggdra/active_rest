@@ -141,16 +141,16 @@ module Verbs
         @resource.save!
         after_create
       end
-    rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
+    rescue ActiveRest::Model::Interface::ResourceNotWritable => e
+      raise Exception::Forbidden.new(e.message,
+              :retry_possible => false)
+    rescue ActiveRest::Model::Interface::AttributeNotWritable => e
       raise Exception::Conflict.new(e.message,
               :errors => { e.attribute_name => [ 'Is not writable' ] },
               :retry_possible => false)
     rescue ActiveRest::Model::Interface::AttributeNotFound => e
       raise Exception::BadRequest.new(e.message,
               :errors => { e.attribute_name => [ 'not found' ] },
-              :retry_possible => false)
-    rescue ActiveRest::Model::Interface::ResourceNotWritable => e
-      raise Exception::Forbidden.new(e.message,
               :retry_possible => false)
     rescue ActiveRecord::RecordInvalid => e
       raise Exception::UnprocessableEntity.new(e.message,
@@ -201,7 +201,10 @@ module Verbs
 
         after_update
       end
-    rescue ActiveRest::Model::Interface::AttributeNotWriteable => e
+    rescue ActiveRest::Model::Interface::ResourceNotWritable => e
+      raise Exception::Forbidden.new(e.message,
+              :retry_possible => false)
+    rescue ActiveRest::Model::Interface::AttributeNotWritable => e
       raise Exception::UnprocessableEntity.new(e.message,
               :errors => { e.attribute_name => [ 'Is not writable' ] },
               :retry_possible => false)

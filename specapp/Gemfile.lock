@@ -14,7 +14,7 @@ GIT
 PATH
   remote: ..
   specs:
-    active_rest (6.0.0)
+    active_rest (6.0.4)
       squeel
 
 GEM

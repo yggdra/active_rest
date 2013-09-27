@@ -17,11 +17,23 @@ class Account < ActiveRecord::Base
     end
   end
 
+  def self.capabilities_for(context)
+    if context.auth_identity == 4
+      [ :creator ]
+    else
+      [ ]
+    end
+  end
+
   def can?(context, capa)
     capabilities_for(context).include?(capa)
   end
 
   interface :rest do
+    capability :creator do
+      action :create
+    end
+
     capability :edit_as_user do
       action :show
       readable :name

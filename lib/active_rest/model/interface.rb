@@ -371,23 +371,35 @@ class Interface
     capas &= capabilities.keys
   end
 
+  def init_capabilities(aaa_context, resource)
+    # Build a list of capabilities the user *has*
+    user_capas = []
+
+    # First global capabilities
+    user_capas += aaa_context.global_capabilities if aaa_context
+
+    # Then capabilities given to the specific model by ACL
+    user_capas += model.capabilities_for(aaa_context) if model.respond_to?(:capabilities_for)
+
+    # Then capabilities given to the specific resource by the ACL
+    user_capas += resource.capabilities_for(aaa_context) if resource && resource.respond_to?(:capabilities_for)
+
+    # Filter out the capabilites not relevant to this resource
+    user_capas = relevant_capabilities(user_capas)
+
+    user_capas
+  end
+
   def action_allowed?(capas, action)
     capas.any? { |x| capabilities[x.to_sym] ? capabilities[x.to_sym].allow_action?(action) : false }
   end
 
   def ar_serializable_hash(obj, opts = {})
-    capas = []
+    user_capas = nil
 
     if authorization_required?
-      if opts[:aaa_context]
-        capas = opts[:aaa_context].global_capabilities
-
-        if obj.respond_to? :capabilities_for
-          capas += obj.capabilities_for(opts[:aaa_context])
-        end
-      end
-
-      capas = relevant_capabilities(capas)
+      user_capas = init_capabilities(opts[:aaa_context], obj)
+      raise ResourceNotReadable.new(obj) if user_capas.empty?
     end
 
     view = opts[:view]
@@ -422,11 +434,11 @@ class Interface
 
       readable =
          attr.readable && # Defined readable in interface
-         attr_readable?(capas, attrname)
+         attr_readable?(user_capas, attrname)
 
       writable =
          attr.writable && # Defined writable in interface
-         attr_writable?(capas, attrname)
+         attr_writable?(user_capas, attrname)
 
       if with_perms
         perms[attrname] ||= {}
@@ -538,20 +550,11 @@ class Interface
   end
 
   def apply_model_attributes(obj, values, opts = {})
-    capas = []
+    user_capas = nil
 
     if authorization_required?
-      if opts[:aaa_context]
-        capas = opts[:aaa_context].global_capabilities
-
-        if obj.respond_to? :capabilities_for
-          capas += obj.capabilities_for(opts[:aaa_context])
-        end
-      end
-
-      capas = relevant_capabilities(capas)
-
-      raise ResourceNotWritable.new(obj.class) if capas.empty?
+      user_capas = init_capabilities(opts[:aaa_context], obj)
+      raise ResourceNotWritable.new(obj) if user_capas.empty?
     end
 
     values.each do |attr_name, value|
@@ -573,9 +576,9 @@ class Interface
 
       writable =
          attr.writable &&
-         attr_writable?(capas, attr_name)
+         attr_writable?(user_capas, attr_name)
 
-      raise AttributeNotWriteable.new(obj, attr_name) if !writable
+      raise AttributeNotWritable.new(obj, attr_name) if !writable
 
       case attr
       when Attribute::Reference
@@ -688,10 +691,13 @@ class Interface
     !authorization_required? || !!capas.map { |x| @capabilities[x.to_sym].writable?(name) }.reduce(&:|)
   end
 
-  class AssociatedRecordNotFound < StandardError
+  class Error < StandardError
   end
 
-  class AttributeError < StandardError
+  class AssociatedRecordNotFound < Error
+  end
+
+  class AttributeError < Error
     attr_accessor :object
     attr_accessor :attribute_name
 
@@ -701,7 +707,13 @@ class Interface
     end
   end
 
-  class AttributeNotWriteable < AttributeError
+  class AttributeNotReadable < AttributeError
+    def to_s
+      "Attribute #{@attribute_name} in class #{@object.class} is not readable"
+    end
+  end
+
+  class AttributeNotWritable < AttributeError
     def to_s
       "Attribute #{@attribute_name} in class #{@object.class} is not writable"
     end
@@ -713,7 +725,7 @@ class Interface
     end
   end
 
-  class ResourceNotWritable < StandardError
+  class ResourceNotReadable < Error
     attr_accessor :object
 
     def initialize(object)
@@ -721,11 +733,23 @@ class Interface
     end
 
     def to_s
-      "Object #{@object.class} not writable"
+      "Resource #{@object.class.name} not readable"
     end
   end
 
-  class ClassDoesNotMatch < StandardError
+  class ResourceNotWritable < Error
+    attr_accessor :object
+
+    def initialize(object)
+      @object = object
+    end
+
+    def to_s
+      "Resource #{@object.class.name} not writable"
+    end
+  end
+
+  class ClassDoesNotMatch < Error
     attr_accessor :model_class
     attr_accessor :type
 

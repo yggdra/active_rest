@@ -274,29 +274,17 @@ module Controller
   end
 
   def ar_authorize_model_action(opts = {})
-    opts[:action] ||= params[:action].to_sym
-
-    true
+    ar_authorize_action(opts)
   end
 
   def ar_authorize_action(opts = {})
     opts[:action] ||= params[:action].to_sym
 
-    intf = @resource.interfaces[:rest]
+    intf = ar_model.interfaces[:rest]
 
     return true if !intf.authorization_required?
 
-    # Build a list of capabilities the user *has*
-    user_capas = []
-
-    # First global capabilities
-    user_capas += @aaa_context.global_capabilities if @aaa_context
-
-    # Then capabilities given to the specific resource by the ACL
-    user_capas += @resource.capabilities_for(@aaa_context) if @resource.respond_to?(:capabilities_for)
-
-    # Filter out the capabilites not relevant to this resource
-    user_capas = intf.relevant_capabilities(user_capas)
+    user_capas = intf.init_capabilities(@aaa_context, @resource)
 
     if !user_capas.any?
       raise Exception::AuthorizationError.new(
