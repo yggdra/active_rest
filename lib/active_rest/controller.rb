@@ -277,6 +277,24 @@ module Controller
     ar_authorize_action(opts)
   end
 
+  def ar_authorize_index_action(opts = {})
+    opts[:action] ||= params[:action].to_sym
+
+    intf = ar_model.interfaces[:rest]
+
+    return true if !intf.authorization_required?
+
+    @user_capas = intf.init_capabilities(@aaa_context)
+
+    if !@user_capas.any? && !@resources.any?
+      raise Exception::AuthorizationError.new(
+            :reason => :forbidden,
+            :short_msg => 'You do not have the required capability to access the resources.')
+    end
+
+    true
+  end
+
   def ar_authorize_action(opts = {})
     opts[:action] ||= params[:action].to_sym
 
@@ -284,15 +302,15 @@ module Controller
 
     return true if !intf.authorization_required?
 
-    user_capas = intf.init_capabilities(@aaa_context, @resource)
+    @user_capas = intf.init_capabilities(@aaa_context, @resource)
 
-    if !user_capas.any?
+    if !@user_capas.any?
       raise Exception::AuthorizationError.new(
             :reason => :forbidden,
             :short_msg => 'You do not have the required capability to access the resource.')
     end
 
-    unless intf.action_allowed?(user_capas, opts[:action])
+    unless intf.action_allowed?(@user_capas, opts[:action])
       raise Exception::AuthorizationError.new(
             :reason => :forbidden,
             :short_msg => 'You do not have the required capability to operate this action.')

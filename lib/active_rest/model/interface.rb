@@ -371,7 +371,7 @@ class Interface
     capas &= capabilities.keys
   end
 
-  def init_capabilities(aaa_context, resource)
+  def init_capabilities(aaa_context, resource = nil)
     # Build a list of capabilities the user *has*
     user_capas = []
 
