@@ -25,7 +25,7 @@ class Account < ActiveRecord::Base
     end
   end
 
-  def can?(context, capa)
+  def has_capability?(context, capa)
     capabilities_for(context).include?(capa)
   end
 

@@ -53,7 +53,7 @@ describe Account do
     end
   end
 
-  describe 'can?' do
+  describe 'has_capability?' do
     before(:each) do
       @a1 = FactoryGirl.create(:account1)
       @a2 = FactoryGirl.create(:account2)
@@ -61,117 +61,117 @@ describe Account do
     end
 
     it 'responds correctly with test data' do
-      @a1.can?(context_1, :edit_as_user).should be_false
-      @a1.can?(context_1, :edit_as_reseller).should be_false
-      @a1.can?(context_1, :edit_as_admin).should be_false
-      @a1.can?(context_1, :special_functions).should be_false
-      @a1.can?(context_1, :superuser).should be_false
+      @a1.has_capability?(context_1, :edit_as_user).should be_false
+      @a1.has_capability?(context_1, :edit_as_reseller).should be_false
+      @a1.has_capability?(context_1, :edit_as_admin).should be_false
+      @a1.has_capability?(context_1, :special_functions).should be_false
+      @a1.has_capability?(context_1, :superuser).should be_false
 
-      @a1.can?(context_2, :edit_as_user).should be_true
-      @a1.can?(context_2, :edit_as_reseller).should be_false
-      @a1.can?(context_2, :edit_as_admin).should be_false
-      @a1.can?(context_2, :special_functions).should be_false
-      @a1.can?(context_2, :superuser).should be_false
+      @a1.has_capability?(context_2, :edit_as_user).should be_true
+      @a1.has_capability?(context_2, :edit_as_reseller).should be_false
+      @a1.has_capability?(context_2, :edit_as_admin).should be_false
+      @a1.has_capability?(context_2, :special_functions).should be_false
+      @a1.has_capability?(context_2, :superuser).should be_false
 
-      @a1.can?(context_3, :edit_as_user).should be_false
-      @a1.can?(context_3, :edit_as_reseller).should be_true
-      @a1.can?(context_3, :edit_as_admin).should be_false
-      @a1.can?(context_3, :special_functions).should be_false
-      @a1.can?(context_3, :superuser).should be_false
+      @a1.has_capability?(context_3, :edit_as_user).should be_false
+      @a1.has_capability?(context_3, :edit_as_reseller).should be_true
+      @a1.has_capability?(context_3, :edit_as_admin).should be_false
+      @a1.has_capability?(context_3, :special_functions).should be_false
+      @a1.has_capability?(context_3, :superuser).should be_false
 
-      @a1.can?(context_4, :edit_as_user).should be_false
-      @a1.can?(context_4, :edit_as_reseller).should be_false
-      @a1.can?(context_4, :edit_as_admin).should be_true
-      @a1.can?(context_4, :special_functions).should be_false
-      @a1.can?(context_4, :superuser).should be_false
+      @a1.has_capability?(context_4, :edit_as_user).should be_false
+      @a1.has_capability?(context_4, :edit_as_reseller).should be_false
+      @a1.has_capability?(context_4, :edit_as_admin).should be_true
+      @a1.has_capability?(context_4, :special_functions).should be_false
+      @a1.has_capability?(context_4, :superuser).should be_false
 
-      @a1.can?(context_5, :edit_as_user).should be_false
-      @a1.can?(context_5, :edit_as_reseller).should be_false
-      @a1.can?(context_5, :edit_as_admin).should be_true
-      @a1.can?(context_5, :special_functions).should be_true
-      @a1.can?(context_5, :superuser).should be_false
+      @a1.has_capability?(context_5, :edit_as_user).should be_false
+      @a1.has_capability?(context_5, :edit_as_reseller).should be_false
+      @a1.has_capability?(context_5, :edit_as_admin).should be_true
+      @a1.has_capability?(context_5, :special_functions).should be_true
+      @a1.has_capability?(context_5, :superuser).should be_false
 
-      @a1.can?(context_s, :edit_as_user).should be_false
-      @a1.can?(context_s, :edit_as_reseller).should be_false
-      @a1.can?(context_s, :edit_as_admin).should be_false
-      @a1.can?(context_s, :special_functions).should be_false
-      @a1.can?(context_s, :superuser).should be_false
-
-
-      @a2.can?(context_1, :edit_as_user).should be_false
-      @a2.can?(context_1, :edit_as_reseller).should be_false
-      @a2.can?(context_1, :edit_as_admin).should be_false
-      @a2.can?(context_1, :special_functions).should be_false
-      @a2.can?(context_1, :superuser).should be_false
-
-      @a2.can?(context_2, :edit_as_user).should be_true
-      @a2.can?(context_2, :edit_as_reseller).should be_false
-      @a2.can?(context_2, :edit_as_admin).should be_false
-      @a2.can?(context_2, :special_functions).should be_false
-      @a2.can?(context_2, :superuser).should be_false
-
-      @a2.can?(context_3, :edit_as_user).should be_false
-      @a2.can?(context_3, :edit_as_reseller).should be_true
-      @a2.can?(context_3, :edit_as_admin).should be_false
-      @a2.can?(context_3, :special_functions).should be_false
-      @a2.can?(context_3, :superuser).should be_false
-
-      @a2.can?(context_4, :edit_as_user).should be_false
-      @a2.can?(context_4, :edit_as_reseller).should be_false
-      @a2.can?(context_4, :edit_as_admin).should be_true
-      @a2.can?(context_4, :special_functions).should be_false
-      @a2.can?(context_4, :superuser).should be_false
-
-      @a2.can?(context_5, :edit_as_user).should be_false
-      @a2.can?(context_5, :edit_as_reseller).should be_false
-      @a2.can?(context_5, :edit_as_admin).should be_true
-      @a2.can?(context_5, :special_functions).should be_true
-      @a2.can?(context_5, :superuser).should be_false
-
-      @a2.can?(context_s, :edit_as_user).should be_false
-      @a2.can?(context_s, :edit_as_reseller).should be_false
-      @a2.can?(context_s, :edit_as_admin).should be_false
-      @a2.can?(context_s, :special_functions).should be_false
-      @a2.can?(context_s, :superuser).should be_false
-      @a2.can?(context_s, :superuser).should be_false
+      @a1.has_capability?(context_s, :edit_as_user).should be_false
+      @a1.has_capability?(context_s, :edit_as_reseller).should be_false
+      @a1.has_capability?(context_s, :edit_as_admin).should be_false
+      @a1.has_capability?(context_s, :special_functions).should be_false
+      @a1.has_capability?(context_s, :superuser).should be_false
 
 
+      @a2.has_capability?(context_1, :edit_as_user).should be_false
+      @a2.has_capability?(context_1, :edit_as_reseller).should be_false
+      @a2.has_capability?(context_1, :edit_as_admin).should be_false
+      @a2.has_capability?(context_1, :special_functions).should be_false
+      @a2.has_capability?(context_1, :superuser).should be_false
 
-      @a3.can?(context_1, :edit_as_user).should be_false
-      @a3.can?(context_1, :edit_as_reseller).should be_false
-      @a3.can?(context_1, :edit_as_admin).should be_false
-      @a3.can?(context_1, :special_functions).should be_false
-      @a3.can?(context_1, :superuser).should be_false
+      @a2.has_capability?(context_2, :edit_as_user).should be_true
+      @a2.has_capability?(context_2, :edit_as_reseller).should be_false
+      @a2.has_capability?(context_2, :edit_as_admin).should be_false
+      @a2.has_capability?(context_2, :special_functions).should be_false
+      @a2.has_capability?(context_2, :superuser).should be_false
 
-      @a3.can?(context_2, :edit_as_user).should be_false
-      @a3.can?(context_2, :edit_as_reseller).should be_false
-      @a3.can?(context_2, :edit_as_admin).should be_false
-      @a3.can?(context_2, :special_functions).should be_false
-      @a3.can?(context_2, :superuser).should be_false
+      @a2.has_capability?(context_3, :edit_as_user).should be_false
+      @a2.has_capability?(context_3, :edit_as_reseller).should be_true
+      @a2.has_capability?(context_3, :edit_as_admin).should be_false
+      @a2.has_capability?(context_3, :special_functions).should be_false
+      @a2.has_capability?(context_3, :superuser).should be_false
 
-      @a3.can?(context_3, :edit_as_user).should be_false
-      @a3.can?(context_3, :edit_as_reseller).should be_false
-      @a3.can?(context_3, :edit_as_admin).should be_false
-      @a3.can?(context_3, :special_functions).should be_false
-      @a3.can?(context_3, :superuser).should be_false
+      @a2.has_capability?(context_4, :edit_as_user).should be_false
+      @a2.has_capability?(context_4, :edit_as_reseller).should be_false
+      @a2.has_capability?(context_4, :edit_as_admin).should be_true
+      @a2.has_capability?(context_4, :special_functions).should be_false
+      @a2.has_capability?(context_4, :superuser).should be_false
 
-      @a3.can?(context_4, :edit_as_user).should be_false
-      @a3.can?(context_4, :edit_as_reseller).should be_false
-      @a3.can?(context_4, :edit_as_admin).should be_false
-      @a3.can?(context_4, :special_functions).should be_false
-      @a3.can?(context_4, :superuser).should be_false
+      @a2.has_capability?(context_5, :edit_as_user).should be_false
+      @a2.has_capability?(context_5, :edit_as_reseller).should be_false
+      @a2.has_capability?(context_5, :edit_as_admin).should be_true
+      @a2.has_capability?(context_5, :special_functions).should be_true
+      @a2.has_capability?(context_5, :superuser).should be_false
 
-      @a3.can?(context_5, :edit_as_user).should be_false
-      @a3.can?(context_5, :edit_as_reseller).should be_false
-      @a3.can?(context_5, :edit_as_admin).should be_false
-      @a3.can?(context_5, :special_functions).should be_false
-      @a3.can?(context_5, :superuser).should be_false
+      @a2.has_capability?(context_s, :edit_as_user).should be_false
+      @a2.has_capability?(context_s, :edit_as_reseller).should be_false
+      @a2.has_capability?(context_s, :edit_as_admin).should be_false
+      @a2.has_capability?(context_s, :special_functions).should be_false
+      @a2.has_capability?(context_s, :superuser).should be_false
+      @a2.has_capability?(context_s, :superuser).should be_false
 
-      @a3.can?(context_s, :edit_as_user).should be_false
-      @a3.can?(context_s, :edit_as_reseller).should be_false
-      @a3.can?(context_s, :edit_as_admin).should be_false
-      @a3.can?(context_s, :special_functions).should be_false
-      @a3.can?(context_s, :superuser).should be_false
+
+
+      @a3.has_capability?(context_1, :edit_as_user).should be_false
+      @a3.has_capability?(context_1, :edit_as_reseller).should be_false
+      @a3.has_capability?(context_1, :edit_as_admin).should be_false
+      @a3.has_capability?(context_1, :special_functions).should be_false
+      @a3.has_capability?(context_1, :superuser).should be_false
+
+      @a3.has_capability?(context_2, :edit_as_user).should be_false
+      @a3.has_capability?(context_2, :edit_as_reseller).should be_false
+      @a3.has_capability?(context_2, :edit_as_admin).should be_false
+      @a3.has_capability?(context_2, :special_functions).should be_false
+      @a3.has_capability?(context_2, :superuser).should be_false
+
+      @a3.has_capability?(context_3, :edit_as_user).should be_false
+      @a3.has_capability?(context_3, :edit_as_reseller).should be_false
+      @a3.has_capability?(context_3, :edit_as_admin).should be_false
+      @a3.has_capability?(context_3, :special_functions).should be_false
+      @a3.has_capability?(context_3, :superuser).should be_false
+
+      @a3.has_capability?(context_4, :edit_as_user).should be_false
+      @a3.has_capability?(context_4, :edit_as_reseller).should be_false
+      @a3.has_capability?(context_4, :edit_as_admin).should be_false
+      @a3.has_capability?(context_4, :special_functions).should be_false
+      @a3.has_capability?(context_4, :superuser).should be_false
+
+      @a3.has_capability?(context_5, :edit_as_user).should be_false
+      @a3.has_capability?(context_5, :edit_as_reseller).should be_false
+      @a3.has_capability?(context_5, :edit_as_admin).should be_false
+      @a3.has_capability?(context_5, :special_functions).should be_false
+      @a3.has_capability?(context_5, :superuser).should be_false
+
+      @a3.has_capability?(context_s, :edit_as_user).should be_false
+      @a3.has_capability?(context_s, :edit_as_reseller).should be_false
+      @a3.has_capability?(context_s, :edit_as_admin).should be_false
+      @a3.has_capability?(context_s, :special_functions).should be_false
+      @a3.has_capability?(context_s, :superuser).should be_false
     end
   end
 
