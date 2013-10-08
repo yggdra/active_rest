@@ -25,6 +25,8 @@ FactoryGirl.define do
     excluded_attribute 23456
     not_readable_attribute 98765
     not_writable_attribute 45678
+
+    association :location, :factory => :company_location2
   end
 
   factory :company_3, :class => 'Company' do
@@ -38,6 +40,8 @@ FactoryGirl.define do
     excluded_attribute 33333
     not_readable_attribute 44444
     not_writable_attribute 55555
+
+    association :location, :factory => :company_location3
   end
 
   factory :group, :class => 'Group' do
@@ -48,6 +52,18 @@ FactoryGirl.define do
     lat 0.12345
     lon 9.12345
     raw_name 'Seveso'
+  end
+
+  factory :company_location2, :class => 'CompanyLocation' do
+    lat 50.12345
+    lon 59.12345
+    raw_name 'Abaca'
+  end
+
+  factory :company_location3, :class => 'CompanyLocation' do
+    lat 90.12345
+    lon 99.12345
+    raw_name 'Zulu'
   end
 
   factory :company_phone, :class => 'Company::Phone' do
@@ -95,5 +111,4 @@ FactoryGirl.define do
     association :polyref_1, :factory => :ext_obj_foo
     association :polyref_2, :factory => :ext_obj_bar
   end
-
 end

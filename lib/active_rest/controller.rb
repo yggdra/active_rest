@@ -218,7 +218,9 @@ module Controller
         desc = ($1 && $1 == '-')
         attrname = $2
 
-        (attr, rel) = rel.nested_attribute(attrname, rel)
+        (attr, path) = rel.nested_attribute(attrname)
+        path.each { |x| rel = rel.joins(x) }
+
         attr = attr.desc if desc
 
         rel = rel.order(attr)
