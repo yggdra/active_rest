@@ -55,6 +55,13 @@ ActiveRecord::Schema.define(version: 20100726160133) do
     t.string   "name"
   end
 
+  create_table "company_location_coordinates", force: true do |t|
+    t.integer "company_location_id"
+    t.float   "lat"
+    t.float   "lon"
+    t.integer "order"
+  end
+
   create_table "company_locations", force: true do |t|
     t.float  "lat"
     t.float  "lon"

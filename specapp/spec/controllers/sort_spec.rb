@@ -63,6 +63,7 @@ describe CompaniesController do
     response.should be_success
 
     ActiveSupport::JSON.decode(response.body).should deep_include([
+      { 'id' => 1 },
       { 'id' => 2 },
       { 'id' => 3 },
     ])
@@ -74,6 +75,7 @@ describe CompaniesController do
     response.should be_success
 
     ActiveSupport::JSON.decode(response.body).should deep_include([
+      { 'id' => 1 },
       { 'id' => 2 },
       { 'id' => 3 },
     ])
@@ -87,6 +89,32 @@ describe CompaniesController do
     ActiveSupport::JSON.decode(response.body).should deep_include([
       { 'id' => 3 },
       { 'id' => 2 },
+      { 'id' => 1 },
+    ])
+  end
+
+
+  it 'sorts ascending on a 2-level nested field with +' do
+    get :index, :format => :json, :sort => '+location.coordinate.order'
+
+    response.should be_success
+
+    ActiveSupport::JSON.decode(response.body).should deep_include([
+      { 'id' => 1 },
+      { 'id' => 2 },
+      { 'id' => 3 },
+    ])
+  end
+
+  it 'sorts descending on a 2-level nested field with -' do
+    get :index, :format => :json, :sort => '-location.coordinate.order'
+
+    response.should be_success
+
+    ActiveSupport::JSON.decode(response.body).should deep_include([
+      { 'id' => 3 },
+      { 'id' => 2 },
+      { 'id' => 1 },
     ])
   end
 

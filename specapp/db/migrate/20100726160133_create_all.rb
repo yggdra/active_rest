@@ -40,6 +40,13 @@ class CreateAll < ActiveRecord::Migration
       t.string :raw_name
     end
 
+    create_table :company_location_coordinates, :force => true do |t|
+      t.references :company_location
+      t.float :lat
+      t.float :lon
+      t.integer :order
+    end
+
     create_table :groups, :force => true do |t|
       t.string :name
     end

@@ -203,7 +203,7 @@ module Controller
           exp.joins.each do |path|
 #            rel = rel.joins { path.inject(self) { |a,x| a.__send__(x) } } if path.any?
 #
-            rel = rel.joins { path[1..-1].inject(self.__send__(path[0]).outer) { |a,x| a.__send__(x) } } if path.any?
+            rel = rel.joins { path[1..-1].inject(self.__send__(path[0]).outer) { |a,x| a.__send__(x).outer } } if path.any?
           end
         rescue Expression::SyntaxError => e
           raise Exception::BadRequest.new(e.message)
@@ -228,7 +228,7 @@ module Controller
         search_in.each do |x|
           (attr, path) = ar_model.nested_attribute(x)
 
-          path.each { |x| rel = rel.joins(x) }
+          rel = rel.joins { path[1..-1].inject(self.__send__(path[0]).outer) { |a,x| a.__send__(x).outer } } if path.any?
 
           e = attr.matches('%' + params[:search] + '%')
           expr = expr ? expr.or(e) : e

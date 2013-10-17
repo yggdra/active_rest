@@ -219,7 +219,8 @@ module Controller
         attrname = $2
 
         (attr, path) = rel.nested_attribute(attrname)
-        path.each { |x| rel = rel.joins(x) }
+
+        rel = rel.joins { path[1..-1].inject(self.__send__(path[0]).outer) { |a,x| a.__send__(x).outer } } if path.any?
 
         attr = attr.desc if desc
 
