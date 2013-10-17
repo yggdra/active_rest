@@ -253,9 +253,9 @@ describe Account do
 
   describe 'ar_serializable_hash' do
     before(:each) do
-      @a1= FactoryGirl.create(:account1)
-      @a2= FactoryGirl.create(:account2)
-      @a3= FactoryGirl.create(:account3)
+      @a1 = FactoryGirl.create(:account1)
+      @a2 = FactoryGirl.create(:account2)
+      @a3 = FactoryGirl.create(:account3)
     end
 
     it 'raises ResourceNotReadable for Account1 in context_1' do
@@ -354,9 +354,9 @@ describe Account do
 
   describe 'apply_update_attributes' do
     before(:each) do
-      @a1= FactoryGirl.create(:account1)
-      @a2= FactoryGirl.create(:account2)
-      @a3= FactoryGirl.create(:account3)
+      @a1 = FactoryGirl.create(:account1)
+      @a2 = FactoryGirl.create(:account2)
+      @a3 = FactoryGirl.create(:account3)
     end
 
     it 'does not raise an error when empty update is specified' do
@@ -399,9 +399,9 @@ describe Account do
 
   describe 'ar_apply_update_attributes' do
     before(:each) do
-      @a1= FactoryGirl.create(:account1)
-      @a2= FactoryGirl.create(:account2)
-      @a3= FactoryGirl.create(:account3)
+      @a1 = FactoryGirl.create(:account1)
+      @a2 = FactoryGirl.create(:account2)
+      @a3 = FactoryGirl.create(:account3)
     end
 
     it 'does not raise an error when empty update is specified if the resource is accessible in some way' do
@@ -465,9 +465,9 @@ describe Account do
 
   describe 'interface[:rest].allow_action?' do
     before(:each) do
-      @a1= FactoryGirl.create(:account1)
-      @a2= FactoryGirl.create(:account2)
-      @a3= FactoryGirl.create(:account3)
+      @a1 = FactoryGirl.create(:account1)
+      @a2 = FactoryGirl.create(:account2)
+      @a3 = FactoryGirl.create(:account3)
     end
 
     it 'allows special_action to users with special_functions capabilities' do

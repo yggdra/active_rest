@@ -154,9 +154,9 @@ describe View, 'attribute' do
      {
       :group =>
        {
-        :id=>1,
-        :name=>"MegaHolding",
-        :_type=>"Group",
+        :id => 1001,
+        :name => 'MegaHolding',
+        :_type => 'Group',
 #        :_object_perms=>{:read=>true, :write=>true, :delete=>true},
 #        :_attr_perms=> {
 #          :id=>{:read=>true, :write=>true},
@@ -177,7 +177,7 @@ describe View, 'attribute' do
      {
       :group =>
        {
-        :id => 1, :name => 'MegaHolding',
+        :id => 1001, :name => 'MegaHolding',
         :_type=> 'Group',
 #        :_object_perms => { :read => true, :write => true, :delete => true },
 #        :_attr_perms => { :id => { :read => true, :write => true },
@@ -217,7 +217,7 @@ describe View, 'attribute' do
 
     @c.ar_serializable_hash(:rest, :view => v).should ==
      {
-      :group => { :id => 1 },
+      :group => { :id => 1001 },
      }
   end
 
@@ -251,8 +251,8 @@ describe View, 'attribute' do
 
     @c.ar_serializable_hash(:rest, :view => v).should ==
      {
-      :users => [{ :id => 1 },
-                 { :id => 2 }],
+      :users => [{ :id => 1001 },
+                 { :id => 1002 }],
      }
   end
 

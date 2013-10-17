@@ -581,14 +581,38 @@ class Interface
       raise AttributeNotWritable.new(obj, attr_name) if !writable
 
       case attr
-      when Attribute::Reference
-      when Attribute::EmbeddedModel
-        record = obj.send(attr_name)
+      when Attribute::Reference, Attribute::PolymorphicReference
+        value = value.with_indifferent_access if value
+        association = obj.association(attr_name)
 
-        if !value || value['_destroy']
+        if association.loaded?
+          record = association.target
+        else
+          record = association.reload.target
+        end
+
+        if value && attr.is_a?(Attribute::PolymorphicReference)
+          association.target = value[:_type].constantize.find(value[:id])
+        elsif value
+          association.target = association.klass.find(value[:id])
+        else
+          association.target = nil
+        end
+
+      when Attribute::EmbeddedModel, Attribute::EmbeddedPolymorphicModel
+        value = value.with_indifferent_access if value
+        association = obj.association(attr_name)
+
+        if association.loaded?
+          record = association.target
+        else
+          record = association.reload.target
+        end
+
+        if !value || value[:_destroy]
           # DESTROY
           record.mark_for_destruction if record
-        elsif record && value['id'] && value['id'] != 0 && record.id == value['id']
+        elsif record
           # UPDATE
           record.ar_apply_update_attributes(@name, value, opts)
         else
@@ -598,68 +622,84 @@ class Interface
           record.mark_for_destruction if record
 
           newrecord = nil
-          if @allow_polymorphic_creation && value.has_key('_type') && value['_type']
-            newrecord = value['_type'].constantize.new
+          if attr.is_a?(Attribute::EmbeddedPolymorphicModel)
+            raise TypeMissing if !value[:_type]
+            # XXX TODO Fail gracefully if type is not found
+            newrecord = value[:_type].constantize.ar_new(@name, value, opts)
           else
-            newrecord = obj.send("build_#{attr_name}")
+            newrecord = association.klass.ar_new(@name, value, opts)
           end
 
-          newrecord.ar_apply_creation_attributes(@name, value, opts)
+          association.target = newrecord
         end
 
       when Attribute::UniformModelsCollection
-
         association = obj.association(attr_name)
 
-        existing_records = if association.loaded?
-          association.target
+        if association.loaded?
+          existing_records = association.target
         else
           ids = value.map {|a| a['id'] || a[:id] }.compact
-          ids.empty? ? [] : association.scope.where(association.klass.primary_key => ids)
+          existing_records = ids.empty? ? [] : association.scope.where(association.klass.primary_key => ids)
         end
 
-        value.each do |attributes|
-          attributes = attributes.with_indifferent_access
+        value.each do |val|
+          val = val.with_indifferent_access
 
-          if attributes['id'].blank? || attributes['id'] == 0
+          # XXX Evaluate if id==9 is to be considered an indication to create record
+          if !val.has_key?(:id) || val[:id].blank? || val[:id] == 0
             # CREATE
-
-            if attributes['_type'] && attr.model_class.constantize.interfaces[@name].allow_polymorphic_creation
-              newrecord = attributes[:_type].constantize.ar_new(@name, attributes, opts)
-              association.concat(newrecord)
+            if attr.model_class.constantize.interfaces[@name].allow_polymorphic_creation
+              raise TypeMising if !val[:_type]
+              # XXX TODO Fail gracefully if type is not found
+              newrecord = val[:_type].constantize.ar_new(@name, val, opts)
             else
-              newrecord = association.build
-              newrecord.ar_apply_creation_attributes(@name, attributes, opts)
+              raise ClassDoesNotMatch.new(obj.class, association.klass) if val[:_type] && val[:_type] != association.klass.name
+              newrecord = association.klass.ar_new(@name, val, opts)
             end
 
-          elsif existing_record = existing_records.detect { |record| record.id.to_s == attributes['id'].to_s }
+            association.concat(newrecord)
+          else
+            existing_record = existing_records.detect { |x| x.id == val[:id] }
+            raise AssociatedRecordNotFound.new if !existing_record
 
-            unless association.loaded?
-              target_record = association.target.detect { |record| record == existing_record }
-
-              if target_record
-                existing_record = target_record
-              else
-                association.add_to_target(existing_record)
-              end
-            end
-
-            if attributes['_destroy']
+            if val[:_destroy]
               # DESTROY
-              existing_record.destroy
+              existing_record.mark_for_destruction
             else
               # UPDATE
-              existing_record.ar_apply_update_attributes(@name, attributes, opts)
+              existing_record.ar_apply_update_attributes(@name, val, opts)
             end
-          else
-            raise AssociatedRecordNotFound.new
           end
         end
+
       when Attribute::UniformReferencesCollection
-      when Attribute::EmbeddedPolymorphicModel
-      when Attribute::PolymorphicReference
+        association = obj.association(attr_name)
+
+        if association.loaded?
+          existing_records = association.target
+        else
+          ids = value.map {|a| a['id'] || a[:id] }.compact
+          existing_records = ids.empty? ? [] : association.scope.where(association.klass.primary_key => ids)
+        end
+
+        value.each do |val|
+          val = val.with_indifferent_access
+
+          existing_record = existing_records.detect { |x| x.id == val[:id] }
+
+          if val[:_destroy]
+            raise AssociatedRecordNotFound.new if !existing_record
+            existing_record.destroy
+          elsif !existing_record
+            association.concat(association.klass.find(val[:id]))
+          end
+        end
+
       when Attribute::PolymorphicModelsCollection
+        # Not supported because ActiveRecord has no concept of polymorphoc has_many
       when Attribute::PolymorphicReferencesCollection
+        # Not supported because ActiveRecord has no concept of polymorphoc has_many
 
       when Attribute::Structure, Attribute
         obj.send("#{attr_name}=", value)
@@ -754,6 +794,8 @@ class Interface
     attr_accessor :type
 
     def initialize(model_class, type)
+      super
+
       @model_class = model_class
       @model_type = type
     end
@@ -763,6 +805,8 @@ class Interface
     end
   end
 
+  class TypeMissing < Error
+  end
 end
 
 end

@@ -55,11 +55,13 @@ class Company < ActiveRecord::Base
 
   has_many :phones,
            :class_name => 'Company::Phone',
-           :embedded => true
+           :embedded => true,
+           :autosave => true
 
   belongs_to :location,
              :class_name => 'CompanyLocation',
-             :embedded => true
+             :embedded => true,
+             :autosave => true
 
   composed_of :full_address,
             :class_name => '::Company::FullAddress',
@@ -69,8 +71,8 @@ class Company < ActiveRecord::Base
               [ :zip, :zip ],
             ]
 
-  belongs_to :object_1, :polymorphic => true, :embedded => true
-  belongs_to :object_2, :polymorphic => true, :embedded => true
+  belongs_to :object_1, :polymorphic => true, :embedded => true, :autosave => true
+  belongs_to :object_2, :polymorphic => true, :embedded => true, :autosave => true
 
   belongs_to :polyref_1, :polymorphic => true
   belongs_to :polyref_2, :polymorphic => true

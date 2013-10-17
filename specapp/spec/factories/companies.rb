@@ -45,25 +45,52 @@ FactoryGirl.define do
   end
 
   factory :group, :class => 'Group' do
+    id 1001
     name 'MegaHolding'
+  end
+
+  factory :group_2, :class => 'Group' do
+    id 1002
+    name 'CompuGlobalHyperMegaNet'
   end
 
   factory :company_location, :class => 'CompanyLocation' do
     lat 0.12345
     lon 9.12345
     raw_name 'Seveso'
+    association :coordinate, :factory => :company_location_coordinate
   end
 
   factory :company_location2, :class => 'CompanyLocation' do
     lat 50.12345
     lon 59.12345
     raw_name 'Abaca'
+    association :coordinate, :factory => :company_location_coordinate2
   end
 
   factory :company_location3, :class => 'CompanyLocation' do
     lat 90.12345
     lon 99.12345
     raw_name 'Zulu'
+    association :coordinate, :factory => :company_location_coordinate3
+  end
+
+  factory :company_location_coordinate, :class => 'CompanyLocationCoordinate' do
+    lat 0.12345
+    lon 9.12345
+    order 1
+  end
+
+  factory :company_location_coordinate2, :class => 'CompanyLocationCoordinate' do
+    lat 50.12345
+    lon 59.12345
+    order 2
+  end
+
+  factory :company_location_coordinate3, :class => 'CompanyLocationCoordinate' do
+    lat 90.12345
+    lon 99.12345
+    order 3
   end
 
   factory :company_phone, :class => 'Company::Phone' do
@@ -96,12 +123,12 @@ FactoryGirl.define do
     not_readable_attribute 232323
     not_writable_attribute 343434
 
-    users { [association(:user, :name => 'Paolino Paperino'),
-             association(:user, :name => 'Zio Paperone')] }
+    users { [association(:user, :id => 1001, :name => 'Paolino Paperino'),
+             association(:user, :id => 1002, :name => 'Zio Paperone')] }
 
     association :location, :factory => :company_location
-    phones { [association(:company_phone, :number => 99999999),
-              association(:company_phone, :number => 12345678)] }
+    phones { [association(:company_phone, :id => 1001, :number => 99999999),
+              association(:company_phone, :id => 1002, :number => 12345678)] }
 
     association :group, :factory => :group
 
