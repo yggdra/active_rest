@@ -12,6 +12,7 @@
 
 require 'active_rest/model/interface/attribute'
 require 'active_rest/model/interface/capability'
+require 'active_rest/model/interface/capability_template'
 
 class Array
   def ar_serializable_hash(ifname, opts = {})
@@ -41,6 +42,7 @@ class Interface
   attr_reader :config_attrs
 
   attr_reader :capabilities
+  attr_reader :templates
 
   def initialize(name, model, opts = {})
     @name = name
@@ -50,6 +52,7 @@ class Interface
     @activerecord_autoinit = true
     @attrs = nil
     @capabilities = {}
+    @templates = {}
 
     @allow_polymorphic_creation = false
 
@@ -246,12 +249,20 @@ class Interface
     a[name].instance_exec(&block) if block
   end
 
+  def template(name, &block)
+    name = name.to_sym
+    templates[name] ||= CapabilityTemplate.new(name, self)
+    templates[name].instance_exec(&block) if block
+  end
+
   def capability(name, &block)
-    capabilities[name] = Capability.new(name, self)
+    name = name.to_sym
+    capabilities[name] ||= Capability.new(name, self)
     capabilities[name].instance_exec(&block) if block
   end
 
   def view(name, &block)
+    name = name.to_sym
     @views[name] ||= View.new(name)
     @views[name].instance_exec(&block) if block
     @views[name]
@@ -371,7 +382,7 @@ class Interface
     capas &= capabilities.keys
   end
 
-  def init_capabilities(aaa_context, resource = nil)
+  def init_capabilities(aaa_context, resource = nil, opts = {})
     # Build a list of capabilities the user *has*
     user_capas = []
 
@@ -383,6 +394,9 @@ class Interface
 
     # Then capabilities given to the specific resource by the ACL
     user_capas += resource.capabilities_for(aaa_context) if resource && resource.respond_to?(:capabilities_for)
+
+    # Used, for example, for :subview capability
+    user_capas += opts[:additional_capas] if opts[:additional_capas]
 
     # Filter out the capabilites not relevant to this resource
     user_capas = relevant_capabilities(user_capas)
@@ -398,7 +412,7 @@ class Interface
     user_capas = nil
 
     if authorization_required?
-      user_capas = init_capabilities(opts[:aaa_context], obj)
+      user_capas = init_capabilities(opts[:aaa_context], obj, opts.slice(:additional_capas))
       raise ResourceNotReadable.new(obj) if user_capas.empty?
     end
 
@@ -461,7 +475,8 @@ class Interface
       when Model::Interface::Attribute::Reference
         if viewinc
           val = obj.send(attr.name_in_model)
-          values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
+          values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview,
+                                                        :additional_capas => [ :subview ])) : nil
         end
       when Model::Interface::Attribute::EmbeddedModel
         val = obj.send(attr.name_in_model)
@@ -488,7 +503,7 @@ class Interface
       when Model::Interface::Attribute::PolymorphicReference
         if viewinc
           val = obj.send(attr.name_in_model)
-          values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview)) : nil
+          values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview, :additional_capas => :subview)) : nil
         else
           ref = obj.association(attr.name_in_model).reflection
           values[attrname] = { :id => obj.send(ref.foreign_key), :_type => obj.send(ref.foreign_type) }
@@ -592,9 +607,11 @@ class Interface
         end
 
         if value && attr.is_a?(Attribute::PolymorphicReference)
+          raise TypeMissing if !value[:_type]
+          raise TypeNotFound.new(value[:_type]) if !(value[:_type].constantize.is_a?(Class) rescue false)
           association.target = value[:_type].constantize.find(value[:id])
         elsif value
-          association.target = association.klass.find(value[:id])
+          association.target = association.klass.find(value[:id]) if value[:id] # XXX Temporaneamente viene ignorato {}
         else
           association.target = nil
         end
@@ -624,7 +641,7 @@ class Interface
           newrecord = nil
           if attr.is_a?(Attribute::EmbeddedPolymorphicModel)
             raise TypeMissing if !value[:_type]
-            # XXX TODO Fail gracefully if type is not found
+            raise TypeNotFound.new(value[:_type]) if !(value[:_type].constantize.is_a?(Class) rescue false)
             newrecord = value[:_type].constantize.ar_new(@name, value, opts)
           else
             newrecord = association.klass.ar_new(@name, value, opts)
@@ -650,8 +667,8 @@ class Interface
           if !val.has_key?(:id) || val[:id].blank? || val[:id] == 0
             # CREATE
             if attr.model_class.constantize.interfaces[@name].allow_polymorphic_creation
-              raise TypeMising if !val[:_type]
-              # XXX TODO Fail gracefully if type is not found
+              raise TypeMissing if !val[:_type]
+              raise TypeNotFound.new(val[:_type]) if !(val[:_type].constantize.is_a?(Class) rescue false)
               newrecord = val[:_type].constantize.ar_new(@name, val, opts)
             else
               raise ClassDoesNotMatch.new(obj.class, association.klass) if val[:_type] && val[:_type] != association.klass.name
@@ -805,7 +822,11 @@ class Interface
     end
   end
 
-  class TypeMissing < Error
+  class TypeMissing < Error ; end
+  class TypeNotFound < Error
+    def initialize(type)
+      super "Cannot find type '#{type}'"
+    end
   end
 end
 

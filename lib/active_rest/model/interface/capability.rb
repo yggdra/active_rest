@@ -12,10 +12,16 @@ class Capability
   attr_accessor :attr_acc
   attr_accessor :actions
 
+  attr_reader :allow_all_actions
+  attr_reader :default_readable
+  attr_reader :default_writable
+
   def initialize(name, interface, h = {})
     raise ArgumentError, 'Name can not be null' if !name
 
     @name = name
+    @interface = interface
+
     @attr_acc = {}
     @actions = {}
 
@@ -24,6 +30,36 @@ class Capability
     @default_writable = false
 
     h.each { |k,v| send("#{k}=", v) }
+  end
+
+  def copy_actions_from(capa)
+    @interface.capabilities[capa].actions.each do |k,v|
+      @actions[k] = v
+    end
+  end
+
+  def copy_attributes_from(capa)
+    @interface.capabilities[capa].attr_acc.each do |k,v|
+      @attr_acc[k] ||= 0
+      @attr_acc[k] |= v
+    end
+  end
+
+  def copy_from(capa)
+    copy_actions_from(capa)
+    copy_attributes_from(capa)
+  end
+
+  def template(capa)
+    @interface.templates[capa].actions.each do |k,v|
+      @actions[k] = v
+    end
+
+    @interface.templates[capa].attr_acc.each do |k,v|
+puts "AAAAAAAAAAAAAAAAA #{k} = #{v}"
+      @attr_acc[k] ||= 0
+      @attr_acc[k] |= v
+    end
   end
 
   def default_readable!
