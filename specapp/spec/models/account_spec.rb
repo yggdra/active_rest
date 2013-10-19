@@ -25,6 +25,21 @@ describe Account do
       @a3 = FactoryGirl.create(:account3)
     end
 
+    it 'returns model\'s schema with GET /schema' do
+      Account.interfaces[:rest].schema.should deep_include({
+        :object_actions => { },
+        :class_actions => { },
+        :capabilities => {
+          :creator => {},
+          :edit_as_user => {},
+          :edit_as_reseller => {},
+          :edit_as_admin => {},
+          :special_functions => {},
+          :superuser => {}
+        },
+      })
+    end
+
     it 'lists capabilities for Account1' do
       @a1.capabilities_for(context_1).should == [ ]
       @a1.capabilities_for(context_2).should == [ :edit_as_user ]

@@ -78,10 +78,6 @@ describe Company do
         @schema.should have_key(:class_actions)
       end
 
-      it 'has a :class_perms key' do
-        @schema.should have_key(:class_perms)
-      end
-
       it 'has a :attrs key' do
         @schema.should have_key(:attrs)
       end
@@ -539,14 +535,6 @@ describe Company do
 
       it 'does not output attribute permissions when :with_perms option is missing' do
         @ch.should_not have_key(:attr_perms)
-      end
-
-      it 'outputs object permissions when :with_perms option is present' do
-        @c.ar_serializable_hash(:rest, :with_perms => true).should have_key(:_object_perms)
-      end
-
-      it 'outputs attribute permissions when :with_perms option is present' do
-        @c.ar_serializable_hash(:rest, :with_perms => true).should have_key(:_attr_perms)
       end
     end
 

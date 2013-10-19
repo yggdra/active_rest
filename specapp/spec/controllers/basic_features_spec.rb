@@ -45,9 +45,8 @@ describe CompaniesController do
                'number' => { 'type' => 'string' },
               'company' => { 'type' => 'reference', 'referenced_class' => 'Company'}
             },
-            'object_actions' => { 'read' => {}, 'write' => {}, 'delete' => {} },
-            'class_actions' => { 'create' => {} },
-            'class_perms' => { 'create' => true }
+            'object_actions' => { },
+            'class_actions' => { },
           },
         },
         'location' => {
@@ -64,9 +63,8 @@ describe CompaniesController do
                 'referenced_class' => 'Company'
               }
             },
-            'object_actions' => { 'read' => {}, 'write' => {}, 'delete' => {} },
-            'class_actions' => { 'create' => {} },
-            'class_perms' => { 'create' => true}
+            'object_actions' => { },
+            'class_actions' => { },
           }
         },
         'full_address' => { 'type' => 'structure' },
@@ -76,9 +74,43 @@ describe CompaniesController do
         'polyref_2' => { 'type' => 'polymorphic_reference' },
         'virtual' => { 'type' => 'string' }
       },
-      'object_actions' => { 'read' => {}, 'write' => {}, 'delete' => {} },
-      'class_actions' => { 'create' => {} },
-      'class_perms' => { 'create' => true }
+      'object_actions' => { },
+      'class_actions' => { },
+      'capabilities' => { },
+    })
+  end
+
+  it 'returns model\'s permissions GET /permissions' do
+    get 'class_permissions', :format => :json
+    response.should be_success
+
+    b = ActiveSupport::JSON.decode(response.body)
+
+    b.should deep_include({
+      'actions_allowed' => [],
+      'attrs' => {
+        'id' => 'RW',
+        'created_at' => 'RW',
+        'updated_at' => 'RW',
+        'name' => 'RW',
+      }
+    })
+  end
+
+  it 'returns instance permissions GET /:id/permissions' do
+    get 'permissions', :id => 2, :format => :json
+    response.should be_success
+
+    b = ActiveSupport::JSON.decode(response.body)
+
+    b.should deep_include({
+      'actions_allowed' => [],
+      'attrs' => {
+        'id' => 'RW',
+        'created_at' => 'RW',
+        'updated_at' => 'RW',
+        'name' => 'RW',
+      }
     })
   end
 
@@ -157,15 +189,15 @@ describe CompaniesController do
   it 'sets ar_view to action name if not specified in the URI parameters' do
     get :show, :id => @c2.id, :format => :json
 
-    controller.ar_view.should be_a(ActiveRest::View)
-    controller.ar_view.name.should == :show
+    controller.send(:ar_view).should be_a(ActiveRest::View)
+    controller.send(:ar_view).name.should == :show
   end
 
   it 'sets ar_view to URI parameter view if specified' do
     get :show, :id => @c2.id, :format => :json, :view => 'foobar'
 
-    controller.ar_view.should be_a(ActiveRest::View)
-    controller.ar_view.name.should == :foobar
+    controller.send(:ar_view).should be_a(ActiveRest::View)
+    controller.send(:ar_view).name.should == :foobar
   end
 
   it 'creates a new record' do

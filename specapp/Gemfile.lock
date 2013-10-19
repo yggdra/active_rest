@@ -1,8 +1,9 @@
 GIT
   remote: http://github.com/vihai/rspec-deep-matchers.git
-  revision: a030d5ad9a9eeaf97e758529a33992f2dc0c1b42
+  revision: 720f77dcf99f9110159a44f74c4ab2c03f405ec7
   specs:
-    rspec-deep-matchers (0.0.5)
+    rspec-deep-matchers (0.0.6)
+      awesome_print
       rspec (>= 2.0.0)
 
 GIT
@@ -14,7 +15,7 @@ GIT
 PATH
   remote: ..
   specs:
-    active_rest (6.2.0)
+    active_rest (6.4.1)
       squeel
 
 GEM

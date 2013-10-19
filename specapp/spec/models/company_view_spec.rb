@@ -13,7 +13,7 @@ describe View do
     v = ActiveRest::View.new(:show) do
     end
 
-    @c1.ar_serializable_hash(:rest, :view => v).should ==
+    @c1.ar_serializable_hash(:rest, :view => v).should deep_include(
      {
       :id => 1,
       :created_at => @c1.created_at,
@@ -44,34 +44,7 @@ describe View do
       :object_2 => nil,
       :virtual => 'This is the virtual value',
       :_type => 'Company',
-#      :_object_perms => { :read => true, :write => true, :delete => true },
-#      :_attr_perms =>
-#       {
-#        :id => {:read => true, :write => true},
-#        :created_at => {:read => true, :write => true},
-#        :updated_at => {:read => true, :write => true},
-#        :name => {:read => true, :write => true},
-#        :city => {:read => true, :write => true},
-#        :street => {:read => true, :write => true},
-#        :zip => {:read => true, :write => true},
-#        :is_active => {:read => true, :write => true},
-#        :registration_date => {:read => true, :write => true},
-#        :group_id => {:read => true, :write => true},
-#        :object_1 => {:read => true, :write => true},
-#        :object_2 => {:read => true, :write => true},
-#        :polyref_1 => {:read => true, :write => true},
-#        :polyref_2 => {:read => true, :write => true},
-#        :users => {:read => true, :write => true},
-#        :contacts => {:read => true, :write => true},
-#        :group => {:read => true, :write => true},
-#        :phones => {:read => true, :write => true},
-#        :location => {:read => true, :write => true},
-#        :full_address => {:read => true, :write => true},
-#        :object_1 => {:read => true, :write => true},
-#        :object_2 => {:read => true, :write => true},
-#        :virtual => {:read => true, :write => true}
-#       }
-     }
+     })
   end
 
 end
@@ -392,8 +365,7 @@ describe View, 'with_perms!' do
 
     @c.ar_serializable_hash(:rest, :view => v).should deep_include(
      {
-      :_object_perms => { :delete => true },
-      :_attr_perms => { :id => { :read => true, :write => true } }
+      :_perms => { :id => 'RW' }
      })
   end
 end
