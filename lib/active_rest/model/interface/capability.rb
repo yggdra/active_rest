@@ -45,15 +45,15 @@ class Capability
   end
 
   def copy_actions_from(capa)
-    @interface.capabilities[capa].allowed_actions.each do |k,v|
-      @actions[k] = v
+    @interface.capabilities[capa].actions.each do |k,v|
+      @actions[k] = v.clone
     end
   end
 
   def copy_attributes_from(capa)
     @interface.capabilities[capa].attr_acc.each do |k,v|
       @attr_acc[k] ||= 0
-      @attr_acc[k] |= v
+      @attr_acc[k] |= v.clone
     end
   end
 
@@ -63,8 +63,8 @@ class Capability
   end
 
   def template(capa)
-    @interface.templates[capa].allowed_actions.each do |k,v|
-      @actions[k] = v
+    @interface.templates[capa].actions.each do |k,v|
+      @actions[k] = v.clone
     end
 
     @interface.templates[capa].attr_acc.each do |k,v|
