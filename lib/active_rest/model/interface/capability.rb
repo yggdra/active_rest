@@ -22,7 +22,7 @@ class Capability
   attr_accessor :interface
 
   attr_accessor :attr_acc
-  attr_accessor :allowed_actions
+  attr_accessor :actions
 
   attr_reader :allow_all_actions
   attr_reader :default_readable
