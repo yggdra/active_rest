@@ -37,6 +37,10 @@ describe Account do
       pending
     end
 
+    it 'allow should raise error if allowing an undefined action' do
+      pending
+    end
+
     it 'returns model\'s schema with GET /schema' do
       Account.interfaces[:rest].schema.should deep_include({
         :actions => { },
