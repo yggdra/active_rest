@@ -357,7 +357,6 @@ describe View, 'with_perms!' do
   end
 
   it 'adds permissions to an empty resource' do
-
     v = ActiveRest::View.new(:show) do
       empty!
       with_perms!
@@ -365,7 +364,10 @@ describe View, 'with_perms!' do
 
     @c.ar_serializable_hash(:rest, :view => v).should deep_include(
      {
-      :_perms => { :id => 'RW' }
+      :_perms => {
+        :attributes => { :id => 'RW' },
+        :allowed_actions => [ ],
+      }
      })
   end
 end

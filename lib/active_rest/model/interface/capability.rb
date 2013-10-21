@@ -1,3 +1,14 @@
+#
+# ActiveRest
+#
+# Copyright (C) 2013-2013, Intercom Srl, Daniele Orlandi
+#
+# Author:: Daniele Orlandi <daniele@orlandi.com>
+#          Lele Forzani <lele@windmill.it>
+#          Alfredo Cerutti <acerutti@intercom.it>
+#
+# License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+#
 
 module ActiveRest
 module Model
@@ -8,9 +19,10 @@ class Capability
   WRITABLE = 0x2
 
   attr_accessor :name
+  attr_accessor :interface
 
   attr_accessor :attr_acc
-  attr_accessor :actions
+  attr_accessor :allowed_actions
 
   attr_reader :allow_all_actions
   attr_reader :default_readable
@@ -33,7 +45,7 @@ class Capability
   end
 
   def copy_actions_from(capa)
-    @interface.capabilities[capa].actions.each do |k,v|
+    @interface.capabilities[capa].allowed_actions.each do |k,v|
       @actions[k] = v
     end
   end
@@ -51,12 +63,11 @@ class Capability
   end
 
   def template(capa)
-    @interface.templates[capa].actions.each do |k,v|
+    @interface.templates[capa].allowed_actions.each do |k,v|
       @actions[k] = v
     end
 
     @interface.templates[capa].attr_acc.each do |k,v|
-puts "AAAAAAAAAAAAAAAAA #{k} = #{v}"
       @attr_acc[k] ||= 0
       @attr_acc[k] |= v
     end
@@ -74,8 +85,12 @@ puts "AAAAAAAAAAAAAAAAA #{k} = #{v}"
     @allow_all_actions = true
   end
 
-  def action(name)
+  def allow(name)
     @actions[name.to_sym] = true
+  end
+
+  def deny(name)
+    @actions[name.to_sym] = false
   end
 
   def readable(name, &block)
@@ -108,8 +123,14 @@ puts "AAAAAAAAAAAAAAAAA #{k} = #{v}"
     @attr_acc[name.to_sym] &= ~(READABLE | WRITABLE)
   end
 
-  def allow_action?(name)
+  def action_allowed?(name)
     @allow_all_actions || @actions[name.to_sym]
+  end
+
+  def allowed_actions
+    actions = @interface.actions.keys
+    actions &= @actions.select { |k,v| v }.keys if !@allow_all_actions
+    actions
   end
 
   def readable?(name)

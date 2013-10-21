@@ -1,3 +1,14 @@
+#
+# ActiveRest
+#
+# Copyright (C) 2013-2013, Intercom Srl, Daniele Orlandi
+#
+# Author:: Daniele Orlandi <daniele@orlandi.com>
+#          Lele Forzani <lele@windmill.it>
+#          Alfredo Cerutti <acerutti@intercom.it>
+#
+# License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+#
 
 module ActiveRest
 module Model
@@ -23,8 +34,8 @@ class Interface
     def initialize(name, interface, h = {})
       raise ArgumentError, 'Name can not be null' if !name
 
-      @name = name
-      @name_in_model = name
+      @name = name.to_sym
+      @name_in_model = name.to_sym
 
       @interface = interface
 

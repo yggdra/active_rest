@@ -65,6 +65,32 @@ module Verbs
     end
   end
 
+  def class_permissions
+    common_permissions
+  end
+
+  def permissions
+    common_permissions
+  end
+
+  def common_permissions
+    intf = ar_model.interfaces[:rest]
+
+    @user_capas = intf.init_capabilities(@aaa_context, @resource)
+
+    res = {
+      :allowed_actions => action_methods.select { |x| intf.action_allowed?(@user_capas, x) },
+      :attributes => Hash[intf.attrs.map { |attrname, attr|
+        [ attrname,
+           (intf.attr_readable?(@user_capas, attr) ? 'R' : '') +
+           (intf.attr_writable?(@user_capas, attr) ? 'W' : '') ]
+      }],
+    }
+
+    respond_with(res)
+  end
+  protected :common_permissions
+
   def index
 #      @resources_relation = ar_model.all.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
 
@@ -110,21 +136,6 @@ module Verbs
       yield(format) if block_given?
     end
   end
-
-  # Empty callbacks
-  def before_save ; end
-
-  def before_create ; end
-  def after_create ; end
-  def after_create_commit ; end
-
-  def before_update ; end
-  def after_update ; end
-  def after_update_commit ; end
-
-  def before_destroy ; end
-  def after_destroy ; end
-  def after_destroy_commit ; end
 
   # POST /resources
 # if parameter '_only_validation' is present only validation actions will be ran
@@ -255,6 +266,22 @@ module Verbs
     end
   end
 
+  protected
+
+  # Empty callbacks
+  def before_save ; end
+
+  def before_create ; end
+  def after_create ; end
+  def after_create_commit ; end
+
+  def before_update ; end
+  def after_update ; end
+  def after_update_commit ; end
+
+  def before_destroy ; end
+  def after_destroy ; end
+  def after_destroy_commit ; end
 end
 
 end

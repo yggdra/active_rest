@@ -70,12 +70,8 @@ describe Company do
         @schema[:type].should == 'Company'
       end
 
-      it 'has a :object_actions key' do
-        @schema.should have_key(:object_actions)
-      end
-
-      it 'has a :class_actions key' do
-        @schema.should have_key(:class_actions)
+      it 'has a :actions key' do
+        @schema.should have_key(:actions)
       end
 
       it 'has a :attrs key' do

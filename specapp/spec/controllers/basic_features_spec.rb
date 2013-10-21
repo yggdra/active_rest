@@ -45,8 +45,7 @@ describe CompaniesController do
                'number' => { 'type' => 'string' },
               'company' => { 'type' => 'reference', 'referenced_class' => 'Company'}
             },
-            'object_actions' => { },
-            'class_actions' => { },
+            'actions' => { },
           },
         },
         'location' => {
@@ -63,8 +62,7 @@ describe CompaniesController do
                 'referenced_class' => 'Company'
               }
             },
-            'object_actions' => { },
-            'class_actions' => { },
+            'actions' => { },
           }
         },
         'full_address' => { 'type' => 'structure' },
@@ -74,8 +72,7 @@ describe CompaniesController do
         'polyref_2' => { 'type' => 'polymorphic_reference' },
         'virtual' => { 'type' => 'string' }
       },
-      'object_actions' => { },
-      'class_actions' => { },
+      'actions' => { },
       'capabilities' => { },
     })
   end
@@ -87,8 +84,8 @@ describe CompaniesController do
     b = ActiveSupport::JSON.decode(response.body)
 
     b.should deep_include({
-      'actions_allowed' => [],
-      'attrs' => {
+      'allowed_actions' => [],
+      'attributes' => {
         'id' => 'RW',
         'created_at' => 'RW',
         'updated_at' => 'RW',
@@ -104,8 +101,8 @@ describe CompaniesController do
     b = ActiveSupport::JSON.decode(response.body)
 
     b.should deep_include({
-      'actions_allowed' => [],
-      'attrs' => {
+      'allowed_actions' => [],
+      'attributes' => {
         'id' => 'RW',
         'created_at' => 'RW',
         'updated_at' => 'RW',

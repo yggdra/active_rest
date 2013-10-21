@@ -25,10 +25,21 @@ describe Account do
       @a3 = FactoryGirl.create(:account3)
     end
 
+    it 'tests inherited capabilities' do
+      pending
+    end
+
+    it 'tests capability templates' do
+      pending
+    end
+
+    it 'tests inherited actions' do
+      pending
+    end
+
     it 'returns model\'s schema with GET /schema' do
       Account.interfaces[:rest].schema.should deep_include({
-        :object_actions => { },
-        :class_actions => { },
+        :actions => { },
         :capabilities => {
           :creator => {},
           :edit_as_user => {},

@@ -30,32 +30,38 @@ class Account < ActiveRecord::Base
   end
 
   interface :rest do
+    action :create
+    action :show
+    action :update
+    action :destroy
+    action :special_action
+
     capability :creator do
-      action :create
+      allow :create
     end
 
     capability :edit_as_user do
-      action :show
+      allow :show
       readable :name
     end
 
     capability :edit_as_reseller do
-      action :show
-      action :update
+      allow :show
+      allow :update
       rw :name
       readable :balance
     end
 
     capability :edit_as_admin do
-      action :show
-      action :update
-      action :destroy
+      allow :show
+      allow :update
+      allow :destroy
       default_readable!
       default_writable!
     end
 
     capability :special_functions do
-      action :special_action
+      allow :special_action
     end
 
     capability :superuser do

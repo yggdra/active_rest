@@ -52,32 +52,41 @@ module Controller
   include Validations
   include Rescuer
 
+  protected
+
   attr_accessor :resource
   attr_accessor :resources
-
-  attr_accessor :ar_capabilities
 
   included do
     class_attribute :ar_model
     self.ar_model = nil
+    protected :ar_model, :ar_model=, :ar_model?
 
     class_attribute :ar_options
     self.ar_options = {}
+    protected :ar_options, :ar_options=, :ar_options?
 
     class_attribute :ar_views
     self.ar_views = {}
+    protected :ar_views, :ar_views=, :ar_views?
 
     class_attribute :ar_scopes
     self.ar_scopes = {}
+    protected :ar_scopes, :ar_scopes=, :ar_scopes?
 
     class_attribute :ar_read_only
     self.ar_read_only = false
+    protected :ar_read_only, :ar_read_only=, :ar_read_only?
 
     class_attribute :ar_transaction_handler
     self.ar_transaction_handler = :ar_default_transaction_handler
+    protected :ar_transaction_handler, :ar_transaction_handler=, :ar_transaction_handler?
 
     define_callbacks :ar_retrieve_resource
+    protected :_ar_retrieve_resource_callbacks, :_ar_retrieve_resource_callbacks=, :_ar_retrieve_resource_callbacks?
+
     define_callbacks :ar_retrieve_resources
+    protected :_ar_retrieve_resources_callbacks, :_ar_retrieve_resources_callbacks=, :_ar_retrieve_resources_callbacks?
 
     class << self
       alias_method_chain :inherited, :ar
@@ -150,8 +159,6 @@ module Controller
     @ar_model || @ar_model = self.class.ar_model
   end
 
-  protected
-
   # default transaction handler which simply starts an ActiveRecord transaction
   #
   def ar_default_transaction_handler
@@ -159,8 +166,6 @@ module Controller
       yield
     end
   end
-
-  private
 
   TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE', 'y', 'yes', 'Y', 'YES', :true, :t]
   def is_true?(val)

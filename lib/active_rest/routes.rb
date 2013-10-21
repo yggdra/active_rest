@@ -19,6 +19,11 @@ module Resources
     resources(*resources) do
       collection do
         get :schema
+        get :permissions, :action => :class_permissions
+      end
+
+      member do
+        get :permissions
       end
 
       yield if block_given?

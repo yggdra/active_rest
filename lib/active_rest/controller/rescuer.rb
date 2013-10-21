@@ -20,6 +20,8 @@ module Rescuer
     TRUE_VALUES.include?(val)
   end
 
+  protected
+
   # Rescue action for ActiveRest::Exception kind of exceptions
   #
   def ar_exception_rescue_action(e, opts = {})

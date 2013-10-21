@@ -1,3 +1,14 @@
+#
+# ActiveRest
+#
+# Copyright (C) 2013-2013, Intercom Srl, Daniele Orlandi
+#
+# Author:: Daniele Orlandi <daniele@orlandi.com>
+#          Lele Forzani <lele@windmill.it>
+#          Alfredo Cerutti <acerutti@intercom.it>
+#
+# License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+#
 
 module ActiveRest
 module Model
@@ -24,8 +35,12 @@ class CapabilityTemplate
     h.each { |k,v| send("#{k}=", v) }
   end
 
-  def action(name)
+  def allow(name)
     @actions[name.to_sym] = true
+  end
+
+  def deny(name)
+    @actions[name.to_sym] = false
   end
 
   def readable(name, &block)

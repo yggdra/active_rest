@@ -36,11 +36,12 @@ class Interface
   attr_accessor :name
   attr_reader :model
   attr_accessor :allow_polymorphic_creation
-  attr_reader :views
   attr_accessor :activerecord_autoinit
-
   attr_reader :config_attrs
 
+  attr_reader :views
+
+  attr_reader :actions
   attr_reader :capabilities
   attr_reader :templates
 
@@ -51,6 +52,7 @@ class Interface
     @views = {}
     @activerecord_autoinit = true
     @attrs = nil
+    @actions = {}
     @capabilities = {}
     @templates = {}
 
@@ -79,8 +81,13 @@ class Interface
       @config_attrs.each { |k,v| (@config_attrs[k] = v.clone).interface = self }
     end
 
+    if @actions
+      @actions = @actions.clone
+    end
+
     if @capabilities
       @capabilities = @capabilities.clone
+      @capabilities.each { |k,v| (@capabilities[k] = v.clone).interface = self }
     end
 
     super
@@ -228,6 +235,7 @@ class Interface
 
   def attribute(name, type = nil, &block)
     a = @attrs || @config_attrs
+    name = name.to_sym
 
     name_in_model = name
     if name.is_a?(Hash)
@@ -261,6 +269,12 @@ class Interface
     capabilities[name].instance_exec(&block) if block
   end
 
+  def action(name)
+    name = name.to_sym
+    actions[name] = {}
+    #actions[name].instance_exec(&block) if block
+  end
+
   def view(name, &block)
     name = name.to_sym
     @views[name] ||= View.new(name)
@@ -269,37 +283,17 @@ class Interface
   end
 
   def schema(options = {})
-
     defs = {}
 
     attrs.select { |k,v| v.readable || v.writable }.each do |attrname,attr|
       defs[attrname] = attr.definition
     end
 
-    object_actions = {
-      :read => {
-      },
-      :write => {
-      },
-      :delete => {
-      }
-      # TODO add specific actions
-    }
-
-    class_actions = {
-      :create => {}
-    }
-
-    class_perms = {
-      :create => true
-    }
-
     res = {
       :type => @model.to_s,
       :attrs => defs,
-      :object_actions => object_actions,
-      :class_actions => class_actions,
-      :class_perms => class_perms,
+      :actions => @actions,
+      :capabilities => Hash[@capabilities.map { |k, capa| [ k, { } ] }],
     }
 
     res
@@ -404,8 +398,12 @@ class Interface
     user_capas
   end
 
+  def allowed_actions(capas)
+    capabilities.slice(*capas).map { |k,v| v.allowed_actions }.flatten.uniq
+  end
+
   def action_allowed?(capas, action)
-    capas.any? { |x| capabilities[x.to_sym] ? capabilities[x.to_sym].allow_action?(action) : false }
+    capabilities.slice(*capas).any? { |k,v| v.action_allowed?(action) }
   end
 
   def ar_serializable_hash(obj, opts = {})
@@ -442,22 +440,13 @@ class Interface
     end
 
     values = {}
-    perms = {}
+    attracc = {}
     attrs.each do |attrname,attr|
-      attrname = attrname.to_sym
-
-      readable =
-         attr.readable && # Defined readable in interface
-         attr_readable?(user_capas, attrname)
-
-      writable =
-         attr.writable && # Defined writable in interface
-         attr_writable?(user_capas, attrname)
+      readable = attr_readable?(user_capas, attr)
+      writable = attr_writable?(user_capas, attr)
 
       if with_perms
-        perms[attrname] ||= {}
-        perms[attrname][:read] = readable
-        perms[attrname][:write] = true
+        attracc[attrname] = (readable ? 'R' : '') + (writable ? 'W' : '')
       end
 
       # Visible in view
@@ -495,7 +484,7 @@ class Interface
             vals = vals.limit(viewdef.limit) if viewdef.limit
             vals = vals.order(viewdef.order) if viewdef.order
           end
-          values[attrname] = vals.map { |x| x.ar_serializable_hash(@name, opts.merge(:view => subview)) }
+          values[attrname] = vals.map { |x| x.ar_serializable_hash(@name, opts.merge(:view => subview, :additional_capas => [ :subview ])) }
         end
       when Model::Interface::Attribute::EmbeddedPolymorphicModel
         val = obj.send(attr.name_in_model)
@@ -503,7 +492,7 @@ class Interface
       when Model::Interface::Attribute::PolymorphicReference
         if viewinc
           val = obj.send(attr.name_in_model)
-          values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview, :additional_capas => :subview)) : nil
+          values[attrname] = val ? val.ar_serializable_hash(@name, opts.merge(:view => subview, :additional_capas => [ :subview ])) : nil
         else
           ref = obj.association(attr.name_in_model).reflection
           values[attrname] = { :id => obj.send(ref.foreign_key), :_type => obj.send(ref.foreign_type) }
@@ -546,11 +535,10 @@ class Interface
     end
 
     if with_perms
-      res[:_object_perms] = {
-        :delete => true
+      res[:_perms] = {
+        :attributes => attracc,
+        :allowed_actions => allowed_actions(user_capas),
       }
-
-      res[:_attr_perms] = perms
     end
 
     res
@@ -600,11 +588,9 @@ class Interface
         value = value.with_indifferent_access if value
         association = obj.association(attr_name)
 
-        if association.loaded?
-          record = association.target
-        else
-          record = association.reload.target
-        end
+        association.reload if !association.loaded?
+
+        record = association.target
 
         if value && attr.is_a?(Attribute::PolymorphicReference)
           raise TypeMissing if !value[:_type]
@@ -740,12 +726,20 @@ class Interface
     "<#{self.class.name} model=#{@model.class.name} name=#{@name} ai=#{@activerecord_autoinit}>"
   end
 
-  def attr_readable?(capas, name)
-    !authorization_required? || !!capas.map { |x| @capabilities[x.to_sym].readable?(name) }.reduce(&:|)
+  def attr_readable?(capas, attr)
+    return true if !authorization_required?
+
+    attr = attrs[attr] if attr.is_a?(Symbol)
+
+    attr.readable && !!capas.map { |x| @capabilities[x.to_sym].readable?(attr.name) }.reduce(&:|)
   end
 
-  def attr_writable?(capas, name)
-    !authorization_required? || !!capas.map { |x| @capabilities[x.to_sym].writable?(name) }.reduce(&:|)
+  def attr_writable?(capas, attr)
+    return true if !authorization_required?
+
+    attr = attrs[attr] if attr.is_a?(Symbol)
+
+    attr.writable && !!capas.map { |x| @capabilities[x.to_sym].writable?(attr.name) }.reduce(&:|)
   end
 
   class Error < StandardError
