@@ -365,7 +365,7 @@ describe View, 'with_perms!' do
     @c.ar_serializable_hash(:rest, :view => v).should deep_include(
      {
       :_perms => {
-        :attributes => { :id => 'RW' },
+        :attributes => { :id => 'R' },
         :allowed_actions => [ ],
       }
      })

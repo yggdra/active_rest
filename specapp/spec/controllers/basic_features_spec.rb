@@ -86,9 +86,9 @@ describe CompaniesController do
     b.should deep_include({
       'allowed_actions' => [],
       'attributes' => {
-        'id' => 'RW',
-        'created_at' => 'RW',
-        'updated_at' => 'RW',
+        'id' => 'R',
+        'created_at' => 'R',
+        'updated_at' => 'R',
         'name' => 'RW',
       }
     })
@@ -103,9 +103,9 @@ describe CompaniesController do
     b.should deep_include({
       'allowed_actions' => [],
       'attributes' => {
-        'id' => 'RW',
-        'created_at' => 'RW',
-        'updated_at' => 'RW',
+        'id' => 'R',
+        'created_at' => 'R',
+        'updated_at' => 'R',
         'name' => 'RW',
       }
     })

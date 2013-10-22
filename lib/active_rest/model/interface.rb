@@ -668,7 +668,8 @@ class Interface
 
             if val[:_destroy]
               # DESTROY
-              existing_record.mark_for_destruction
+              existing_record.destroy
+#              existing_record.mark_for_destruction
             else
               # UPDATE
               existing_record.ar_apply_update_attributes(@name, val, opts)
@@ -727,19 +728,21 @@ class Interface
   end
 
   def attr_readable?(capas, attr)
-    return true if !authorization_required?
-
     attr = attrs[attr] if attr.is_a?(Symbol)
 
-    attr.readable && !!capas.map { |x| @capabilities[x.to_sym].readable?(attr.name) }.reduce(&:|)
+    return false if !attr.readable
+    return true if !authorization_required?
+
+    !!capas.map { |x| @capabilities[x.to_sym].readable?(attr.name) }.reduce(&:|)
   end
 
   def attr_writable?(capas, attr)
-    return true if !authorization_required?
-
     attr = attrs[attr] if attr.is_a?(Symbol)
 
-    attr.writable && !!capas.map { |x| @capabilities[x.to_sym].writable?(attr.name) }.reduce(&:|)
+    return false if !attr.writable
+    return true if !authorization_required?
+
+    !!capas.map { |x| @capabilities[x.to_sym].writable?(attr.name) }.reduce(&:|)
   end
 
   class Error < StandardError
