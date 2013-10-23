@@ -606,11 +606,8 @@ class Interface
         value = value.with_indifferent_access if value
         association = obj.association(attr_name)
 
-        if association.loaded?
-          record = association.target
-        else
-          record = association.reload.target
-        end
+        association.reload if association.loaded?
+        record = association.target
 
         if !value || value[:_destroy]
           # DESTROY
