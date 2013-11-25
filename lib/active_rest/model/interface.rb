@@ -294,6 +294,7 @@ class Interface
       :attrs => defs,
       :actions => @actions,
       :capabilities => Hash[@capabilities.map { |k, capa| [ k, { } ] }],
+
     }
 
     res
@@ -644,9 +645,10 @@ class Interface
         end
 
         value.each do |val|
+
           val = val.with_indifferent_access
 
-          # XXX Evaluate if id==9 is to be considered an indication to create record
+          # XXX Evaluate if id==0 is to be considered an indication to create record
           if !val.has_key?(:id) || val[:id].blank? || val[:id] == 0
             # CREATE
             if attr.model_class.constantize.interfaces[@name].allow_polymorphic_creation
@@ -666,10 +668,12 @@ class Interface
             if val[:_destroy]
               # DESTROY
               existing_record.destroy
-#              existing_record.mark_for_destruction
+              # TODO FIXME Why doesn't this work?!?!?!
+              # existing_record.mark_for_destruction
             else
               # UPDATE
               existing_record.ar_apply_update_attributes(@name, val, opts)
+              existing_record.save # FIXME TODO WHY?????
             end
           end
         end
