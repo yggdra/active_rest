@@ -57,20 +57,15 @@ module Verbs
   def schema
     @schema = ar_model.interfaces[:rest].schema
 
-    respond_to do |format|
-      format.xml { render :xml => @schema.to_xml(:dasherize => false) }
-      format.yaml { render :text => @schema }
-      format.json { render :json => @schema }
-      yield(format) if block_given?
-    end
+    respond_with(@schema.merge(:permissions => common_permissions))
   end
 
   def class_permissions
-    common_permissions
+    respond_with(common_permissions)
   end
 
   def permissions
-    common_permissions
+    respond_with(common_permissions)
   end
 
   def common_permissions
@@ -86,8 +81,6 @@ module Verbs
            (intf.attr_writable?(@user_capas, attr) ? 'W' : '') ]
       }],
     }
-
-    respond_with(res)
   end
   protected :common_permissions
 
