@@ -607,11 +607,15 @@ class Interface
         value = value.with_indifferent_access if value
         association = obj.association(attr_name)
 
-        association.reload if association.loaded?
+        association.reload if !association.loaded?
         record = association.target
 
         if !value || value[:_destroy]
           # DESTROY
+          # Why isn't this working?
+          #association.target = newrecord
+          obj.send("#{attr_name}=", nil)
+
           record.mark_for_destruction if record
         elsif record
           # UPDATE
@@ -631,7 +635,9 @@ class Interface
             newrecord = association.klass.ar_new(@name, value, opts)
           end
 
-          association.target = newrecord
+          # Why isn't this working?
+          #association.target = newrecord
+          obj.send("#{attr_name}=", newrecord)
         end
 
       when Attribute::UniformModelsCollection
