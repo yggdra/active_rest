@@ -832,6 +832,16 @@ class Interface
       super "Cannot find type '#{type}'"
     end
   end
+
+  class FakeAAAContext
+    attr_reader :global_capabilities
+    attr_reader :auth_identity
+
+    def initialize
+      @global_capabilities = [ :superuser ]
+      @auth_identity = nil
+    end
+  end
 end
 
 end
