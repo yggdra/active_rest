@@ -91,7 +91,7 @@ module Verbs
       ar_retrieve_resources
       ar_authorize_index_action
     rescue ActiveRest::Model::UnknownField => e
-      raise ActiveRest::Exception::BadRequest.new(e.message,
+      raise Exception::BadRequest.new(e.message,
               :errors => { e.attribute_name => [ 'not found' ] },
               :retry_possible => false)
     end
