@@ -370,7 +370,7 @@ class Interface
   end
 
   def authorization_required?
-    capabilities.any?
+    @model.acl_enabled && capabilities.any?
   end
 
   def relevant_capabilities(capas)
