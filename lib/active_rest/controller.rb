@@ -259,7 +259,7 @@ module Controller
         @resources = ar_model.search(params[:_search])
         @resources_count = @resources.count
       else
-        @resources_relation ||= ar_model.all
+        @resources_relation ||= ar_model.scoped({})
 
         # Filters
         @resources_relation = apply_scopes_to_relation(@resources_relation)
