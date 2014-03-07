@@ -2,6 +2,10 @@ class Account < ActiveRecord::Base
 
   include ActiveRest::Model
 
+  def self.authorizable?
+    true
+  end
+
   def capabilities_for(context)
     if name == 'Account3 Sfigato'
       return []
