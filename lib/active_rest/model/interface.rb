@@ -553,6 +553,172 @@ class Interface
     apply_model_attributes(*args)
   end
 
+  def apply_model_attribute_no_auth(attr_name, value)
+    attr_name = attr_name.to_sym
+    attr = attrs[attr_name]
+
+    if attr_name == :_type
+      return if !value
+      return if @allow_polymorphic_creation && value.constantize <= obj.class
+      return if value.constantize == obj.class
+
+      raise ClassDoesNotMatch.new(obj.class, value.constantize)
+    end
+    return if attr_name == :id
+
+    raise AttributeNotFound.new(obj, attr_name) if !attr
+    return if attr.ignored
+
+    writable =
+       attr.writable &&
+       attr_writable?(user_capas, attr_name)
+
+    raise AttributeNotWritable.new(obj, attr_name) if !writable
+
+    case attr
+    when Attribute::Reference, Attribute::PolymorphicReference
+      value = value.with_indifferent_access if value
+      association = obj.association(attr_name)
+
+      association.reload if !association.loaded?
+
+      record = association.target
+
+      if value && attr.is_a?(Attribute::PolymorphicReference)
+        raise TypeMissing if !value[:_type]
+        raise TypeNotFound.new(value[:_type]) if !(value[:_type].constantize.is_a?(Class) rescue false)
+        association.target = value[:_type].constantize.find(value[:id])
+      elsif value
+        association.target = association.klass.find(value[:id]) if value[:id] # XXX Temporaneamente viene ignorato {}
+      else
+        association.target = nil
+      end
+
+    when Attribute::EmbeddedModel, Attribute::EmbeddedPolymorphicModel
+      value = value.with_indifferent_access if value
+      association = obj.association(attr_name)
+
+      association.reload if !association.loaded?
+      record = association.target
+
+      if !value || value[:_destroy]
+        # DESTROY
+        # Why isn't this working?
+        #association.target = newrecord
+        obj.send("#{attr_name}=", nil)
+
+        record.mark_for_destruction if record
+      elsif record
+        # UPDATE
+        record.ar_apply_update_attributes(@name, value, opts)
+      else
+        # CREATE
+
+        # We have to do this since it is embedded
+        record.mark_for_destruction if record
+
+        newrecord = nil
+        if attr.is_a?(Attribute::EmbeddedPolymorphicModel)
+          raise TypeMissing if !value[:_type]
+          raise TypeNotFound.new(value[:_type]) if !(value[:_type].constantize.is_a?(Class) rescue false)
+          newrecord = value[:_type].constantize.ar_new(@name, value, opts)
+        else
+          newrecord = association.klass.ar_new(@name, value, opts)
+        end
+
+        # Why isn't this working?
+        #association.target = newrecord
+        obj.send("#{attr_name}=", newrecord)
+      end
+
+    when Attribute::UniformModelsCollection
+      association = obj.association(attr_name)
+
+      if association.loaded?
+        existing_records = association.target
+      else
+        ids = value.map {|a| a['id'] || a[:id] }.compact
+        existing_records = ids.empty? ? [] : association.scope.where(association.klass.primary_key => ids)
+      end
+
+      value.each do |val|
+
+        val = val.with_indifferent_access
+
+        # XXX Evaluate if id==0 is to be considered an indication to create record
+        if !val.has_key?(:id) || val[:id].blank? || val[:id] == 0
+          # CREATE
+          if attr.model_class.constantize.interfaces[@name].allow_polymorphic_creation
+            raise TypeMissing if !val[:_type]
+            raise TypeNotFound.new(val[:_type]) if !(val[:_type].constantize.is_a?(Class) rescue false)
+            newrecord = val[:_type].constantize.ar_new(@name, val, opts)
+          else
+            raise ClassDoesNotMatch.new(obj.class, association.klass) if val[:_type] && val[:_type] != association.klass.name
+            newrecord = association.klass.ar_new(@name, val, opts)
+          end
+
+          association.concat(newrecord)
+        else
+          existing_record = existing_records.detect { |x| x.id == val[:id] }
+          raise AssociatedRecordNotFound.new if !existing_record
+
+          if val[:_destroy]
+            # DESTROY
+            existing_record.destroy
+            # TODO FIXME Why doesn't this work?!?!?!
+            # existing_record.mark_for_destruction
+          else
+            # UPDATE
+            existing_record.ar_apply_update_attributes(@name, val, opts)
+            existing_record.save # FIXME TODO WHY?????
+          end
+        end
+      end
+
+    when Attribute::UniformReferencesCollection
+      association = obj.association(attr_name)
+
+      if association.loaded?
+        existing_records = association.target
+      else
+        ids = value.map {|a| a['id'] || a[:id] }.compact
+        existing_records = ids.empty? ? [] : association.scope.where(association.klass.primary_key => ids)
+      end
+
+      value.each do |val|
+        val = val.with_indifferent_access
+
+        existing_record = existing_records.detect { |x| x.id == val[:id] }
+
+        if val[:_destroy]
+          raise AssociatedRecordNotFound.new if !existing_record
+          existing_record.destroy
+        elsif !existing_record
+          association.concat(association.klass.find(val[:id]))
+        end
+      end
+
+    when Attribute::PolymorphicModelsCollection
+      # Not supported because ActiveRecord has no concept of polymorphoc has_many
+    when Attribute::PolymorphicReferencesCollection
+      # Not supported because ActiveRecord has no concept of polymorphoc has_many
+
+    when Attribute::Structure, Attribute
+      obj.send("#{attr_name}=", value)
+    end
+  end
+
+  def apply_model_attribute(*args)
+    user_capas = nil
+
+    if authorization_required?
+      user_capas = init_capabilities(opts[:aaa_context], obj)
+      raise ResourceNotWritable.new(obj) if user_capas.empty?
+    end
+
+    apply_model_attributes_no_auth(*args)
+  end
+
   def apply_model_attributes(obj, values, opts = {})
     user_capas = nil
 
@@ -562,160 +728,7 @@ class Interface
     end
 
     values.each do |attr_name, value|
-
-      attr_name = attr_name.to_sym
-      attr = attrs[attr_name]
-
-      if attr_name == :_type
-        next if !value
-        next if @allow_polymorphic_creation && value.constantize <= obj.class
-        next if value.constantize == obj.class
-
-        raise ClassDoesNotMatch.new(obj.class, value.constantize)
-      end
-      next if attr_name == :id
-
-      raise AttributeNotFound.new(obj, attr_name) if !attr
-      next if attr.ignored
-
-      writable =
-         attr.writable &&
-         attr_writable?(user_capas, attr_name)
-
-      raise AttributeNotWritable.new(obj, attr_name) if !writable
-
-      case attr
-      when Attribute::Reference, Attribute::PolymorphicReference
-        value = value.with_indifferent_access if value
-        association = obj.association(attr_name)
-
-        association.reload if !association.loaded?
-
-        record = association.target
-
-        if value && attr.is_a?(Attribute::PolymorphicReference)
-          raise TypeMissing if !value[:_type]
-          raise TypeNotFound.new(value[:_type]) if !(value[:_type].constantize.is_a?(Class) rescue false)
-          association.target = value[:_type].constantize.find(value[:id])
-        elsif value
-          association.target = association.klass.find(value[:id]) if value[:id] # XXX Temporaneamente viene ignorato {}
-        else
-          association.target = nil
-        end
-
-      when Attribute::EmbeddedModel, Attribute::EmbeddedPolymorphicModel
-        value = value.with_indifferent_access if value
-        association = obj.association(attr_name)
-
-        association.reload if !association.loaded?
-        record = association.target
-
-        if !value || value[:_destroy]
-          # DESTROY
-          # Why isn't this working?
-          #association.target = newrecord
-          obj.send("#{attr_name}=", nil)
-
-          record.mark_for_destruction if record
-        elsif record
-          # UPDATE
-          record.ar_apply_update_attributes(@name, value, opts)
-        else
-          # CREATE
-
-          # We have to do this since it is embedded
-          record.mark_for_destruction if record
-
-          newrecord = nil
-          if attr.is_a?(Attribute::EmbeddedPolymorphicModel)
-            raise TypeMissing if !value[:_type]
-            raise TypeNotFound.new(value[:_type]) if !(value[:_type].constantize.is_a?(Class) rescue false)
-            newrecord = value[:_type].constantize.ar_new(@name, value, opts)
-          else
-            newrecord = association.klass.ar_new(@name, value, opts)
-          end
-
-          # Why isn't this working?
-          #association.target = newrecord
-          obj.send("#{attr_name}=", newrecord)
-        end
-
-      when Attribute::UniformModelsCollection
-        association = obj.association(attr_name)
-
-        if association.loaded?
-          existing_records = association.target
-        else
-          ids = value.map {|a| a['id'] || a[:id] }.compact
-          existing_records = ids.empty? ? [] : association.scope.where(association.klass.primary_key => ids)
-        end
-
-        value.each do |val|
-
-          val = val.with_indifferent_access
-
-          # XXX Evaluate if id==0 is to be considered an indication to create record
-          if !val.has_key?(:id) || val[:id].blank? || val[:id] == 0
-            # CREATE
-            if attr.model_class.constantize.interfaces[@name].allow_polymorphic_creation
-              raise TypeMissing if !val[:_type]
-              raise TypeNotFound.new(val[:_type]) if !(val[:_type].constantize.is_a?(Class) rescue false)
-              newrecord = val[:_type].constantize.ar_new(@name, val, opts)
-            else
-              raise ClassDoesNotMatch.new(obj.class, association.klass) if val[:_type] && val[:_type] != association.klass.name
-              newrecord = association.klass.ar_new(@name, val, opts)
-            end
-
-            association.concat(newrecord)
-          else
-            existing_record = existing_records.detect { |x| x.id == val[:id] }
-            raise AssociatedRecordNotFound.new if !existing_record
-
-            if val[:_destroy]
-              # DESTROY
-              existing_record.destroy
-              # TODO FIXME Why doesn't this work?!?!?!
-              # existing_record.mark_for_destruction
-            else
-              # UPDATE
-              existing_record.ar_apply_update_attributes(@name, val, opts)
-              existing_record.save # FIXME TODO WHY?????
-            end
-          end
-        end
-
-      when Attribute::UniformReferencesCollection
-        association = obj.association(attr_name)
-
-        if association.loaded?
-          existing_records = association.target
-        else
-          ids = value.map {|a| a['id'] || a[:id] }.compact
-          existing_records = ids.empty? ? [] : association.scope.where(association.klass.primary_key => ids)
-        end
-
-        value.each do |val|
-          val = val.with_indifferent_access
-
-          existing_record = existing_records.detect { |x| x.id == val[:id] }
-
-          if val[:_destroy]
-            raise AssociatedRecordNotFound.new if !existing_record
-            existing_record.destroy
-          elsif !existing_record
-            association.concat(association.klass.find(val[:id]))
-          end
-        end
-
-      when Attribute::PolymorphicModelsCollection
-        # Not supported because ActiveRecord has no concept of polymorphoc has_many
-      when Attribute::PolymorphicReferencesCollection
-        # Not supported because ActiveRecord has no concept of polymorphoc has_many
-
-      when Attribute::Structure, Attribute
-        obj.send("#{attr_name}=", value)
-      end
-
+      apply_model_attribute_no_auth(attr_name, value)
     end
   end
 
