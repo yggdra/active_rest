@@ -553,27 +553,15 @@ class Interface
     apply_model_attributes(*args)
   end
 
-  def apply_model_attribute_no_auth(attr_name, value)
+  def apply_model_attribute(obj, attr_name, value, user_capas, opts)
     attr_name = attr_name.to_sym
     attr = attrs[attr_name]
-
-    if attr_name == :_type
-      return if !value
-      return if @allow_polymorphic_creation && value.constantize <= obj.class
-      return if value.constantize == obj.class
-
-      raise ClassDoesNotMatch.new(obj.class, value.constantize)
-    end
-    return if attr_name == :id
 
     raise AttributeNotFound.new(obj, attr_name) if !attr
     return if attr.ignored
 
-    writable =
-       attr.writable &&
-       attr_writable?(user_capas, attr_name)
-
-    raise AttributeNotWritable.new(obj, attr_name) if !writable
+    raise AttributeNotWritable.new(obj, attr_name) if !attr.writable
+    raise AttributeNotWritable.new(obj, attr_name) if !attr_writable?(user_capas, attr_name)
 
     case attr
     when Attribute::Reference, Attribute::PolymorphicReference
@@ -708,17 +696,6 @@ class Interface
     end
   end
 
-  def apply_model_attribute(*args)
-    user_capas = nil
-
-    if authorization_required?
-      user_capas = init_capabilities(opts[:aaa_context], obj)
-      raise ResourceNotWritable.new(obj) if user_capas.empty?
-    end
-
-    apply_model_attributes_no_auth(*args)
-  end
-
   def apply_model_attributes(obj, values, opts = {})
     user_capas = nil
 
@@ -728,7 +705,21 @@ class Interface
     end
 
     values.each do |attr_name, value|
-      apply_model_attribute_no_auth(attr_name, value)
+      attr_name = attr_name.to_sym
+
+      if attr_name == :_type
+        next if !value
+        next if @allow_polymorphic_creation && value.constantize <= obj.class
+        next if value.constantize == obj.class
+
+        raise ClassDoesNotMatch.new(obj.class, value.constantize)
+
+        next
+      end
+
+      next if attr_name == :id
+
+      apply_model_attribute(obj, attr_name, value, user_capas, opts)
     end
   end
 
