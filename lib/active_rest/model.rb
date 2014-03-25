@@ -51,6 +51,8 @@ module Model
 
   module ClassMethods
     def ar_new(interface_name, values, opts = {})
+      return nil if values.nil?
+
       obj = new
       obj.ar_apply_creation_attributes(interface_name, values, opts)
       obj
