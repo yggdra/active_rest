@@ -176,7 +176,19 @@ module Filters
 
         raise Exception::BadRequest, "Scope #{scope_name} not found" if !scope
 
-        rel = scope.kind_of?(Proc) ? instance_exec(rel, &scope) : rel.send(scope)
+        if scope.kind_of?(Proc)
+          if scope.arity > 0
+            rel = instance_exec(rel, @aaa_context, &scope)
+          else
+            rel = instance_exec(rel, &scope)
+          end
+        else
+          if rel.klass.method(scope).arity > 0
+            rel = rel.send(scope, @aaa_context)
+          else
+            rel = rel.send(scope)
+          end
+        end
       end
     end
 
