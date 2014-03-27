@@ -17,6 +17,7 @@ class Interface
 class CapabilityTemplate
   READABLE = 0x1
   WRITABLE = 0x2
+  CREATABLE = 0x4
 
   attr_accessor :name
 
@@ -63,14 +64,24 @@ class CapabilityTemplate
     @attr_acc[name.to_sym] &= ~WRITABLE
   end
 
+  def creatable(name, &block)
+    @attr_acc[name.to_sym] ||= 0
+    @attr_acc[name.to_sym] |= CREATABLE
+  end
+
+  def not_creatable(name, &block)
+    @attr_acc[name.to_sym] ||= 0
+    @attr_acc[name.to_sym] &= ~CREATABLE
+  end
+
   def rw(name, &block)
     @attr_acc[name.to_sym] ||= 0
-    @attr_acc[name.to_sym] |= READABLE | WRITABLE
+    @attr_acc[name.to_sym] |= READABLE | WRITABLE | CREATABLE
   end
 
   def no_access(name, &block)
     @attr_acc[name.to_sym] ||= 0
-    @attr_acc[name.to_sym] &= ~(READABLE | WRITABLE)
+    @attr_acc[name.to_sym] &= ~(READABLE | WRITABLE | CREATABLE)
   end
 end
 

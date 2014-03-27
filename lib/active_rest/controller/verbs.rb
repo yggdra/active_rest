@@ -78,7 +78,9 @@ module Verbs
       :attributes => Hash[intf.attrs.map { |attrname, attr|
         [ attrname,
            (intf.attr_readable?(@user_capas, attr) ? 'R' : '') +
-           (intf.attr_writable?(@user_capas, attr) ? 'W' : '') ]
+           (intf.attr_writable?(@user_capas, attr) ? 'W' : '') +
+           (intf.attr_creatable?(@user_capas, attr) ? 'C' : '')
+        ]
       }],
     }
   end
@@ -140,6 +142,7 @@ module Verbs
         before_create
         @resource ||= ar_model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
 
+        before_creation_save
         before_save
 
         @resource.save!
@@ -265,6 +268,7 @@ module Verbs
   def before_save ; end
 
   def before_create ; end
+  def before_creation_save ; end
   def after_create ; end
   def after_create_commit ; end
 

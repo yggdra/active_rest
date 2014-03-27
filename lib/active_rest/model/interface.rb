@@ -384,10 +384,10 @@ class Interface
     # First global capabilities
     user_capas += aaa_context.global_capabilities if aaa_context
 
-    # Then capabilities given to the specific model by ACL
+    # Then capabilities given to the specific model
     user_capas += model.capabilities_for(aaa_context) if model.respond_to?(:capabilities_for)
 
-    # Then capabilities given to the specific resource by the ACL
+    # Then capabilities given to the specific resource
     user_capas += resource.capabilities_for(aaa_context) if resource && resource.respond_to?(:capabilities_for)
 
     # Used, for example, for :subview capability
@@ -445,6 +445,7 @@ class Interface
     attrs.each do |attrname,attr|
       readable = attr_readable?(user_capas, attr)
       writable = attr_writable?(user_capas, attr)
+      creatable = attr_creatable?(user_capas, attr)
 
       if with_perms
         attracc[attrname] = (readable ? 'R' : '') + (writable ? 'W' : '')
@@ -545,15 +546,15 @@ class Interface
     res
   end
 
-  def apply_creation_attributes(*args)
-    apply_model_attributes(*args)
+  def apply_creation_attributes(obj, values, opts = {})
+    apply_model_attributes(obj, values, opts, true)
   end
 
-  def apply_update_attributes(*args)
-    apply_model_attributes(*args)
+  def apply_update_attributes(obj, values, opts = {})
+    apply_model_attributes(obj, values, opts, false)
   end
 
-  def apply_model_attribute(obj, attr_name, value, user_capas, opts)
+  def apply_model_attribute(obj, attr_name, value, user_capas, opts, creating)
     attr_name = attr_name.to_sym
     attr = attrs[attr_name]
 
@@ -561,7 +562,12 @@ class Interface
     return if attr.ignored
 
     raise AttributeNotWritable.new(obj, attr_name) if !attr.writable
-    raise AttributeNotWritable.new(obj, attr_name) if !attr_writable?(user_capas, attr_name)
+
+    if creating
+      raise AttributeNotWritable.new(obj, attr_name) if !attr_creatable?(user_capas, attr_name)
+    else
+      raise AttributeNotWritable.new(obj, attr_name) if !attr_writable?(user_capas, attr_name)
+    end
 
     case attr
     when Attribute::Reference, Attribute::PolymorphicReference
@@ -696,7 +702,7 @@ class Interface
     end
   end
 
-  def apply_model_attributes(obj, values, opts = {})
+  def apply_model_attributes(obj, values, opts, creating)
     user_capas = nil
 
     if authorization_required?
@@ -719,7 +725,7 @@ class Interface
 
       next if attr_name == :id
 
-      apply_model_attribute(obj, attr_name, value, user_capas, opts)
+      apply_model_attribute(obj, attr_name, value, user_capas, opts, creating)
     end
   end
 
@@ -754,6 +760,15 @@ class Interface
     return true if !authorization_required?
 
     !!capas.map { |x| @capabilities[x.to_sym].writable?(attr.name) }.reduce(&:|)
+  end
+
+  def attr_creatable?(capas, attr)
+    attr = attrs[attr] if attr.is_a?(Symbol)
+
+    return false if !attr.writable
+    return true if !authorization_required?
+
+    !!capas.map { |x| @capabilities[x.to_sym].creatable?(attr.name) }.reduce(&:|)
   end
 
   class Error < StandardError

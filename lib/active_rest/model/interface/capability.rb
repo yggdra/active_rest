@@ -17,6 +17,7 @@ class Interface
 class Capability
   READABLE = 0x1
   WRITABLE = 0x2
+  CREATABLE = 0x4
 
   attr_accessor :name
   attr_accessor :interface
@@ -27,6 +28,7 @@ class Capability
   attr_reader :allow_all_actions
   attr_reader :default_readable
   attr_reader :default_writable
+  attr_reader :default_creatable
 
   def initialize(name, interface, h = {})
     raise ArgumentError, 'Name can not be null' if !name
@@ -40,6 +42,7 @@ class Capability
     @allow_all_actions = false
     @default_readable = false
     @default_writable = false
+    @default_creatable = false
 
     h.each { |k,v| send("#{k}=", v) }
   end
@@ -81,6 +84,10 @@ class Capability
     @default_writable = true
   end
 
+  def default_creatable!
+    @default_creatable = true
+  end
+
   def allow_all_actions!
     @allow_all_actions = true
   end
@@ -113,14 +120,29 @@ class Capability
     @attr_acc[name.to_sym] &= ~WRITABLE
   end
 
+  def creatable(name, &block)
+    @attr_acc[name.to_sym] ||= 0
+    @attr_acc[name.to_sym] |= CREATABLE
+  end
+
+  def not_creatable(name, &block)
+    @attr_acc[name.to_sym] ||= 0
+    @attr_acc[name.to_sym] &= ~CREATABLE
+  end
+
   def rw(name, &block)
     @attr_acc[name.to_sym] ||= 0
     @attr_acc[name.to_sym] |= READABLE | WRITABLE
   end
 
+  def rwc(name, &block)
+    @attr_acc[name.to_sym] ||= 0
+    @attr_acc[name.to_sym] |= READABLE | WRITABLE | CREATABLE
+  end
+
   def no_access(name, &block)
     @attr_acc[name.to_sym] ||= 0
-    @attr_acc[name.to_sym] &= ~(READABLE | WRITABLE)
+    @attr_acc[name.to_sym] &= ~(READABLE | WRITABLE | CREATABLE)
   end
 
   def action_allowed?(name)
@@ -139,6 +161,10 @@ class Capability
 
   def writable?(name)
     @attr_acc[name.to_sym] ? ((@attr_acc[name.to_sym] & WRITABLE) != 0) : @default_writable
+  end
+
+  def creatable?(name)
+    @attr_acc[name.to_sym] ? ((@attr_acc[name.to_sym] & CREATABLE) != 0) : @default_creatable
   end
 end
 

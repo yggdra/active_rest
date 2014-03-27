@@ -89,7 +89,7 @@ describe CompaniesController do
         'id' => 'R',
         'created_at' => 'R',
         'updated_at' => 'R',
-        'name' => 'RW',
+        'name' => 'RWC',
       }
     })
   end
@@ -106,7 +106,7 @@ describe CompaniesController do
         'id' => 'R',
         'created_at' => 'R',
         'updated_at' => 'R',
-        'name' => 'RW',
+        'name' => 'RWC',
       }
     })
   end
