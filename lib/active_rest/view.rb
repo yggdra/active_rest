@@ -156,6 +156,12 @@ class View
       @display = :show
       @virtual_src = block
     end
+
+    def with_type!
+      @subview ||= View.new(@name)
+      @subview.with_type!
+      @subview
+    end
   end
 end
 
