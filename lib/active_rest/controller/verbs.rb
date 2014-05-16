@@ -87,7 +87,7 @@ module Verbs
   protected :common_permissions
 
   def index
-#      @resources_relation = ar_model.all.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
+    @resources_relation = ar_model.all.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
 
     begin
       ar_retrieve_resources

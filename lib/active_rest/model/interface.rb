@@ -384,13 +384,15 @@ class Interface
     # First global capabilities
     user_capas += aaa_context.global_capabilities if aaa_context
 
-    # Then capabilities given to the specific model
-    user_capas += model.capabilities_for(aaa_context) if model.respond_to?(:capabilities_for)
+    if !opts[:skip_capfor]
+      # Then capabilities given to the specific model
+      user_capas += model.capabilities_for(aaa_context) if model.respond_to?(:capabilities_for)
 
-    # Then capabilities given to the specific resource
-    user_capas += resource.capabilities_for(aaa_context) if resource && resource.respond_to?(:capabilities_for)
+      # Then capabilities given to the specific resource
+      user_capas += resource.capabilities_for(aaa_context) if resource && resource.respond_to?(:capabilities_for)
+    end
 
-    # Used, for example, for :subview capability
+    # Used, for example, for subview capability
     user_capas += opts[:additional_capas] if opts[:additional_capas]
 
     # Filter out the capabilites not relevant to this resource
@@ -408,12 +410,6 @@ class Interface
   end
 
   def ar_serializable_hash(obj, opts = {})
-    user_capas = nil
-
-    if authorization_required?
-      user_capas = init_capabilities(opts[:aaa_context], obj, opts.slice(:additional_capas))
-      raise ResourceNotReadable.new(obj) if user_capas.empty?
-    end
 
     view = opts[:view]
 
@@ -423,6 +419,16 @@ class Interface
     end
 
     view ||= @views[:_default_] || View.new(:anonymous)
+
+    authreq = authorization_required?
+
+    user_capas = nil
+    if authreq
+      user_capas = init_capabilities(opts[:aaa_context], obj,
+                     :additional_capas => view.capabilities,
+                     :skip_capfor => view.shortcut_capabilities)
+      raise ResourceNotReadable.new(obj) if user_capas.empty?
+    end
 
     with_perms = (view.with_perms || opts[:with_perms] == true) && opts[:with_perms] != false
 
@@ -443,9 +449,15 @@ class Interface
     values = {}
     attracc = {}
     attrs.each do |attrname,attr|
-      readable = attr_readable?(user_capas, attr)
-      writable = attr_writable?(user_capas, attr)
-      creatable = attr_creatable?(user_capas, attr)
+      if authreq
+        readable = attr_readable?(user_capas, attr)
+        writable = attr_writable?(user_capas, attr)
+        creatable = attr_creatable?(user_capas, attr)
+      else
+        readable = attr.readable
+        writable = attr.writable
+        creatable = attr.writable
+      end
 
       if with_perms
         attracc[attrname] = (readable ? 'R' : '') + (writable ? 'W' : '')

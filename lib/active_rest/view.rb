@@ -1,7 +1,7 @@
 #
 # ActiveRest
 #
-# Copyright (C) 2008-2011, Intercom Srl, Daniele Orlandi
+# Copyright (C) 2008-2014, Intercom Srl, Daniele Orlandi
 #
 # Author:: Daniele Orlandi <daniele@orlandi.com>
 #          Lele Forzani <lele@windmill.it>
@@ -26,7 +26,10 @@ class View
   attr_accessor :limit
   attr_accessor :order
 
-  def initialize(name = :anonymous, &block)
+  attr_accessor :capabilities
+  attr_accessor :shortcut_capabilities
+
+  def initialize(name = :anonymous, config = {}, &block)
     @name = name
 
     @definition = {}
@@ -38,6 +41,11 @@ class View
     @extjs_polymorphic_workaround = false
 
     @eager_loading_hints = []
+
+    @capabilities = []
+    @shortcut_capabilities = false
+
+    config.each { |k,v| send("#{k}=", v) }
 
     self.instance_eval(&block) if block_given?
   end
@@ -129,25 +137,25 @@ class View
     end
 
     def attribute(name, &block)
-      @subview ||= View.new(@name)
+      @subview ||= new_subview
       @subview.attribute(name, &block)
       @subview
     end
 
     def empty!
-      @subview ||= View.new(@name)
+      @subview ||= new_subview
       @subview.empty!
       @subview
     end
 
     def extjs_polymorphic_workaround!
-      @subview ||= View.new(@name)
+      @subview ||= new_subview
       @subview.extjs_polymorphic_workaround!
       @subview
     end
 
     def per_class!(name, &block)
-      @subview ||= View.new(@name)
+      @subview ||= new_subview
       @subview.per_class!(name, &block)
       @subview
     end
@@ -158,9 +166,27 @@ class View
     end
 
     def with_type!
-      @subview ||= View.new(@name)
+      @subview ||= new_subview
       @subview.with_type!
       @subview
+    end
+
+    def capabilities(capas)
+      @subview ||= new_subview
+      @subview.capabilities=(capas)
+      @subview
+    end
+
+    def shortcut_capabilities!
+      @subview ||= new_subview
+      @subview.shortcut_capabilities = true
+      @subview
+    end
+
+    protected
+
+    def new_subview
+      View.new(@name, :capabilities => [ :subview ])
     end
   end
 end
