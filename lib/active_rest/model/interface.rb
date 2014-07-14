@@ -610,6 +610,8 @@ class Interface
         association.reload if !association.loaded?
         record = association.target
 
+        obj.send(:attribute_will_change!, attr_name)
+
         if !value || value[:_destroy]
           # DESTROY
           # Why isn't this working?
