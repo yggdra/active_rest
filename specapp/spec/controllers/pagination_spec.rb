@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'assert2/xhtml'
 
-describe CompaniesController, 'pagination' do
+describe CompaniesController, 'pagination', type: :controller do
 
   before(:each) do
     @c1 = FactoryGirl.create(:company_1)

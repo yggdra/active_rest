@@ -135,7 +135,7 @@ class Interface
         )
     end
 
-    @model.reflections.each do |name, reflection|
+    @model.aggregate_reflections.each do |name, reflection|
       case reflection.macro
       when :composed_of
         @attrs[name] =
@@ -143,7 +143,11 @@ class Interface
 
         # Hide attributes composing the structure
         reflection.options[:mapping].each { |x| mark_attr_to_be_excluded(x[0].to_sym) }
+      end
+    end
 
+    @model.reflections.each do |name, reflection|
+      case reflection.macro
       when :belongs_to
         if reflection.options[:polymorphic]
           if reflection.options[:embedded]
@@ -374,7 +378,7 @@ class Interface
   end
 
   def relevant_capabilities(capas)
-    capas &= capabilities.keys
+   capas &= capabilities.keys
   end
 
   def init_capabilities(aaa_context, resource = nil, opts = {})

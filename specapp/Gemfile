@@ -1,17 +1,19 @@
 source 'http://rubygems.org'
 
-gem 'rails', '~> 4.0.1'
+gem 'rails', '~> 4.1.0'
+gem 'rails-observers'
 
 gem 'sqlite3-ruby', :require => 'sqlite3'
 
-gem 'squeel'
-gem 'active_rest', '>= 5.0.0', :path => '..'
+gem 'squeel', :git => 'https://github.com/activerecord-hackery/squeel.git'
+
+gem 'active_rest', '>= 6.0.0', :path => '..'
 
 # Bundle gems for certain environments:
 group :test, :development do
 #  gem 'webrat'
-  gem 'rspec', '>= 2.0.0'
-  gem 'rspec-rails', '>= 2.0.0'
+  gem 'rspec', '>= 3.0.0'
+  gem 'rspec-rails', '>= 3.0.0'
   gem 'factory_girl_rails', '>= 1.1.beta1'
   gem 'nokogiri'
   gem 'vihai-assert2', :git => 'https://github.com/vihai/assert2.git'

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'assert2/xhtml'
 
-describe VirtattrCompaniesController, 'get' do
+describe VirtattrCompaniesController, 'get', type: :controller do
 
   before(:each) do
     @c1 = FactoryGirl.create(:company_complex)
@@ -34,7 +34,7 @@ describe VirtattrCompaniesController, 'get' do
   end
 end
 
-describe VirtattrCompaniesController, 'schema' do
+describe VirtattrCompaniesController, 'schema', type: :controller do
   before(:each) do
     @c1 = FactoryGirl.create(:company_complex)
     get :schema, :id => @c1.id,  :format => 'json'

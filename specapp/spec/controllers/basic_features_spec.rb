@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'assert2/xhtml'
 
-describe CompaniesController do
+describe CompaniesController, type: :controller do
 
   before(:each) do
     @c1 = FactoryGirl.create(:company_1)
@@ -295,7 +295,7 @@ end
 #
 # REST VALIDATIONS
 #
-describe CompaniesController do
+describe CompaniesController, type: :controller do
 
   before(:each) do
     @c1 = FactoryGirl.create(:company_1)

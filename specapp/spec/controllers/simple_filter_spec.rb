@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'assert2/xhtml'
 
-describe CompaniesController, 'simple filter' do
+describe CompaniesController, 'simple filter', type: :controller do
 
   before(:each) do
     @c1 = FactoryGirl.create(:company_1)

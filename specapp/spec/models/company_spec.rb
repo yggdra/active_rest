@@ -178,11 +178,11 @@ describe Company do
           end
 
           it 'is not readable' do
-            @attrs[:not_readable_attribute][:readable].should be_false
+            expect(@attrs[:not_readable_attribute][:readable]).to be_falsey
           end
 
           it 'is writable' do
-            @attrs[:not_readable_attribute][:writable].should be_true
+            @attrs[:not_readable_attribute][:writable].should be_truthy
           end
         end
 
@@ -197,11 +197,11 @@ describe Company do
           end
 
           it 'is readable' do
-            @attrs[:not_writable_attribute][:readable].should be_true
+            @attrs[:not_writable_attribute][:readable].should be_truthy
           end
 
           it 'is not writable' do
-            @attrs[:not_writable_attribute][:writable].should be_false
+            @attrs[:not_writable_attribute][:writable].should be_falsey
           end
         end
 
@@ -452,7 +452,7 @@ describe Company do
         end
 
         it 'has 2 elements' do
-          @ch[:phones].should have(2).elements
+          expect(@ch[:phones].size).to eq(2)
         end
 
         it 'elements are of type Company::Phone' do

@@ -26,19 +26,23 @@ describe Account do
     end
 
     it 'tests inherited capabilities' do
-      pending
+      pending 'to be implemented'
+      fail
     end
 
     it 'tests capability templates' do
-      pending
+      pending 'to be implemented'
+      fail
     end
 
     it 'tests inherited actions' do
-      pending
+      pending 'to be implemented'
+      fail
     end
 
     it 'allow should raise error if allowing an undefined action' do
-      pending
+      pending 'to be implemented'
+      fail
     end
 
     it 'returns model\'s schema with GET /schema' do
@@ -91,193 +95,193 @@ describe Account do
     end
 
     it 'responds correctly with test data' do
-      @a1.has_capability?(context_1, :edit_as_user).should be_false
-      @a1.has_capability?(context_1, :edit_as_reseller).should be_false
-      @a1.has_capability?(context_1, :edit_as_admin).should be_false
-      @a1.has_capability?(context_1, :special_functions).should be_false
-      @a1.has_capability?(context_1, :superuser).should be_false
+      @a1.has_capability?(context_1, :edit_as_user).should be_falsey
+      @a1.has_capability?(context_1, :edit_as_reseller).should be_falsey
+      @a1.has_capability?(context_1, :edit_as_admin).should be_falsey
+      @a1.has_capability?(context_1, :special_functions).should be_falsey
+      @a1.has_capability?(context_1, :superuser).should be_falsey
 
-      @a1.has_capability?(context_2, :edit_as_user).should be_true
-      @a1.has_capability?(context_2, :edit_as_reseller).should be_false
-      @a1.has_capability?(context_2, :edit_as_admin).should be_false
-      @a1.has_capability?(context_2, :special_functions).should be_false
-      @a1.has_capability?(context_2, :superuser).should be_false
+      @a1.has_capability?(context_2, :edit_as_user).should be_truthy
+      @a1.has_capability?(context_2, :edit_as_reseller).should be_falsey
+      @a1.has_capability?(context_2, :edit_as_admin).should be_falsey
+      @a1.has_capability?(context_2, :special_functions).should be_falsey
+      @a1.has_capability?(context_2, :superuser).should be_falsey
 
-      @a1.has_capability?(context_3, :edit_as_user).should be_false
-      @a1.has_capability?(context_3, :edit_as_reseller).should be_true
-      @a1.has_capability?(context_3, :edit_as_admin).should be_false
-      @a1.has_capability?(context_3, :special_functions).should be_false
-      @a1.has_capability?(context_3, :superuser).should be_false
+      @a1.has_capability?(context_3, :edit_as_user).should be_falsey
+      @a1.has_capability?(context_3, :edit_as_reseller).should be_truthy
+      @a1.has_capability?(context_3, :edit_as_admin).should be_falsey
+      @a1.has_capability?(context_3, :special_functions).should be_falsey
+      @a1.has_capability?(context_3, :superuser).should be_falsey
 
-      @a1.has_capability?(context_4, :edit_as_user).should be_false
-      @a1.has_capability?(context_4, :edit_as_reseller).should be_false
-      @a1.has_capability?(context_4, :edit_as_admin).should be_true
-      @a1.has_capability?(context_4, :special_functions).should be_false
-      @a1.has_capability?(context_4, :superuser).should be_false
+      @a1.has_capability?(context_4, :edit_as_user).should be_falsey
+      @a1.has_capability?(context_4, :edit_as_reseller).should be_falsey
+      @a1.has_capability?(context_4, :edit_as_admin).should be_truthy
+      @a1.has_capability?(context_4, :special_functions).should be_falsey
+      @a1.has_capability?(context_4, :superuser).should be_falsey
 
-      @a1.has_capability?(context_5, :edit_as_user).should be_false
-      @a1.has_capability?(context_5, :edit_as_reseller).should be_false
-      @a1.has_capability?(context_5, :edit_as_admin).should be_true
-      @a1.has_capability?(context_5, :special_functions).should be_true
-      @a1.has_capability?(context_5, :superuser).should be_false
+      @a1.has_capability?(context_5, :edit_as_user).should be_falsey
+      @a1.has_capability?(context_5, :edit_as_reseller).should be_falsey
+      @a1.has_capability?(context_5, :edit_as_admin).should be_truthy
+      @a1.has_capability?(context_5, :special_functions).should be_truthy
+      @a1.has_capability?(context_5, :superuser).should be_falsey
 
-      @a1.has_capability?(context_s, :edit_as_user).should be_false
-      @a1.has_capability?(context_s, :edit_as_reseller).should be_false
-      @a1.has_capability?(context_s, :edit_as_admin).should be_false
-      @a1.has_capability?(context_s, :special_functions).should be_false
-      @a1.has_capability?(context_s, :superuser).should be_false
-
-
-      @a2.has_capability?(context_1, :edit_as_user).should be_false
-      @a2.has_capability?(context_1, :edit_as_reseller).should be_false
-      @a2.has_capability?(context_1, :edit_as_admin).should be_false
-      @a2.has_capability?(context_1, :special_functions).should be_false
-      @a2.has_capability?(context_1, :superuser).should be_false
-
-      @a2.has_capability?(context_2, :edit_as_user).should be_true
-      @a2.has_capability?(context_2, :edit_as_reseller).should be_false
-      @a2.has_capability?(context_2, :edit_as_admin).should be_false
-      @a2.has_capability?(context_2, :special_functions).should be_false
-      @a2.has_capability?(context_2, :superuser).should be_false
-
-      @a2.has_capability?(context_3, :edit_as_user).should be_false
-      @a2.has_capability?(context_3, :edit_as_reseller).should be_true
-      @a2.has_capability?(context_3, :edit_as_admin).should be_false
-      @a2.has_capability?(context_3, :special_functions).should be_false
-      @a2.has_capability?(context_3, :superuser).should be_false
-
-      @a2.has_capability?(context_4, :edit_as_user).should be_false
-      @a2.has_capability?(context_4, :edit_as_reseller).should be_false
-      @a2.has_capability?(context_4, :edit_as_admin).should be_true
-      @a2.has_capability?(context_4, :special_functions).should be_false
-      @a2.has_capability?(context_4, :superuser).should be_false
-
-      @a2.has_capability?(context_5, :edit_as_user).should be_false
-      @a2.has_capability?(context_5, :edit_as_reseller).should be_false
-      @a2.has_capability?(context_5, :edit_as_admin).should be_true
-      @a2.has_capability?(context_5, :special_functions).should be_true
-      @a2.has_capability?(context_5, :superuser).should be_false
-
-      @a2.has_capability?(context_s, :edit_as_user).should be_false
-      @a2.has_capability?(context_s, :edit_as_reseller).should be_false
-      @a2.has_capability?(context_s, :edit_as_admin).should be_false
-      @a2.has_capability?(context_s, :special_functions).should be_false
-      @a2.has_capability?(context_s, :superuser).should be_false
-      @a2.has_capability?(context_s, :superuser).should be_false
+      @a1.has_capability?(context_s, :edit_as_user).should be_falsey
+      @a1.has_capability?(context_s, :edit_as_reseller).should be_falsey
+      @a1.has_capability?(context_s, :edit_as_admin).should be_falsey
+      @a1.has_capability?(context_s, :special_functions).should be_falsey
+      @a1.has_capability?(context_s, :superuser).should be_falsey
 
 
+      @a2.has_capability?(context_1, :edit_as_user).should be_falsey
+      @a2.has_capability?(context_1, :edit_as_reseller).should be_falsey
+      @a2.has_capability?(context_1, :edit_as_admin).should be_falsey
+      @a2.has_capability?(context_1, :special_functions).should be_falsey
+      @a2.has_capability?(context_1, :superuser).should be_falsey
 
-      @a3.has_capability?(context_1, :edit_as_user).should be_false
-      @a3.has_capability?(context_1, :edit_as_reseller).should be_false
-      @a3.has_capability?(context_1, :edit_as_admin).should be_false
-      @a3.has_capability?(context_1, :special_functions).should be_false
-      @a3.has_capability?(context_1, :superuser).should be_false
+      @a2.has_capability?(context_2, :edit_as_user).should be_truthy
+      @a2.has_capability?(context_2, :edit_as_reseller).should be_falsey
+      @a2.has_capability?(context_2, :edit_as_admin).should be_falsey
+      @a2.has_capability?(context_2, :special_functions).should be_falsey
+      @a2.has_capability?(context_2, :superuser).should be_falsey
 
-      @a3.has_capability?(context_2, :edit_as_user).should be_false
-      @a3.has_capability?(context_2, :edit_as_reseller).should be_false
-      @a3.has_capability?(context_2, :edit_as_admin).should be_false
-      @a3.has_capability?(context_2, :special_functions).should be_false
-      @a3.has_capability?(context_2, :superuser).should be_false
+      @a2.has_capability?(context_3, :edit_as_user).should be_falsey
+      @a2.has_capability?(context_3, :edit_as_reseller).should be_truthy
+      @a2.has_capability?(context_3, :edit_as_admin).should be_falsey
+      @a2.has_capability?(context_3, :special_functions).should be_falsey
+      @a2.has_capability?(context_3, :superuser).should be_falsey
 
-      @a3.has_capability?(context_3, :edit_as_user).should be_false
-      @a3.has_capability?(context_3, :edit_as_reseller).should be_false
-      @a3.has_capability?(context_3, :edit_as_admin).should be_false
-      @a3.has_capability?(context_3, :special_functions).should be_false
-      @a3.has_capability?(context_3, :superuser).should be_false
+      @a2.has_capability?(context_4, :edit_as_user).should be_falsey
+      @a2.has_capability?(context_4, :edit_as_reseller).should be_falsey
+      @a2.has_capability?(context_4, :edit_as_admin).should be_truthy
+      @a2.has_capability?(context_4, :special_functions).should be_falsey
+      @a2.has_capability?(context_4, :superuser).should be_falsey
 
-      @a3.has_capability?(context_4, :edit_as_user).should be_false
-      @a3.has_capability?(context_4, :edit_as_reseller).should be_false
-      @a3.has_capability?(context_4, :edit_as_admin).should be_false
-      @a3.has_capability?(context_4, :special_functions).should be_false
-      @a3.has_capability?(context_4, :superuser).should be_false
+      @a2.has_capability?(context_5, :edit_as_user).should be_falsey
+      @a2.has_capability?(context_5, :edit_as_reseller).should be_falsey
+      @a2.has_capability?(context_5, :edit_as_admin).should be_truthy
+      @a2.has_capability?(context_5, :special_functions).should be_truthy
+      @a2.has_capability?(context_5, :superuser).should be_falsey
 
-      @a3.has_capability?(context_5, :edit_as_user).should be_false
-      @a3.has_capability?(context_5, :edit_as_reseller).should be_false
-      @a3.has_capability?(context_5, :edit_as_admin).should be_false
-      @a3.has_capability?(context_5, :special_functions).should be_false
-      @a3.has_capability?(context_5, :superuser).should be_false
+      @a2.has_capability?(context_s, :edit_as_user).should be_falsey
+      @a2.has_capability?(context_s, :edit_as_reseller).should be_falsey
+      @a2.has_capability?(context_s, :edit_as_admin).should be_falsey
+      @a2.has_capability?(context_s, :special_functions).should be_falsey
+      @a2.has_capability?(context_s, :superuser).should be_falsey
+      @a2.has_capability?(context_s, :superuser).should be_falsey
 
-      @a3.has_capability?(context_s, :edit_as_user).should be_false
-      @a3.has_capability?(context_s, :edit_as_reseller).should be_false
-      @a3.has_capability?(context_s, :edit_as_admin).should be_false
-      @a3.has_capability?(context_s, :special_functions).should be_false
-      @a3.has_capability?(context_s, :superuser).should be_false
+
+
+      @a3.has_capability?(context_1, :edit_as_user).should be_falsey
+      @a3.has_capability?(context_1, :edit_as_reseller).should be_falsey
+      @a3.has_capability?(context_1, :edit_as_admin).should be_falsey
+      @a3.has_capability?(context_1, :special_functions).should be_falsey
+      @a3.has_capability?(context_1, :superuser).should be_falsey
+
+      @a3.has_capability?(context_2, :edit_as_user).should be_falsey
+      @a3.has_capability?(context_2, :edit_as_reseller).should be_falsey
+      @a3.has_capability?(context_2, :edit_as_admin).should be_falsey
+      @a3.has_capability?(context_2, :special_functions).should be_falsey
+      @a3.has_capability?(context_2, :superuser).should be_falsey
+
+      @a3.has_capability?(context_3, :edit_as_user).should be_falsey
+      @a3.has_capability?(context_3, :edit_as_reseller).should be_falsey
+      @a3.has_capability?(context_3, :edit_as_admin).should be_falsey
+      @a3.has_capability?(context_3, :special_functions).should be_falsey
+      @a3.has_capability?(context_3, :superuser).should be_falsey
+
+      @a3.has_capability?(context_4, :edit_as_user).should be_falsey
+      @a3.has_capability?(context_4, :edit_as_reseller).should be_falsey
+      @a3.has_capability?(context_4, :edit_as_admin).should be_falsey
+      @a3.has_capability?(context_4, :special_functions).should be_falsey
+      @a3.has_capability?(context_4, :superuser).should be_falsey
+
+      @a3.has_capability?(context_5, :edit_as_user).should be_falsey
+      @a3.has_capability?(context_5, :edit_as_reseller).should be_falsey
+      @a3.has_capability?(context_5, :edit_as_admin).should be_falsey
+      @a3.has_capability?(context_5, :special_functions).should be_falsey
+      @a3.has_capability?(context_5, :superuser).should be_falsey
+
+      @a3.has_capability?(context_s, :edit_as_user).should be_falsey
+      @a3.has_capability?(context_s, :edit_as_reseller).should be_falsey
+      @a3.has_capability?(context_s, :edit_as_admin).should be_falsey
+      @a3.has_capability?(context_s, :special_functions).should be_falsey
+      @a3.has_capability?(context_s, :superuser).should be_falsey
     end
   end
 
   describe 'attr_readable?' do
     it 'responds false to user without privileges' do
-      Account.interfaces[:rest].attr_readable?([], :name).should be_false
-      Account.interfaces[:rest].attr_readable?([], :balance).should be_false
-      Account.interfaces[:rest].attr_readable?([], :secret).should be_false
+      Account.interfaces[:rest].attr_readable?([], :name).should be_falsey
+      Account.interfaces[:rest].attr_readable?([], :balance).should be_falsey
+      Account.interfaces[:rest].attr_readable?([], :secret).should be_falsey
     end
 
     it 'allows reading of unprivileged atttribute "name" to authorized identities with user role' do
-      Account.interfaces[:rest].attr_readable?([ :edit_as_user ], :name).should be_true
-      Account.interfaces[:rest].attr_readable?([ :edit_as_user ], :balance).should be_false
-      Account.interfaces[:rest].attr_readable?([ :edit_as_user ], :secret).should be_false
+      Account.interfaces[:rest].attr_readable?([ :edit_as_user ], :name).should be_truthy
+      Account.interfaces[:rest].attr_readable?([ :edit_as_user ], :balance).should be_falsey
+      Account.interfaces[:rest].attr_readable?([ :edit_as_user ], :secret).should be_falsey
     end
 
     it 'allows reading of some attributes to authorized identities with reseller role' do
-      Account.interfaces[:rest].attr_readable?([ :edit_as_reseller ], :name).should be_true
-      Account.interfaces[:rest].attr_readable?([ :edit_as_reseller ], :balance).should be_true
-      Account.interfaces[:rest].attr_readable?([ :edit_as_reseller ], :secret).should be_false
+      Account.interfaces[:rest].attr_readable?([ :edit_as_reseller ], :name).should be_truthy
+      Account.interfaces[:rest].attr_readable?([ :edit_as_reseller ], :balance).should be_truthy
+      Account.interfaces[:rest].attr_readable?([ :edit_as_reseller ], :secret).should be_falsey
     end
 
     it 'allows reading of all attributes to authorized identities with admin role (using defaults)' do
-      Account.interfaces[:rest].attr_readable?([ :edit_as_admin ], :name).should be_true
-      Account.interfaces[:rest].attr_readable?([ :edit_as_admin ], :balance).should be_true
-      Account.interfaces[:rest].attr_readable?([ :edit_as_admin ], :secret).should be_true
+      Account.interfaces[:rest].attr_readable?([ :edit_as_admin ], :name).should be_truthy
+      Account.interfaces[:rest].attr_readable?([ :edit_as_admin ], :balance).should be_truthy
+      Account.interfaces[:rest].attr_readable?([ :edit_as_admin ], :secret).should be_truthy
     end
 
     it 'does not allow reading to identities with special_functions (which only allows an action)' do
-      Account.interfaces[:rest].attr_readable?([ :special_functions ], :name).should be_false
-      Account.interfaces[:rest].attr_readable?([ :special_functions ], :balance).should be_false
-      Account.interfaces[:rest].attr_readable?([ :special_functions ], :secret).should be_false
+      Account.interfaces[:rest].attr_readable?([ :special_functions ], :name).should be_falsey
+      Account.interfaces[:rest].attr_readable?([ :special_functions ], :balance).should be_falsey
+      Account.interfaces[:rest].attr_readable?([ :special_functions ], :secret).should be_falsey
     end
 
     it 'allow reading to identities with superuser' do
-      Account.interfaces[:rest].attr_readable?([ :superuser ], :name).should be_true
-      Account.interfaces[:rest].attr_readable?([ :superuser ], :balance).should be_true
-      Account.interfaces[:rest].attr_readable?([ :superuser ], :secret).should be_true
+      Account.interfaces[:rest].attr_readable?([ :superuser ], :name).should be_truthy
+      Account.interfaces[:rest].attr_readable?([ :superuser ], :balance).should be_truthy
+      Account.interfaces[:rest].attr_readable?([ :superuser ], :secret).should be_truthy
     end
   end
 
   describe 'attr_writable?' do
     it 'responds false to user without privileges' do
-      Account.interfaces[:rest].attr_writable?([], :name).should be_false
-      Account.interfaces[:rest].attr_writable?([], :balance).should be_false
-      Account.interfaces[:rest].attr_writable?([], :secret).should be_false
+      Account.interfaces[:rest].attr_writable?([], :name).should be_falsey
+      Account.interfaces[:rest].attr_writable?([], :balance).should be_falsey
+      Account.interfaces[:rest].attr_writable?([], :secret).should be_falsey
     end
 
     it 'disallows writing of to identities with "user" role' do
-      Account.interfaces[:rest].attr_writable?([ :edit_as_user ], :name).should be_false
-      Account.interfaces[:rest].attr_writable?([ :edit_as_user ], :balance).should be_false
-      Account.interfaces[:rest].attr_writable?([ :edit_as_user ], :secret).should be_false
+      Account.interfaces[:rest].attr_writable?([ :edit_as_user ], :name).should be_falsey
+      Account.interfaces[:rest].attr_writable?([ :edit_as_user ], :balance).should be_falsey
+      Account.interfaces[:rest].attr_writable?([ :edit_as_user ], :secret).should be_falsey
     end
 
     it 'allows writing of name to identities with "reseller" role' do
-      Account.interfaces[:rest].attr_writable?([ :edit_as_reseller ], :name).should be_true
-      Account.interfaces[:rest].attr_writable?([ :edit_as_reseller ], :balance).should be_false
-      Account.interfaces[:rest].attr_writable?([ :edit_as_reseller ], :secret).should be_false
+      Account.interfaces[:rest].attr_writable?([ :edit_as_reseller ], :name).should be_truthy
+      Account.interfaces[:rest].attr_writable?([ :edit_as_reseller ], :balance).should be_falsey
+      Account.interfaces[:rest].attr_writable?([ :edit_as_reseller ], :secret).should be_falsey
     end
 
     it 'allows writing of all attributes to identities with "admin" role (using defaults)' do
-      Account.interfaces[:rest].attr_writable?([ :edit_as_admin ], :name).should be_true
-      Account.interfaces[:rest].attr_writable?([ :edit_as_admin ], :balance).should be_true
-      Account.interfaces[:rest].attr_writable?([ :edit_as_admin ], :secret).should be_true
+      Account.interfaces[:rest].attr_writable?([ :edit_as_admin ], :name).should be_truthy
+      Account.interfaces[:rest].attr_writable?([ :edit_as_admin ], :balance).should be_truthy
+      Account.interfaces[:rest].attr_writable?([ :edit_as_admin ], :secret).should be_truthy
     end
 
     it 'does not allow writing to identities with special_functions (which only allows an action)' do
-      Account.interfaces[:rest].attr_writable?([ :special_functions ], :name).should be_false
-      Account.interfaces[:rest].attr_writable?([ :special_functions ], :balance).should be_false
-      Account.interfaces[:rest].attr_writable?([ :special_functions ], :secret).should be_false
+      Account.interfaces[:rest].attr_writable?([ :special_functions ], :name).should be_falsey
+      Account.interfaces[:rest].attr_writable?([ :special_functions ], :balance).should be_falsey
+      Account.interfaces[:rest].attr_writable?([ :special_functions ], :secret).should be_falsey
     end
 
     it 'allows writing to identities with superuser' do
-      Account.interfaces[:rest].attr_writable?([ :superuser ], :name).should be_true
-      Account.interfaces[:rest].attr_writable?([ :superuser ], :balance).should be_true
-      Account.interfaces[:rest].attr_writable?([ :superuser ], :secret).should be_true
+      Account.interfaces[:rest].attr_writable?([ :superuser ], :name).should be_truthy
+      Account.interfaces[:rest].attr_writable?([ :superuser ], :balance).should be_truthy
+      Account.interfaces[:rest].attr_writable?([ :superuser ], :secret).should be_truthy
     end
   end
 
@@ -501,19 +505,19 @@ describe Account do
     end
 
     it 'allows special_action to users with special_functions capabilities' do
-      @a1.interfaces[:rest].action_allowed?([ :special_functions ], :special_action).should be_true
+      @a1.interfaces[:rest].action_allowed?([ :special_functions ], :special_action).should be_truthy
     end
 
     it 'allows special_action to users with superuser capabilities' do
-      @a1.interfaces[:rest].action_allowed?([ :superuser ], :special_action).should be_true
+      @a1.interfaces[:rest].action_allowed?([ :superuser ], :special_action).should be_truthy
     end
 
     it 'denies special_action to users with no capabilities' do
-      @a1.interfaces[:rest].action_allowed?([ ], :special_action).should be_false
+      @a1.interfaces[:rest].action_allowed?([ ], :special_action).should be_falsey
     end
 
     it 'denies special_action to users with any other capabilities' do
-      @a1.interfaces[:rest].action_allowed?([ :edit_as_user, :edit_as_admin, :edit_as_reseller ], :special_action).should be_false
+      @a1.interfaces[:rest].action_allowed?([ :edit_as_user, :edit_as_admin, :edit_as_reseller ], :special_action).should be_falsey
     end
   end
 end

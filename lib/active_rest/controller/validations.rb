@@ -42,7 +42,7 @@ module Validations
 
   def validate_create
     ar_authorize_model_action(:action => :create)
-    resource = ar_model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
+    resource = ar_model.ar_new(:rest, @request_resource, :aaa_context => aaa_context)
 
     begin
       ActiveRecord::Base.transaction do

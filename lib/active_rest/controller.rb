@@ -56,6 +56,7 @@ module Controller
 
   attr_accessor :resource
   attr_accessor :resources
+  attr_accessor :aaa_context
 
   included do
     class_attribute :ar_model
@@ -114,10 +115,11 @@ module Controller
         new_action = 'validate_' + action_name
         action_name = new_action
         send(action_name)
-        return false
-      end
 
-      true
+        false
+      else
+        true
+      end
     end
 
     prepend_before_action do
@@ -227,7 +229,8 @@ module Controller
 
         rel = rel.joins { path[1..-1].inject(self.__send__(path[0]).outer) { |a,x| a.__send__(x).outer } } if path.any?
 
-        attr = attr.desc if desc
+        # Call .asc explicitly to overcome a bug in pgsql adapter leading to undefined method to_sql
+        attr = desc ? attr.desc : attr.asc
 
         rel = rel.order(attr)
       end
@@ -259,7 +262,16 @@ module Controller
         @resources = ar_model.search(params[:_search])
         @resources_count = @resources.count
       else
+        intf = ar_model.interfaces[:rest]
+
         @resources_relation ||= ar_model.all
+
+        # Authorization
+        if intf.authorization_required? && ar_user_capas.empty?
+          @resources_relation = @resources_relation.with_capability(aaa_context)
+        end
+
+        @authorized_resources_relation = @resources_relation
 
         # Filters
         @resources_relation = apply_scopes_to_relation(@resources_relation)
@@ -292,9 +304,7 @@ module Controller
 
     return true if !intf.authorization_required?
 
-    @user_capas = intf.init_capabilities(@aaa_context)
-
-    if !@user_capas.any? && !@resources.any?
+    if ar_user_capas.empty? && @authorized_resources_relation.empty?
       raise Exception::AuthorizationError.new(
             :reason => :forbidden,
             :short_msg => 'You do not have the required capability to access the resources.')
@@ -310,21 +320,23 @@ module Controller
 
     return true if !intf.authorization_required?
 
-    @user_capas = intf.init_capabilities(@aaa_context, @resource)
-
-    if !@user_capas.any?
+    if ar_user_capas.empty?
       raise Exception::AuthorizationError.new(
             :reason => :forbidden,
             :short_msg => 'You do not have the required capability to access the resource.')
     end
 
-    unless intf.action_allowed?(@user_capas, opts[:action])
+    unless intf.action_allowed?(ar_user_capas, opts[:action])
       raise Exception::AuthorizationError.new(
             :reason => :forbidden,
             :short_msg => 'You do not have the required capability to operate this action.')
     end
 
     true
+  end
+
+  def ar_user_capas
+    @ar_user_capas ||= ar_model.interfaces[:rest].init_capabilities(aaa_context, @resource)
   end
 
   module ClassMethods

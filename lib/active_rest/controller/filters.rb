@@ -178,13 +178,13 @@ module Filters
 
         if scope.kind_of?(Proc)
           if scope.arity > 0
-            rel = instance_exec(rel, @aaa_context, &scope)
+            rel = instance_exec(rel, aaa_context, &scope)
           else
             rel = instance_exec(rel, &scope)
           end
         else
           if rel.klass.method(scope).arity > 0
-            rel = rel.send(scope, @aaa_context)
+            rel = rel.send(scope, aaa_context)
           else
             rel = rel.send(scope)
           end

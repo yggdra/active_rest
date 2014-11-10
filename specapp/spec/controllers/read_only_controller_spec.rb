@@ -5,7 +5,7 @@ require 'assert2/xhtml'
 #
 # CONTROLLER IN READ ONLY MODE
 #
-describe ReadOnlyCompaniesController do
+describe ReadOnlyCompaniesController, type: :controller do
 
   before(:each) do
     @c1 = FactoryGirl.create(:company_1)

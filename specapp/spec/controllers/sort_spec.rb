@@ -1,7 +1,7 @@
 
 require 'spec_helper'
 
-describe CompaniesController do
+describe CompaniesController, type: :controller do
 
   before(:each) do
     @c1 = FactoryGirl.create(:company_1)

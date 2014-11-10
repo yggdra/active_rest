@@ -71,9 +71,9 @@ module Verbs
   def common_permissions
     intf = ar_model.interfaces[:rest]
 
-    @user_capas = intf.init_capabilities(@aaa_context, @resource)
+    @user_capas = intf.init_capabilities(aaa_context, @resource)
 
-    res = {
+    {
       :allowed_actions => action_methods.select { |x| intf.action_allowed?(@user_capas, x) },
       :attributes => Hash[intf.attrs.map { |attrname, attr|
         [ attrname,
@@ -87,7 +87,8 @@ module Verbs
   protected :common_permissions
 
   def index
-    @resources_relation = ar_model.all.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
+    # FIXME: doesn't work with pg, causing "undefined method to_sql"
+    @resources_relation = ar_model.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
 
     begin
       ar_retrieve_resources
@@ -140,7 +141,7 @@ module Verbs
     begin
       send(ar_transaction_handler) do
         before_create
-        @resource ||= ar_model.ar_new(:rest, @request_resource, :aaa_context => @aaa_context)
+        @resource ||= ar_model.ar_new(:rest, @request_resource, :aaa_context => aaa_context)
 
         before_creation_save
         before_save
@@ -200,7 +201,7 @@ module Verbs
       send(ar_transaction_handler) do
         before_update
 
-        @resource.ar_apply_update_attributes(:rest, @request_resource, :aaa_context => @aaa_context)
+        @resource.ar_apply_update_attributes(:rest, @request_resource, :aaa_context => aaa_context)
 
         before_save
 
