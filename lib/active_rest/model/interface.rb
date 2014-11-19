@@ -868,13 +868,13 @@ class Interface
     end
   end
 
-  class FakeAAAContext
-    attr_reader :global_capabilities
-    attr_reader :auth_identity
+  class GenericAAAContext
+    attr_accessor :global_capabilities
+    attr_accessor :auth_identity
 
-    def initialize
-      @global_capabilities = [ :superuser ]
-      @auth_identity = nil
+    def initialize(global_capabilities: [ ], auth_identity: nil)
+      @global_capabilities = global_capabilities
+      @auth_identity = auth_identity
     end
   end
 end
