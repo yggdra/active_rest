@@ -50,6 +50,19 @@ class View
     self.instance_eval(&block) if block_given?
   end
 
+  def initialize_copy(source)
+    @definition = @definition.clone
+    @definition.each { |k,v| @definition[k] = v.clone }
+
+    @per_class = @per_class.clone
+    @per_class.each { |k,v| @per_class[k] = v.clone }
+
+    @eager_loading_hints = @eager_loading_hints.clone
+
+    @capabilities = @capabilities.clone
+    @capabilities.each { |k,v| @capabilities[k] = v.clone }
+  end
+
   def attr_visible?(attr)
     if @empty
       @definition[attr].display == :show

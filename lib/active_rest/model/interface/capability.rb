@@ -47,6 +47,11 @@ class Capability
     h.each { |k,v| send("#{k}=", v) }
   end
 
+  def initialize_copy(source)
+    @attr_acc = @attr_acc.clone
+    @actions = @actions.clone
+  end
+
   def copy_actions_from(capa)
     @interface.capabilities[capa].actions.each do |k,v|
       @actions[k] = v
