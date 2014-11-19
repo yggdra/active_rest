@@ -220,7 +220,7 @@ module Controller
 
     sorts = params[:sort].split(',')
 
-    sorts.reverse.each do |sort|
+    sorts.each do |sort|
       if sort =~ /^([-+]?)(.*)$/
         desc = ($1 && $1 == '-')
         attrname = $2
@@ -267,7 +267,7 @@ module Controller
         @resources_relation ||= ar_model.all
 
         # Authorization
-        if intf.authorization_required? && ar_user_capas.empty?
+        if intf.authorization_required?
           @resources_relation = @resources_relation.with_capability(aaa_context)
         end
 
