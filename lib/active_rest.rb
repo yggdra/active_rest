@@ -12,6 +12,8 @@ require 'active_record'
 module ActiveRest
 class Engine < Rails::Engine
 end
+
+  AAAContext = ::ActiveRest::Model::Interface::GenericAAAContext
 end
 
 module ActiveRecord::Associations::Builder
