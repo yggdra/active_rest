@@ -539,6 +539,7 @@ class Interface
       res[:_perms] = {
         :attributes => attracc,
         :allowed_actions => allowed_actions(user_capas),
+        :owned => obj.respond_to?(:is_object_owner?) ? obj.is_object_owner?(user_capas, opts[:aaa_context]) : true
       }
     end
 

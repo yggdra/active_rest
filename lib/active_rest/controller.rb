@@ -103,7 +103,7 @@ module Controller
     # are we just requiring validations ?
     prepend_before_action(:only => [ :update, :create ]) do
       if request.content_mime_type == :json
-        @request_resource = ActiveSupport::JSON.decode(request.body)
+        @request_resource = ActiveSupport::JSON.decode(request.body.read)
       end
 
       # if a X-Validate-Only header is present RESTful request is considered a "dry-run" and gets rerouted to

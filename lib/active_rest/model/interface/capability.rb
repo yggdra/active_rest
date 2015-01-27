@@ -57,6 +57,16 @@ class Capability
     end
   end
 
+  def initialize_copy(source)
+    @actions = {}
+
+    if @interface.templates
+      @interface.templates.each { |k,v| template(k) }
+    end
+
+    super
+  end
+
   def copy_from(capa)
     copy_actions_from(capa)
     copy_attributes_from(capa)
@@ -64,7 +74,7 @@ class Capability
 
   def template(capa)
     @interface.templates[capa].actions.each do |k,v|
-      @actions[k] = v
+      @actions[k] |= v
     end
 
     @interface.templates[capa].attr_acc.each do |k,v|
