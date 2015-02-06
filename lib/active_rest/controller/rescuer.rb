@@ -65,7 +65,9 @@ module Rescuer
         format.xml { render :xml => res, :status => status_code }
         format.yaml { render :yaml => res, :status => status_code }
         format.json { render :json => res, :status => status_code }
+        format.text { render :plain => res.awesome_inspect(:plain => true), :status => status_code }
         yield(format, res, status_code) if block_given?
+        format.any { render :plain => res.awesome_inspect(:plain => true), :status => status_code }
       end
     end
   end
