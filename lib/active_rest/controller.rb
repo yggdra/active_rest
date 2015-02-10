@@ -193,14 +193,6 @@ module Controller
     end
 
     #ar_authorize_action if !opts[:skip_authorization]
-
-    if @resource.respond_to?(:object_readable?)
-      intf = ar_model.interfaces[:rest]
-      capas = intf.init_capabilities(@aaa_context, @resource)
-
-      @resource = {} if !@resource.object_readable?(capas, @aaa_context)
-    end
-
     @resource
   rescue ActiveRecord::RecordNotFound => e
     raise Exception::NotFound.new(e.message,
