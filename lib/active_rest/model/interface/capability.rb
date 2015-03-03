@@ -58,7 +58,8 @@ class Capability
   end
 
   def initialize_copy(source)
-    @actions = {}
+    @actions = source.actions.clone
+    @attr_acc = source.attr_acc.clone
 
     if @interface.templates
       @interface.templates.each { |k,v| template(k) }
