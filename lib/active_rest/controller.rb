@@ -185,7 +185,9 @@ module Controller
   #
   def ar_retrieve_resource(opts = {})
     @resource_relation ||= ar_model
-    @resource_relation = ar_model.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
+# Disabled since active_record_union does not support includes
+#    @resource_relation = ar_model.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
+    @resource_relation = ar_model.all if ar_model
 
     run_callbacks :ar_retrieve_resource do
       tid = opts[:id] || params[:id]
@@ -304,11 +306,11 @@ module Controller
 
     return true if !intf.authorization_required?
 
-    if ar_user_capas.empty? && @authorized_resources_relation.empty?
-      raise Exception::AuthorizationError.new(
-            :reason => :forbidden,
-            :short_msg => 'You do not have the required capability to access the resources.')
-    end
+#    if ar_user_capas.empty? && @authorized_resources_relation.empty?
+#      raise Exception::AuthorizationError.new(
+#            :reason => :forbidden,
+#            :short_msg => 'You do not have the required capability to access the resources.')
+#    end
 
     true
   end
@@ -323,13 +325,13 @@ module Controller
     if ar_user_capas.empty?
       raise Exception::AuthorizationError.new(
             :reason => :forbidden,
-            :short_msg => 'You do not have the required capability to access the resource.')
+            :short_msg => "You do not have the required capability to access the resource attempting #{opts[:action]}")
     end
 
     unless intf.action_allowed?(ar_user_capas, opts[:action])
       raise Exception::AuthorizationError.new(
             :reason => :forbidden,
-            :short_msg => 'You do not have the required capability to operate this action.')
+            :short_msg => "You do not have the required capability to operate action #{opts[:action]}.")
     end
 
     true

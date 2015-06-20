@@ -16,16 +16,25 @@ require 'active_rest/model/interface/capability_template'
 
 class Array
   def ar_serializable_hash(ifname, opts = {})
-    map do |x|
-      x.respond_to?(:ar_serializable_hash) ? x.ar_serializable_hash(ifname, opts) : x
-    end
+    map { |x|
+      begin
+        x.respond_to?(:ar_serializable_hash) ? x.ar_serializable_hash(ifname, opts) : x
+      rescue ActiveRest::Model::Interface::ResourceNotReadable
+        nil
+      end
+    }#.compact
   end
 end
 
 class Hash
   def ar_serializable_hash(ifname, opts = {})
     nh = self.clone
-    each { |k,v| nh[k] = v.respond_to?(:ar_serializable_hash) ? v.ar_serializable_hash(ifname, opts) : v }
+    each { |k,v|
+      begin
+       nh[k]  = v.respond_to?(:ar_serializable_hash) ? v.ar_serializable_hash(ifname, opts) : v
+      rescue ActiveRest::Model::Interface::ResourceNotReadable
+      end
+    }
   end
 end
 
@@ -424,7 +433,7 @@ class Interface
 
     view ||= @views[:_default_] || View.new(:anonymous)
 
-    authreq = authorization_required?
+    authreq = opts[:aaa_context] && authorization_required?
 
     user_capas = nil
     if authreq
@@ -494,7 +503,13 @@ class Interface
           vals = vals.limit(viewdef.limit) if viewdef.limit
           vals = vals.order(viewdef.order) if viewdef.order
         end
-        values[attrname] = vals.map { |x| x.ar_serializable_hash(@name, opts.merge(:view => subview)) }
+        values[attrname] = vals.map { |x|
+          begin
+            x.ar_serializable_hash(@name, opts.merge(:view => subview))
+          rescue ActiveRest::Model::Interface::ResourceNotReadable
+            nil
+          end
+        }
       when Model::Interface::Attribute::UniformReferencesCollection
         if viewinc
           vals = obj.send(attr.name_in_model)
@@ -502,7 +517,13 @@ class Interface
             vals = vals.limit(viewdef.limit) if viewdef.limit
             vals = vals.order(viewdef.order) if viewdef.order
           end
-          values[attrname] = vals.map { |x| x.ar_serializable_hash(@name, opts.merge(:view => subview, :additional_capas => [ :subview ])) }
+          values[attrname] = vals.map { |x|
+            begin
+              x.ar_serializable_hash(@name, opts.merge(:view => subview, :additional_capas => [ :subview ]))
+            rescue ActiveRest::Model::Interface::ResourceNotReadable
+              nil
+            end
+          }
         end
       when Model::Interface::Attribute::EmbeddedPolymorphicModel
         val = obj.send(attr.name_in_model)
@@ -577,12 +598,14 @@ class Interface
     raise AttributeNotFound.new(obj, attr_name) if !attr
     return if attr.ignored
 
-    raise AttributeNotWritable.new(obj, attr_name) if !attr.writable
+    if user_capas
+      raise AttributeNotWritable.new(obj, attr_name) if !attr.writable
 
-    if creating
-      raise AttributeNotWritable.new(obj, attr_name) if !attr_creatable?(user_capas, attr_name)
-    else
-      raise AttributeNotWritable.new(obj, attr_name) if !attr_writable?(user_capas, attr_name)
+      if creating
+        raise AttributeNotWritable.new(obj, attr_name) if !attr_creatable?(user_capas, attr_name)
+      else
+        raise AttributeNotWritable.new(obj, attr_name) if !attr_writable?(user_capas, attr_name)
+      end
     end
 
     case attr
@@ -721,7 +744,7 @@ class Interface
   def apply_model_attributes(obj, values, opts, creating)
     user_capas = nil
 
-    if authorization_required?
+    if opts[:aaa_context] && authorization_required?
       user_capas = init_capabilities(opts[:aaa_context], obj)
       raise ResourceNotWritable.new(obj) if user_capas.empty?
     end

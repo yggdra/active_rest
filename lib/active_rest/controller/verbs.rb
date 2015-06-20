@@ -88,7 +88,9 @@ module Verbs
 
   def index
     # FIXME: doesn't work with pg, causing "undefined method to_sql"
-    @resources_relation = ar_model.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
+# Disabled since active_record_union does not support includes
+#    @resources_relation = ar_model.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
+    @resources_relation = ar_model.all if ar_model
 
     begin
       ar_retrieve_resources

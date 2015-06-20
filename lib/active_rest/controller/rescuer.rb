@@ -42,19 +42,19 @@ module Rescuer
       render :nothing => true, :status => e.status
     else
       res = {
-        :type => e.class.name,
-        :reason => :exception,
-        :short_msg => e.message,
-        :long_msg => '',
-        :retry_possible => false,
-        :additional_info => "Exception of class '#{e.class}'",
+        reason: :exception,
+        exception_type: e.class.name,
+        short_msg: e.message,
+        long_msg: e.respond_to?(:long_msg) ? e.long_msg : e.message,
+        retry_possible: false,
+        additional_info: "Exception of class '#{e.class}'",
+        data: {},
       }
 
-      res.merge!(e.public_data) if e.respond_to?(:public_data)
+      res[:data].merge!(e.public_data) if e.respond_to?(:public_data)
 
       if request.local? || Rails.application.config.consider_all_requests_local
-        res.merge!(e.private_data) if e.respond_to?(:private_data)
-
+        res[:data].merge!(e.private_data) if e.respond_to?(:private_data)
         res[:annotated_source_code] = e.annoted_source_code.to_s if e.respond_to?(:annoted_source_code)
         res[:backtrace] = e.backtrace
       end
