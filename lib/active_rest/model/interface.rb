@@ -392,7 +392,7 @@ class Interface
 
   def init_capabilities(aaa_context, resource = nil, opts = {})
     # Build a list of capabilities the user *has*
-    user_capas = []
+    user_capas = [ :anonymous ]
 
     # First global capabilities
     user_capas += aaa_context.global_capabilities if aaa_context
