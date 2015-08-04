@@ -88,7 +88,7 @@ module Model
 
       path.push(attrs[0].to_sym)
 
-      reflection = reflections[attrs[0].to_sym]
+      reflection = reflections[attrs[0].to_s]
       raise UnknownRelation.new("Unknown relation #{attrs[0]}", attrs[0]) if !reflection
 
       if reflection.options[:polymorphic]

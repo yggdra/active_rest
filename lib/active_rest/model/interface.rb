@@ -145,6 +145,8 @@ class Interface
     end
 
     @model.aggregate_reflections.each do |name, reflection|
+      name = name.to_sym
+
       case reflection.macro
       when :composed_of
         @attrs[name] =
@@ -156,6 +158,8 @@ class Interface
     end
 
     @model.reflections.each do |name, reflection|
+      name = name.to_sym
+
       case reflection.macro
       when :belongs_to
         if reflection.options[:polymorphic]
@@ -423,7 +427,6 @@ class Interface
   end
 
   def ar_serializable_hash(obj, opts = {})
-
     view = opts[:view]
 
     if view.is_a?(Symbol)
@@ -549,8 +552,10 @@ class Interface
             val = val.to_i if val.respond_to?(:to_i)
           when :array
             val = val.to_a if val.respond_to?(:to_a)
+            val = val.ar_serializable_hash(self.name) if val.respond_to?(:ar_serializable_hash)
           when :hash
             val = val.to_h if val.respond_to?(:to_h)
+            val = val.ar_serializable_hash(self.name) if val.respond_to?(:ar_serializable_hash)
           end
 
 #          val = val.to_ar if val.respond_to?(:to_ar)
